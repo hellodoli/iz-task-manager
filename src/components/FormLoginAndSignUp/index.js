@@ -1,12 +1,55 @@
 import React, { useState } from "react";
 
-import Users from "../apis/users";
+import User from "../../apis/user";
 
-import TextField from "@material-ui/core/TextField";
-//import Appbar from "@material-ui/core/AppBar";
+import { 
+  makeStyles,
+  Tabs,
+  Tab,
+  TextField,
+  Paper
+} from "@material-ui/core";
+import {
+  FormWrapperFixedCenter,
+  FormWrapper,
+  FormWrapperHeader,
+  // MaterialUI makeStyles
+  formTabHeader
+} from './styled';
 
+// unique key
 const usernameInput = "username";
 const passwordInput = "password";
+
+function FormTab() {
+  const [value, setValue] = useState(0);
+
+  const handleChange = (event, value) => {
+    setValue(value);
+  }
+
+  const classes = formTabHeader();
+  
+  return (
+    <Paper square>
+      <FormWrapperHeader>
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          centered={true}
+          aria-label="form-tabs-header"
+          classes={{ 
+            root: classes.root,
+            indicator: classes.indicator
+          }}
+        >
+          <Tab label="ALREADY MEMBER ?" />
+          <Tab label="NEW MEMBER ?" />
+        </Tabs>
+      </FormWrapperHeader>
+    </Paper>
+  );
+}
 
 function FormLoginAndSignUp() {
   const [input, setInput] = useState({
@@ -14,7 +57,7 @@ function FormLoginAndSignUp() {
     [passwordInput]: ""
   });
 
-  const [user] = useState(new Users());
+  const [user] = useState(new User());
 
   function onSubmit(e) {
     e.preventDefault();
@@ -41,7 +84,11 @@ function FormLoginAndSignUp() {
   }
 
   return (
-    <div>Hello</div>
+    <FormWrapperFixedCenter>
+      <FormWrapper>
+        <FormTab />
+      </FormWrapper>
+    </FormWrapperFixedCenter>
   );
 }
 

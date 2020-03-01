@@ -1,6 +1,6 @@
 import api from "./index";
 
-class Users {
+class User {
   async signUp(user) {
     try {
       const response = await api.post("/users", user);
@@ -11,4 +11,4 @@ class Users {
   }
 }
 
-export default Users;
+export default User;

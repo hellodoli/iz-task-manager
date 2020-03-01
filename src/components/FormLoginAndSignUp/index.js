@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import Users from "../apis/users";
 
 import TextField from "@material-ui/core/TextField";
+//import Appbar from "@material-ui/core/AppBar";
 
 const usernameInput = "username";
 const passwordInput = "password";
 
-function Form() {
+function FormLoginAndSignUp() {
   const [input, setInput] = useState({
     [usernameInput]: "",
     [passwordInput]: ""
@@ -27,26 +28,21 @@ function Form() {
   }
 
   async function signUpUser() {
-    await user.signUp({
-      name: "Tommy",
-      email: "demo@gmail.com",
+    const userData = {
+      name: "Tom",
+      email: "demo03@gmail.com",
       password: "123456789",
       age: 24
-    });
+    };
+    const userSignUp = await user.signUp(userData);
+    if (userSignUp) {
+      console.log(userSignUp);
+    }  
   }
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        <TextField label="Username" variant="outlined" />
-        <TextField variant="outlined" />
-
-        <button type="submit" onClick={signUpUser}>
-          Signin
-        </button>
-      </form>
-    </div>
+    <div>Hello</div>
   );
 }
 
-export default Form;
+export default FormLoginAndSignUp;

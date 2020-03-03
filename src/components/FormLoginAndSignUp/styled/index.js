@@ -15,6 +15,8 @@ export const FormWrapperFixedCenter = styled.div`
 
 export const FormWrapper = styled.div`
   position: relative;
+  width: 35%;
+  min-width: 275px;
 `;
 
 export const FormWrapperHeader = styled.div`
@@ -27,6 +29,7 @@ export const FormWrapperHeader = styled.div`
 
 // Material css
 export const muiTabs = makeStyles(theme => {
+  window.theme = theme;
   console.log("theme: ", theme);
   return {
     indicator: {
@@ -36,12 +39,23 @@ export const muiTabs = makeStyles(theme => {
   };
 });
 
-export const muiTab = makeStyles({
+export const muiTab = makeStyles(theme => ({
   root: {
     padding: "18px 36px",
-    background: "#fff"
+    background: "transparent",
+    color: theme.palette.common.white
   },
-  textColorInherit: {
-    opacity: "1"
+  selected: {
+    background: theme.palette.common.white,
+    color: "inherit"
   }
-});
+  /*textColorInherit: {
+    opacity: "1"
+  }*/
+}));
+
+export const muiUseStyles = makeStyles(theme => ({
+  margin: {
+    margin: theme.spacing(1)
+  }
+}));

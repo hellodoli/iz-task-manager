@@ -7,12 +7,13 @@ import { muiForm } from './styled';
 import FormTabHeader from './FormTabHeader';
 import TabPanel from './TabPanel';
 import FormSignIn from './FormSignIn';
+import FormSignUp from './FormSignUp';
 
-function FormLoginAndSignUp(props) {
+function FormLoginAndSignUp() {
   const classes = muiForm();
   const [value, setValue] = useState(0);
 
-  // handle value Tab, TabPanel
+  // handle value Tab, TabPanel (để show tab)
   const handleChangeTabValue = (event, value) => setValue(value);
 
   return (
@@ -26,7 +27,7 @@ function FormLoginAndSignUp(props) {
             <FormSignIn />
           </TabPanel>
           <TabPanel value={value} index={1}>
-            Item 2
+            <FormSignUp />
           </TabPanel>
         </div>
       </Paper>

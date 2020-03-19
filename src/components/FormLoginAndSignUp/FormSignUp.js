@@ -1,66 +1,36 @@
 import React, { useState } from 'react';
-
 import validator from 'validator';
-
-import { getCookie, setCookie } from '../../utils/cookies';
-
 import User from '../../apis/user';
-
-import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
   FormControl,
   InputLabel,
   OutlinedInput,
   InputAdornment,
-  IconButton,
-  Button,
-  FormControlLabel,
   FormHelperText,
-  Checkbox
+  IconButton,
+  Button
 } from '@material-ui/core';
+import { Visibility, VisibilityOff } from '@material-ui/icons';
 
-function FormSignIn() {
+function FormSignUp() {
   const [user] = useState(new User());
   const [values, setValues] = useState({
-    email: '',
+    name: '',
+    username: '',
     password: '',
-    isShowPassword: false,
-    checked: false
+    email: '',
+    isShowPassword: false
   });
 
-  const [eMailError, setEmailError] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  function clearErrorText(prop) {
-    if (prop === 'email') {
-      if (eMailError !== '') {
-        setEmailError('');
-      }
-    }
-
-    if (prop === 'password') {
-      if (passwordError !== '') {
-        setPasswordError('');
-      }
-    }
-  }
-
-  // handle change username, password
+  // handle change name, email, username, password
   const handleChange = prop => event => {
     setValues({
       ...values,
       [prop]: event.target.value
-    });
-
-    // clear error text when user type input
-    clearErrorText(prop);
-  };
-
-  // handle click check 'keep login'
-  const handleCheck = props => event => {
-    setValues({
-      ...values,
-      [props]: event.target.checked
     });
   };
 
@@ -72,32 +42,12 @@ function FormSignIn() {
     });
   };
 
-  // call API SignIn
-  async function callAPISignIn(userInfo) {
-    console.log('>>> START SIGN IN <<<');
-    await user.signIn(userInfo);
-    const data = user.dataLogin;
-    if (data.isError) {
-      // set Error Text
-      const { error, errorCode } = data;
-      if (errorCode === 1) {
-        setEmailError(error);
-      } else if (errorCode === 2) {
-        setPasswordError(error);
-      }
-    } else if (data.user && data.token) {
-      // clear Error Text
-      setEmailError('');
-      setPasswordError('');
-      // set cookies
-      setCookie('emailToken', data.token, 30);
-    }
-  }
-
-  function handleCheckValidInput() {
+  async function handleCheckValidInput() {
+    let isValidName = null;
     let isValidEmail = null;
     let isValidPassword = null;
 
+    const name = values.name.trim();
     const email = values.email.trim();
     const password = values.password;
 
@@ -109,44 +59,90 @@ function FormSignIn() {
       setEmailError('');
     }
 
+    if (name === '') {
+      isValidName = false;
+      setNameError("Full name can't be empty");
+    } else {
+      isValidName = true;
+      setNameError('');
+    }
+
     if (password === '') {
       isValidPassword = false;
       setPasswordError("Password can't be empty");
+    } else if (password.length < 7) {
+      isValidPassword = false;
+      setPasswordError('Password must be at least 7 characters long');
+    } else if (password.toLowerCase().includes('password')) {
+      isValidPassword = false;
+      setPasswordError("Password can't contain 'password'");
     } else {
       isValidPassword = true;
       setPasswordError('');
     }
 
-    if (isValidPassword && isValidEmail) {
-      callAPISignIn({ email, password });
+    // call API when valid
+    if (isValidPassword && isValidEmail && isValidName) {
+      console.log('valid sign up');
+      const newUser = {
+        name,
+        email,
+        password
+      };
+      await user.signUp(newUser);
+      if (user.newUserInfo.email) {
+        // save cookies
+        console.log('signup success');
+      } else {
+        console.log('signup fail');
+      }
     }
   }
 
-  function submitSignIn(event) {
+  function submitSignUp(event) {
     event.preventDefault();
     handleCheckValidInput();
   }
 
   return (
     <div>
-      <form autoComplete="off" onSubmit={submitSignIn}>
-        {/* Username */}
+      <form autoComplete="off" onSubmit={submitSignUp}>
+        {/* Name */}
         <FormControl
           fullWidth
           variant="outlined"
           margin="normal"
-          error={eMailError === '' ? false : true}
+          error={nameError === '' ? false : true}
         >
-          <InputLabel htmlFor="outlined-adornment-email-signin">
+          <InputLabel htmlFor="outlined-adornment-name-signup">
+            Your name
+          </InputLabel>
+          <OutlinedInput
+            id="outlined-adornment-name-signup"
+            value={values.name}
+            onChange={handleChange('name')}
+            labelWidth={70}
+          ></OutlinedInput>
+          {nameError !== '' && <FormHelperText>{nameError}</FormHelperText>}
+        </FormControl>
+        {/* Email */}
+        <FormControl
+          fullWidth
+          variant="outlined"
+          margin="normal"
+          error={emailError === '' ? false : true}
+        >
+          <InputLabel htmlFor="outlined-adornment-email-signup">
             Email
           </InputLabel>
           <OutlinedInput
-            id="outlined-adornment-email-signin"
+            id="outlined-adornment-email-signup"
+            type="email"
             value={values.email}
             onChange={handleChange('email')}
-            labelWidth={40}
+            labelWidth={70}
           ></OutlinedInput>
-          {eMailError !== '' && <FormHelperText>{eMailError}</FormHelperText>}
+          {emailError !== '' && <FormHelperText>{emailError}</FormHelperText>}
         </FormControl>
         {/* Password */}
         <FormControl
@@ -155,13 +151,14 @@ function FormSignIn() {
           margin="normal"
           error={passwordError === '' ? false : true}
         >
-          <InputLabel htmlFor="outlined-adornment-password-signin">
+          <InputLabel htmlFor="outlined-adornment-password-signup">
             Password
           </InputLabel>
           <OutlinedInput
-            id="outlined-adornment-password-signin"
-            value={values.password}
+            id="outlined-adornment-password-signup"
+            required={true}
             type={values.isShowPassword ? 'text' : 'password'}
+            value={values.password}
             onChange={handleChange('password')}
             labelWidth={70}
             endAdornment={
@@ -180,20 +177,6 @@ function FormSignIn() {
             <FormHelperText>{passwordError}</FormHelperText>
           )}
         </FormControl>
-        {/* Remember Login */}
-        <FormControl fullWidth margin="dense">
-          <FormControlLabel
-            control={
-              <Checkbox
-                color="primary"
-                checked={values.checked}
-                value="checked"
-                onChange={handleCheck('checked')}
-              />
-            }
-            label="Sample text"
-          />
-        </FormControl>
         {/* Buttons Group */}
         <FormControl fullWidth margin="normal">
           <Button
@@ -201,8 +184,9 @@ function FormSignIn() {
             variant="contained"
             color="primary"
             size="large"
+            onClick={submitSignUp}
           >
-            Login
+            Sign Up
           </Button>
         </FormControl>
       </form>
@@ -210,4 +194,4 @@ function FormSignIn() {
   );
 }
 
-export default FormSignIn;
+export default FormSignUp;

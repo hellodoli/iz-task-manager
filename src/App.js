@@ -1,16 +1,11 @@
 import React from 'react';
-
-import { ThemeProvider } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-// Components
-import FormLoginAndSignUp from './components/FormLoginAndSignUp';
+// Containers
+import SetUp from './containers/SetUp';
 
 function App() {
   return (
     <div className="App">
-      <Container maxWidth="lg">
-        <FormLoginAndSignUp />
-      </Container>
+      <SetUp />
     </div>
   );
 }

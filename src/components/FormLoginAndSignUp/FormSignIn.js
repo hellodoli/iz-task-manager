@@ -111,7 +111,7 @@ function FormSignIn() {
 
     if (password === '') {
       isValidPassword = false;
-      setPasswordError("Password can't be empty");
+      setPasswordError("Password isn't valid");
     } else {
       isValidPassword = true;
       setPasswordError('');

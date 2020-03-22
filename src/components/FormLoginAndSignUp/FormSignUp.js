@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import validator from 'validator';
+import { setCookie } from '../../utils/cookies';
 import User from '../../apis/user';
+
 import {
   FormControl,
   InputLabel,
@@ -42,7 +44,22 @@ function FormSignUp() {
     });
   };
 
-  async function handleCheckValidInput() {
+  async function callAPISignUp (newUserInput) {
+    console.log('>>> START SIGN UP <<<');
+    await user.signUp(newUserInput);
+    const newUser = user.newUserInfo.user;
+    if (newUser && newUser.email) {
+      // save cookies
+      console.log('signup success');
+      // set cookies
+      const token = user.newUserInfo.token;
+      setCookie('emailToken', token, 30);
+    } else {
+      console.log('signup fail');
+    }
+  }
+
+  function handleCheckValidInput() {
     let isValidName = null;
     let isValidEmail = null;
     let isValidPassword = null;
@@ -83,19 +100,7 @@ function FormSignUp() {
 
     // call API when valid
     if (isValidPassword && isValidEmail && isValidName) {
-      console.log('valid sign up');
-      const newUser = {
-        name,
-        email,
-        password
-      };
-      await user.signUp(newUser);
-      if (user.newUserInfo.email) {
-        // save cookies
-        console.log('signup success');
-      } else {
-        console.log('signup fail');
-      }
+      callAPISignUp({ name, email, password });
     }
   }
 

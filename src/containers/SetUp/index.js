@@ -7,13 +7,13 @@ import { checkAuth } from '../../actions/oauth';
 //import SetUp from './components/SetUp';
 import FormLoginAndSignUp from '../../components/FormLoginAndSignUp';
 
-function SetUp(props) {
+function SetUp (props) {
   useEffect(() => {
-    props.checkAuth();
+    // props.checkAuth();
   }, []);
   return (
     <div>
-      { console.log(props.demo) }
+      <FormLoginAndSignUp />
     </div>
   );
 }

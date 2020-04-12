@@ -10,7 +10,7 @@ export const checkAuth = () => async dispatch => {
     console.log(token);
     if (token !== '') {
       const user = new User();
-      await user.getUser(token);      
+      await user.getUser(token);
       if (user.dataSetup && user.dataSetup.email) {
         isSignedIn = true;
         user = { ...user.dataSetup };

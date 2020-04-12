@@ -1,7 +1,4 @@
 import React from 'react';
-
-import clsx from 'clsx';
-
 import PropTypes from 'prop-types';
 
 import { Tabs, Tab } from '@material-ui/core';
@@ -17,7 +14,7 @@ function FormTabHeader(props) {
   });
 
   return (
-    <div className={clsx(classes.wrapperHeader)}>
+    <div className={classes.wrapperHeader}>
       <Tabs
         value={value}
         onChange={handleChange}

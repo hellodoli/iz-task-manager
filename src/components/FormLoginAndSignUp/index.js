@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Paper } from '@material-ui/core';
+import { Container, Paper } from '@material-ui/core';
 import { muiForm } from './styled';
 
 // Components
@@ -18,19 +18,21 @@ function FormLoginAndSignUp() {
 
   return (
     <div className={classes.wrapperFixed}>
-      <Paper square className={classes.wrapperContainer}>
-        {/* Form tab */}
-        <FormTabHeader value={value} handleChange={handleChangeTabValue} />
-        {/* Form tab panel */}
-        <div>
-          <TabPanel value={value} index={0}>
-            <FormSignIn />
-          </TabPanel>
-          <TabPanel value={value} index={1}>
-            <FormSignUp />
-          </TabPanel>
-        </div>
-      </Paper>
+      <Container className={classes.wrapperContainerParent}>
+        <Paper square className={classes.wrapperContainer}>
+          {/* Form tab */}
+          <FormTabHeader value={value} handleChange={handleChangeTabValue} />
+          {/* Form tab panel */}
+          <div>
+            <TabPanel value={value} index={0}>
+              <FormSignIn />
+            </TabPanel>
+            <TabPanel value={value} index={1}>
+              <FormSignUp />
+            </TabPanel>
+          </div>
+        </Paper>
+      </Container>
     </div>
   );
 }

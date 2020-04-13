@@ -20,7 +20,7 @@ import {
 } from '@material-ui/core';
 
 function FormSignIn() {
-  const [user] = useState(new User());
+  const [userAPI] = useState(new User());
   const [values, setValues] = useState({
     email: '',
     password: '',
@@ -75,8 +75,8 @@ function FormSignIn() {
   // call API SignIn
   async function callAPISignIn(userInfo) {
     console.log('>>> START SIGN IN <<<');
-    await user.signIn(userInfo);
-    const data = user.dataLogin;
+    await userAPI.signIn(userInfo);
+    const data = userAPI.dataLogin;
     if (data.isError) {
       // set Error Text
       const { error, errorCode } = data;
@@ -85,12 +85,14 @@ function FormSignIn() {
       } else if (errorCode === 2) {
         setPasswordError(error);
       }
-    } else if (data.user && data.token) {
-      // clear Error Text
-      setEmailError('');
-      setPasswordError('');
-      // set cookies
-      setCookie('emailToken', data.token, 30);
+    } else {
+      if (data.user && data.token) {
+        // clear Error Text
+        setEmailError('');
+        setPasswordError('');
+        // set cookies
+        setCookie('emailToken', data.token, 30);
+      }
     }
   }
 

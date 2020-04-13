@@ -12,10 +12,10 @@ const oauthReducer = (state = INTIAL_STATE, action) => {
         ...state,
         isSignedIn: action.payload.isSignedIn,
         user: action.payload.user
-      }
+      };
     default:
       return state;
   }
-}
+};
 
 export default oauthReducer;

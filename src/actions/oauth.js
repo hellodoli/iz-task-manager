@@ -7,13 +7,13 @@ export const checkAuth = () => async dispatch => {
     let user = {};
     let isSignedIn = false;
     const token = getCookie('emailToken');
-    console.log(token);
+    console.log('token: ', token);
     if (token !== '') {
-      const user = new User();
-      await user.getUser(token);
-      if (user.dataSetup && user.dataSetup.email) {
+      const userAPI = new User();
+      await userAPI.getUser(token);
+      if (userAPI.dataSetup && userAPI.dataSetup.email) {
         isSignedIn = true;
-        user = { ...user.dataSetup };
+        user = { ...userAPI.dataSetup };
       }
     }
     dispatch({

@@ -1,44 +1,13 @@
-import React, { useEffect } from 'react';
-
-import { compose } from 'redux';
-import { connect } from 'react-redux';
-
-import { withRouter, Switch, Route } from 'react-router-dom';
-
-import { checkAuth } from '../../actions/oauth';
-
-// Components
-import Loading from '../../components/Loading';
-import FormLoginAndSignUp from '../../components/FormLoginAndSignUp';
-// Containers
+import { useEffect } from 'react';
+import { withRouter } from 'react-router-dom';
 
 function SetUp(props) {
-  const { auth, checkAuth, history } = props;
-
+  const { isSignedIn, history } = props;
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const renderSetUp = () => {
-    if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
-    if (auth.isSignedIn) history.push('/app');
+    if (isSignedIn) history.push('/app');
     else history.push('/show');
-  };
-
-  return (
-    <Switch>
-      <Route exact path="/" render={renderSetUp} />
-      <Route path="/show" render={() => <div>Show</div>} />
-      <Route path="/app" render={() => <div>App</div>} />
-    </Switch>
-  );
+  }, [history, isSignedIn]);
+  return null;
 }
 
-const mapStateToProps = state => ({
-  auth: state.oauthReducer
-});
-
-export default compose(
-  withRouter,
-  connect(mapStateToProps, { checkAuth })
-)(SetUp);
+export default withRouter(SetUp);

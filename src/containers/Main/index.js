@@ -1,12 +1,28 @@
-import React from 'react';
-import { Switch, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
 
-function Main() {
-  return (
-    <Switch>
-      <Route exact path="/" render={() => <div>Main</div>} />
-    </Switch>
-  );
+import { connect } from 'react-redux';
+
+import { useHistory } from 'react-router-dom';
+
+// Components
+import Loading from '../../components/Loading';
+// Containers
+import DashBoard from '../DashBoard';
+
+function Main(props) {
+  const { auth } = props;
+  const history = useHistory();
+
+  useEffect(() => {
+    if (auth.isSignedIn === false) history.push('/show');
+  }, [auth.isSignedIn, history]);
+
+  if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
+  if (auth.isSignedIn) return <DashBoard />;
 }
 
-export default Main;
+const mapStateToProps = state => ({
+  auth: state.oauthReducer
+});
+
+export default connect(mapStateToProps)(Main);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import clsx from 'clsx';
 import { Container, Paper } from '@material-ui/core';
 import { muiForm } from './styled';
 
@@ -19,7 +19,14 @@ function FormLoginAndSignUp() {
   return (
     <div className={classes.wrapperFixed}>
       <Container className={classes.wrapperContainerParent}>
-        <Paper square className={classes.wrapperContainer}>
+        <Paper
+          square
+          className={clsx(
+            classes.wrapperContainer,
+            classes.wrapperBorderRadius
+          )}
+          elevation={10}
+        >
           {/* Form tab */}
           <FormTabHeader value={value} handleChange={handleChangeTabValue} />
           {/* Form tab panel */}

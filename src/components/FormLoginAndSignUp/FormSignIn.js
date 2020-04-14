@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import validator from 'validator';
 
-import { getCookie, setCookie } from '../../utils/cookies';
+import { setCookie } from '../../utils/cookies';
 
 import User from '../../apis/user';
 

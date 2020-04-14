@@ -25,6 +25,9 @@ export const muiTab = makeStyles(theme => ({
 }));
 
 export const muiForm = makeStyles(theme => ({
+  wrapperBorderRadius: {
+    borderRadius: theme.shape.borderRadius
+  },
   wrapperFixed: {
     position: 'fixed',
     top: 0,
@@ -53,7 +56,9 @@ export const muiForm = makeStyles(theme => ({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-end',
-    backgroundColor: theme.palette.primary.main
+    backgroundColor: theme.palette.primary.main,
+    borderTopLeftRadius: theme.shape.borderRadius,
+    borderTopRightRadius: theme.shape.borderRadius
   },
   margin: {
     margin: theme.spacing(1)

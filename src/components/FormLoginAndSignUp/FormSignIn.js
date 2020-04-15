@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+import { useHistory } from 'react-router-dom';
+
 import validator from 'validator';
 
 import { setCookie } from '../../utils/cookies';
@@ -19,7 +21,8 @@ import {
   Checkbox
 } from '@material-ui/core';
 
-function FormSignIn() {
+function FormSignIn(props) {
+  const history = useHistory();
   const [userAPI] = useState(new User());
   const [values, setValues] = useState({
     email: '',
@@ -91,7 +94,10 @@ function FormSignIn() {
         setEmailError('');
         setPasswordError('');
         // set cookies
-        setCookie('emailToken', data.token, 30);
+        const extimes = values.checked ? 30 : 'auto';
+        setCookie('emailToken', data.token, extimes);
+        // logged
+        history.push('/app');
       }
     }
   }
@@ -193,7 +199,7 @@ function FormSignIn() {
                 onChange={handleCheck('checked')}
               />
             }
-            label="Sample text"
+            label="Remember me for 30 days"
           />
         </FormControl>
         {/* Buttons Group */}

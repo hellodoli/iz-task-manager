@@ -1,6 +1,9 @@
 export function setCookie(cname, cvalue, exdays) {
+  if (typeof exdays === 'undefined') exdays = 'auto';
   const d = new Date();
-  d.setTime(d.getTime() + exdays * 24 * 60 * 60);
+  const finalExtimes =
+    exdays === 'auto' ? 15 * 60 * 1000 : exdays * 24 * 60 * 60 * 1000;
+  d.setTime(d.getTime() + finalExtimes);
   const expires = 'expires=' + d.toUTCString();
   document.cookie = cname + '=' + cvalue + ';' + expires + ';path=/';
   console.log(document.cookie);

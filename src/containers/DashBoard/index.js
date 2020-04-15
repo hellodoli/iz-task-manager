@@ -1,9 +1,15 @@
 import React from 'react';
 
+import { muiDashBoard } from './styled';
+
+import MainApp from './MainApp';
+
 function DashBoard() {
+  const classes = muiDashBoard();
+
   return (
-    <div>
-      <div>DashBoard</div>
+    <div className={classes.wrapperBgDashBoard}>
+      <MainApp />
     </div>
   );
 }

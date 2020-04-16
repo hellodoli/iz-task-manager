@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { TASK_ALL, TASK_TODAY, TASK_OTHER } from '../../constants/location';
 import { getTask } from '../../actions/task';
+
+import { FormControlLabel, Checkbox } from '@material-ui/core';
 
 import { muiTaskGeneral, muiTaskItem } from './styled';
 
@@ -12,12 +14,35 @@ function renderSchedule(schedule) {
   return scheduleText;
 }
 
-function TaskItem({ des, schedule, section, subtasks, completed }) {
+// { des, schedule, section, subtasks, completed }
+function TaskItem() {
+  const completed = false;
   const classes = muiTaskItem();
+  const [complete, setComplete] = useState(completed);
+
+  const handleChange = event => {
+    setComplete(event.target.checked);
+  };
+
   return (
     <div className={classes.wrapperItem}>
-      <div>{des}</div>
-    </div>
+        <div className={classes.wrapperItemDetail}>
+          <div>
+            <FormControlLabel
+              control={
+                <Checkbox checked={complete} onChange={handleChange} color="primary" />
+              }
+            />
+          </div>
+          <div className={classes.wrapperItemContent}>
+            <div>Some thing to dos</div>
+            <div className={classes.wrapperItemContentBottom}>
+              <div>Yesterday</div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+      </div>
   );
 }
 
@@ -55,7 +80,6 @@ function TaskMain(props) {
     return null;
   };
 
-  const classes = muiTaskItem();
   return (
     <div>
       <header className={gClasses.wrapperHeader}>
@@ -64,18 +88,8 @@ function TaskMain(props) {
       {/* render Tasks Main */}
       <div></div>
       {/* demo */}
-      <div className={classes.wrapperItem}>
-        <div className={classes.wrapperItemDetail}>
-          <div>checker</div>
-          <div className={classes.wrapperItemContent}>
-            <div>Some thing to dos</div>
-            <div>
-              <div></div>
-              <div></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TaskItem />
+      <TaskItem />
     </div>
   );
 }

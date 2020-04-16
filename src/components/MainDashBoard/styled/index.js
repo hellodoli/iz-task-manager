@@ -12,14 +12,24 @@ export const muiTaskGeneral = makeStyles(theme => ({
 
 export const muiTaskItem = makeStyles(theme => ({
   wrapperItem: {
-    position: 'relative',
+    pageBreakInside: 'avoid',
     padding: 0,
+    position: 'relative',
     borderRadius: theme.typography.pxToRem(3),
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: theme.typography.pxToRem(14)
   },
   wrapperItemDetail: {
     display: 'flex',
-    padding: `${theme.typography.pxToRem(10)} 0`
+    padding: `${theme.typography.pxToRem(10)} 0`,
+    fontSize: theme.typography.pxToRem(14),
+    color: theme.palette.text.primary,
+    borderBottom: `1px solid ${theme.palette.text.secondary}`
   },
-  wrapperItemContent: {}
+  wrapperItemContentBottom: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: theme.typography.pxToRem(4)
+  }
 }));

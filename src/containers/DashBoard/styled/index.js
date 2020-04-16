@@ -1,7 +1,11 @@
 import { makeStyles } from '@material-ui/core/styles';
 
 export const muiDashBoard = makeStyles(theme => ({
-  wrapperBgDashBoard: {
+  root: {
+    '--widthMenu': '305px',
+    '--heightTopbar': '44px'
+  },
+  wrapperBg: {
     position: 'fixed',
     top: 0,
     left: 0,
@@ -9,18 +13,34 @@ export const muiDashBoard = makeStyles(theme => ({
     height: '100%',
     background: theme.palette.background.paper
   },
-  wrapperMainAppDashBoard: {
+  wrapperMainApp: {
     width: '100%',
     minHeight: '100vh'
   },
-  wrapperLeftMenuDashBoard: {
+  wrapperLeftMenu: {
     position: 'fixed',
-    width: '305px',
-    height: 'calc(100% - 44px)',
-    marginTop: '44px',
+    width: 'var(--widthMenu)',
+    height: 'calc(100% - var(--heightTopbar))',
+    marginTop: 'var(--heightTopbar)',
     paddingTop: theme.typography.pxToRem(30),
     paddingLeft: theme.typography.pxToRem(35),
     background: theme.palette.background.default,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    transition: 'left .25s cubic-bezier(.4,0,.2,1)'
+  },
+  wrapperRightMenu: {
+    backgroundColor: theme.palette.background.paper,
+    marginLeft: 'var(--widthMenu)',
+    minHeight: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'relative',
+    transition:
+      'opacity .25s cubic-bezier(.4,0,.6,1), margin-left .25s cubic-bezier(.4,0,.2,1)'
+  },
+  innerRightMenu: {
+    padding: theme.typography.pxToRem(74),
+    width: '100%',
+    maxWidth: '1000px'
   }
 }));

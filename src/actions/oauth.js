@@ -1,4 +1,4 @@
-import { CHECK_AUTH } from '../constants/oauth';
+import { CHECK_AUTH, SIGN_IN, SIGN_OUT } from '../constants/oauth';
 import { getCookie } from '../utils/cookies';
 import User from '../apis/user';
 
@@ -24,3 +24,12 @@ export const checkAuth = () => async dispatch => {
     console.log(error);
   }
 };
+
+export const signIn = userInfo => ({
+  type: SIGN_IN,
+  payload: userInfo
+});
+
+export const signOut = () => ({
+  type: SIGN_OUT
+});

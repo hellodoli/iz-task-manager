@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-
-import { useHistory } from 'react-router-dom';
-
+import PropTypes from 'prop-types';
 import validator from 'validator';
-
+import { useHistory } from 'react-router-dom';
+import { connect } from 'react-redux';
 import { setCookie } from '../../utils/cookies';
-
 import User from '../../apis/user';
+import { signIn } from '../../actions/oauth';
 
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 import {
@@ -96,6 +95,8 @@ function FormSignIn(props) {
         // set cookies
         const extimes = values.checked ? 30 : 'auto';
         setCookie('emailToken', data.token, extimes);
+        // set login user info
+        props.signIn();
         // logged
         history.push('/app');
       }
@@ -218,4 +219,8 @@ function FormSignIn(props) {
   );
 }
 
-export default FormSignIn;
+FormSignIn.propTypes = {
+  signIn: PropTypes.func.isRequired
+};
+
+export default connect(null, { signIn })(FormSignIn);

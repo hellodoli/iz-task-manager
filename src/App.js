@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-
-import { useTheme } from '@material-ui/core/styles';
-
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-
 import { Switch, Route, useLocation } from 'react-router-dom';
-
+import { useTheme } from '@material-ui/core/styles';
 import { checkAuth } from './actions/oauth';
+
+// CSS
+import './reboot.css';
+import GlobalCSS from './containers/GlobalCSS';
 
 // Components
 import Loading from './components/Loading';
 import FormLoginAndSignUp from './components/FormLoginAndSignUp';
 
 // Containers
-import GlobalCSS from './containers/GlobalCSS';
 import SetUp from './containers/SetUp';
 import Main from './containers/Main';
 
@@ -39,7 +39,7 @@ function useDarkTheme() {
 function App(props) {
   const { auth, checkAuth } = props;
   const location = useLocation();
-  console.log(useDarkTheme());
+  //console.log(useDarkTheme());
 
   useEffect(() => {
     checkAuth();
@@ -67,6 +67,11 @@ function App(props) {
     </div>
   );
 }
+
+App.propTypes = {
+  auth: PropTypes.object.isRequired,
+  checkAuth: PropTypes.func.isRequired
+};
 
 const mapStateToProps = state => ({
   auth: state.oauthReducer

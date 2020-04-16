@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-
 import { useHistory } from 'react-router-dom';
 
 // Components
@@ -19,7 +18,12 @@ function Main(props) {
 
   if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
   if (auth.isSignedIn) return <DashBoard />;
+  return null;
 }
+
+Main.propTypes = {
+  auth: PropTypes.object.isRequired
+};
 
 const mapStateToProps = state => ({
   auth: state.oauthReducer

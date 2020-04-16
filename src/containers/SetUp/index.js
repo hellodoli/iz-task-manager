@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 
 function SetUp(props) {
@@ -9,5 +10,9 @@ function SetUp(props) {
   }, [history, isSignedIn]);
   return null;
 }
+
+SetUp.propTypes = {
+  isSignedIn: PropTypes.bool.isRequired
+};
 
 export default withRouter(SetUp);

@@ -1,4 +1,5 @@
 import { makeStyles } from '@material-ui/core/styles';
+import { green, red } from '@material-ui/core/colors';
 
 export const muiTaskGeneral = makeStyles(theme => ({
   wrapperHeader: {
@@ -31,5 +32,12 @@ export const muiTaskItem = makeStyles(theme => ({
     alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: theme.typography.pxToRem(4)
+  },
+  itemDes: {
+    fontSize: theme.typography.pxToRem(14)
+  },
+  itemDueDay: {
+    fontSize: theme.typography.pxToRem(12),
+    color: props => (props.a ? 'red' : 'blue')
   }
 }));

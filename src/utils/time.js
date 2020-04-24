@@ -1,3 +1,5 @@
+import { SCHEDULE_DATE } from '../constants/schedule';
+
 export function checkLeapYear(year) {
   if (
     (year % 4 === 0 && year % 100 !== 0 && year % 400 !== 0) ||
@@ -48,11 +50,120 @@ export const monthNames = [
 ];
 
 export const dayNames = [
-  'Sunday', // 0
-  'Monday', // 1
-  'Tuesday',
-  'Tuesday',
-  'Thursday',
-  'Friday',
-  'Saturday' // 6
+  SCHEDULE_DATE.sun, // 0
+  SCHEDULE_DATE.mon, // 1
+  SCHEDULE_DATE.tue,
+  SCHEDULE_DATE.wed,
+  SCHEDULE_DATE.thurs,
+  SCHEDULE_DATE.fri,
+  SCHEDULE_DATE.sat // 6
 ];
+
+export function setScheduleDate(schedule) {
+  if (schedule === null) return ''; // user not set schedule
+  let scheduleText = '';
+  const scheduleSet = schedule.substring(0, 10);
+  const scheduleDate = parseInt(schedule.substring(8, 10));
+  const scheduleMonth = parseInt(schedule.substring(5, 7));
+  const scheduleYear = parseInt(scheduleSet.substring(0, 4));
+
+  const d = new Date();
+  const date = d.getUTCDate();
+  const month = d.getUTCMonth() + 1;
+  const year = d.getUTCFullYear();
+
+  const tomorrow = date + 1;
+  const yesterday = date - 1;
+  const next7days = date + 7;
+  const lastDateOfMonth = getLastDateOfMonth(month, year);
+
+  const subYear = scheduleYear - year;
+  if (subYear === 0) {
+    // same year
+    const subMonth = scheduleMonth - month;
+    if (subMonth < 2) {
+      if (subMonth < 0) {
+        // past month
+        if (
+          subMonth === -1 &&
+          yesterday === 0 &&
+          scheduleDate === getLastDateOfMonth(month - 1, year)
+        ) {
+          scheduleText = SCHEDULE_DATE.yesterday;
+        } else {
+          scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
+        }
+      } else {
+        // same month
+        if (subMonth === 0) {
+          if (scheduleDate === date) {
+            scheduleText = SCHEDULE_DATE.today;
+          } else if (scheduleDate === yesterday) {
+            scheduleText = SCHEDULE_DATE.yesterday;
+          } else if (scheduleDate === tomorrow) {
+            scheduleText = SCHEDULE_DATE.tomorrow;
+          } else if (scheduleDate > tomorrow && scheduleDate <= next7days) {
+            const d = new Date();
+            d.setUTCDate(scheduleDate);
+            scheduleText = dayNames[d.getUTCDay()];
+          } else {
+            scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
+          }
+        } else {
+          // next 1 month
+          if (tomorrow > lastDateOfMonth && scheduleDate === 1) {
+            scheduleText = SCHEDULE_DATE.tomorrow;
+          } else {
+            const a =
+              next7days > lastDateOfMonth
+                ? lastDateOfMonth + scheduleDate
+                : scheduleDate;
+            if (a > tomorrow && a <= next7days) {
+              const d = new Date();
+              d.setUTCMonth(scheduleMonth - 1);
+              d.setUTCDate(scheduleDate);
+              scheduleText = dayNames[d.getUTCDay()];
+            } else {
+              scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
+            }
+          }
+        }
+      }
+    } else {
+      // next more 1 month
+      scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
+    }
+  } else {
+    if (subYear === 1) {
+      // next 1 year
+      if (
+        tomorrow > lastDateOfMonth &&
+        scheduleDate === 1 &&
+        scheduleMonth === 1
+      ) {
+        scheduleText = SCHEDULE_DATE.tomorrow;
+      } else {
+        const a =
+          next7days > lastDateOfMonth
+            ? lastDateOfMonth + scheduleDate
+            : scheduleDate;
+        if (a > tomorrow && a <= next7days) {
+          const d = new Date();
+          d.setUTCFullYear(scheduleYear);
+          d.setUTCMonth(scheduleMonth - 1);
+          d.setUTCDate(scheduleDate);
+          scheduleText = dayNames[d.getUTCDay()];
+        } else {
+          scheduleText = `${scheduleDate} ${
+            monthNames[scheduleMonth - 1]
+          } ${scheduleYear}`;
+        }
+      }
+    } else {
+      scheduleText = `${scheduleDate} ${
+        monthNames[scheduleMonth - 1]
+      } ${scheduleYear}`;
+    }
+  }
+  return scheduleText;
+}

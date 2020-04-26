@@ -1,19 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
 import clsx from 'clsx';
+import { connect } from 'react-redux';
+import { Switch, Route } from 'react-router-dom';
+
+// Task API Class
+import TaskAPI from '../../apis/task';
 
 import { SCHEDULE_DATE } from '../../constants/schedule';
 import { TASK_ALL, TASK_TODAY, TASK_OTHER } from '../../constants/location';
 
-import { splitObjectByKey } from '../../utils/ob';
 import { setScheduleDate } from '../../utils/time';
+import { getCookie } from '../../utils/cookies';
 
-import { getTask } from '../../actions/task';
+import { getTask, setTask } from '../../actions/task';
 
-import { FormControlLabel, Checkbox } from '@material-ui/core';
+// Styling
+import {
+  FormControlLabel,
+  Checkbox,
+  Paper,
+  IconButton,
+  TextField,
+  Button,
+  Fab
+} from '@material-ui/core';
+import { Edit, Add as AddIcon } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
+
+let prevPathNameTask = null;
+let prevEditTask = null;
 
 function setScheduleStatusColor(scheduleText, schedule) {
   let color = '';
@@ -45,188 +62,333 @@ function setScheduleStatusColor(scheduleText, schedule) {
   return color;
 }
 
-// filter Task by schedule today or overday (use for component TasksToday)
-function filterTaskByToday(tasks) {
-  const cloneTasks = tasks.slice();
-  const tasksToday = [];
-  const tasksOverDue = [];
-
-  const d = new Date();
-  const curDate = d.toJSON(); // transfer to UTC
-  const curDateString = d.toDateString();
-  const date = parseInt(curDate.substring(8, 10));
-  const month = parseInt(curDate.substring(5, 7));
-  const year = parseInt(curDate.substring(0, 4));
-
-  for (let index = 0; index < cloneTasks.length; index++) {
-    const schedule = cloneTasks[index].schedule;
-    if (schedule !== null) {
-      const scheduleDate = parseInt(schedule.substring(8, 10));
-      const scheduleMonth = parseInt(schedule.substring(5, 7));
-      const scheduleYear = parseInt(schedule.substring(0, 4));
-      if (scheduleYear === year && scheduleMonth === month) {
-        if (scheduleDate === date) {
-          tasksToday.push(cloneTasks[index]);
-        } else if (scheduleDate < date) {
-          tasksOverDue.push(cloneTasks[index]);
-        }
-      }
-    }
+function checkCurrentPathname (pathname) {
+  let taskClassName = '';
+  let taskIdName = '';
+  let taskDataProperty = '';
+  if (pathname === TASK_ALL) {
+    taskClassName = 'task-by-section';
+    taskIdName = 'taskBySection';
+    taskDataProperty = 'tasksInbox';
+  } else if (pathname === TASK_TODAY) {
+    taskClassName = 'task-by-schedule-today';
+    taskIdName = 'taskByScheduleToday';
+    taskDataProperty = 'tasksToday';
+  } else if (pathname === TASK_OTHER) {
+    taskClassName = 'task-next-7-days';
+    taskIdName = 'taskNext7Days';
+    taskDataProperty = 'tasksOther';
   }
-
-  return [
-    {
-      section: 'Overdue',
-      items: tasksOverDue
-    },
-    {
-      section: curDateString,
-      items: tasksToday
-    }
-  ];
+  return {
+    taskClassName,
+    taskIdName,
+    taskDataProperty
+  };
 }
 
 function TaskItem({
-  taskItem: { des, schedule, section, subtasks, completed },
+  parentIndex,
+  childIndex,
+  taskItem: { _id, des, schedule, section, subtasks, completed, isOpen, originDes },
+
+  startOpenEditTask,
+  startCloseEditStart,
+  updateDesTask,
+  handleChange,
   isShowSchedule
 }) {
-  console.log(isShowSchedule);
   const classes = muiTaskItem();
   const scheduleText = setScheduleDate(schedule);
-  const color = setScheduleStatusColor(scheduleText, schedule);
-  const scheduleClasses = muiTaskItem({ color });
+  const scheduleClasses = muiTaskItem({ color: setScheduleStatusColor(scheduleText, schedule) });
+  const obIndex = {
+    parentIndex,
+    childIndex
+  };
 
-  const handleChange = event => {
-    console.log(event.target.checked);
+  const cancelEdit = () => startCloseEditStart(obIndex);
+    
+  const openEdit = () => startOpenEditTask(obIndex);
+    
+  const editing = e => handleChange(obIndex, e.target.value);
+    
+  const saveEdit = () => updateDesTask(obIndex, { id: _id, des });
+  
+  return (
+    <Paper 
+      elevation={0}
+      className={clsx('task-item', classes.wrapperItem)}
+    >
+      {/* Task Edit */}
+      { isOpen &&
+          <div className={clsx("task-item-edit", classes.wrapperItemEdit)}>
+            <TextField
+              variant="outlined"
+              value={des}
+              size="small"
+              color="primary"
+              fullWidth={true}
+              autoFocus={true}
+              onChange={editing}
+            />
+            <div className={classes.buttonEditGroup}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={saveEdit}
+                >
+                  Save</Button>{'  '}
+              <Button
+                variant="text"
+                onClick={cancelEdit}
+              >Cancel</Button>
+            </div>
+          </div>
+      }
+      {/* Task Action */}
+      { !isOpen &&
+        <div className={clsx('task-item-actions', classes.wrapperItemAction)}>
+          <IconButton
+            size="small"
+            onClick={openEdit}
+          >
+            <Edit />
+          </IconButton>
+        </div>
+      }
+      {/* Task Detail */}
+      { !isOpen &&
+        <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
+          <div className="task-item-detail-checkbox">
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={completed}
+                  onChange={handleChange}
+                  size="small"
+                  color="primary"
+                />
+              }
+            />
+          </div>
+          <div className={classes.wrapperItemContent}>
+            <div className={classes.itemDes}>{ des }</div>
+            <div className={classes.wrapperItemContentBottom}>
+              {isShowSchedule === true && schedule !== null && (
+                <div className={scheduleClasses.itemDueDay}>{scheduleText}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      }
+    </Paper>
+  );
+}
+
+function TaskHeader({ pathname }) {
+  const gClasses = muiTaskGeneral();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const renderHeaderText = () => {
+    let taskHeader = '';
+    if (pathname === TASK_ALL) {
+      taskHeader = 'Inbox';
+    } else if (pathname === TASK_OTHER) {
+      taskHeader = 'Next 7 days';
+    } else if (pathname === TASK_TODAY) {
+      taskHeader = 'Today';
+    }
+    return taskHeader;
+  };
+
+  const change = () => {
+    setIsOpen(true);
+    
+  };
+  
+  return (
+    <React.Fragment>
+      <div className={gClasses.wrapperHeader}>
+        <h1 className={gClasses.wrapperHeaderTitle}>{ renderHeaderText() }</h1>
+        <div>
+          <Fab
+            variant="extended"
+            size="small"
+            color="secondary"
+            aria-label="add section"
+            onClick={change}
+          >
+            <AddIcon />
+            Add section
+          </Fab>
+        </div>
+        
+      </div>
+      { isOpen &&
+        <div className={gClasses.wrapperAddSection}>
+          Section Content
+        </div>
+      }
+    </React.Fragment>
+  );
+}
+
+function TaskList(props) {
+  const { tasks, location, setTask } = props;
+  const pathname = location.pathname;
+  const {
+    taskClassName,
+    taskIdName,
+    taskDataProperty
+  }= checkCurrentPathname(pathname);
+  const gClasses = muiTaskGeneral(); // mui class (general class)
+
+  // check first
+  if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
+    console.log('prevPathname: ', prevPathNameTask);
+  }
+  prevPathNameTask = pathname;
+  
+  const startOpenEditTask = (obIndex) => {
+    const cloneTask = tasks[taskDataProperty].slice();
+    // get current Task
+    const { parentIndex, childIndex } = obIndex;
+    const curTask = cloneTask[parentIndex].items[childIndex];
+
+    if (prevEditTask !== null) {
+      const {
+        obIndex: {
+          parentIndex: prevParentIndex,
+          childIndex: prevChildIndex
+        }
+      } = prevEditTask;
+      
+      // get prev Task
+      const prevTask = cloneTask[prevParentIndex].items[prevChildIndex];
+      // set Task
+      prevTask.des = prevTask.originDes;
+      prevTask.isOpen = false;
+      curTask.isOpen = true;
+    } else {
+      curTask.isOpen = true;
+    }
+    setTask({ ...tasks, [taskDataProperty]: cloneTask });
+    prevEditTask = { obIndex };
+  };
+
+  const updateDesTask = async (obIndex, taskOb) => {
+    prevEditTask = null;
+    const taskAPI = new TaskAPI();
+    const token = getCookie('emailToken');
+    await taskAPI.updateTask(token, taskOb);
+    if (taskAPI.isUpdateSuccess) {
+      // change UI after success
+      const { parentIndex, childIndex } = obIndex;
+      const cloneTask = tasks[taskDataProperty].slice();
+      const curTask = cloneTask[parentIndex].items[childIndex];
+      // set current isOpen status
+      curTask.originDes = curTask.des;
+      curTask.isOpen = false;
+      setTask({ ...tasks, [taskDataProperty]: cloneTask });
+    } else {
+      // fail
+      alert('update fail');
+    }
+  }
+
+  const startCloseEditStart = (obIndex) => {
+    const { parentIndex, childIndex } = obIndex;
+    const cloneTask = tasks[taskDataProperty].slice();
+    const curTask = cloneTask[parentIndex].items[childIndex];
+    // set current isOpen status
+    curTask.des = curTask.originDes;
+    curTask.isOpen = false;
+    setTask({ ...tasks, [taskDataProperty]: cloneTask });
+  };
+
+  const handleChange = (obIndex, newDes) => {
+    const { parentIndex, childIndex } = obIndex;
+    const cloneTask = tasks[taskDataProperty].slice();
+    cloneTask[parentIndex].items[childIndex].des = newDes;
+    setTask({ ...tasks, [taskDataProperty]: cloneTask });
   };
 
   return (
-    <div className={clsx('task-item', classes.wrapperItem)}>
-      <div className={clsx('task-item-actions')}></div>
-      <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
-        <div>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={completed}
-                onChange={handleChange}
-                color="primary"
-              />
-            }
-          />
-        </div>
-        <div className={classes.wrapperItemContent}>
-          <div className={classes.itemDes}>{des}</div>
-          <div className={classes.wrapperItemContentBottom}>
-            {isShowSchedule === true && schedule !== null && (
-              <div className={scheduleClasses.itemDueDay}>{scheduleText}</div>
-            )}
-          </div>
-        </div>
+    <div>
+      <div className={gClasses.wrapperSection}>
+        {tasks[taskDataProperty].map(({ section, items }, index) => {
+          const parentIndex = index;
+          return (
+            <div className={taskClassName} key={`${taskIdName}${parentIndex}`}>
+              <h3 className={clsx(`${taskClassName}-header`, gClasses.sectionHeader)}>
+                {section}
+              </h3>
+
+              <div className={`${taskClassName}-body`}>
+                {items.map((taskItem, index) => (
+                  <TaskItem
+                    key={taskItem._id}
+                    parentIndex={parentIndex}
+                    childIndex={index}
+                    
+                    taskItem={taskItem}
+                    isShowSchedule={true}
+                    handleChange={handleChange}
+                    startOpenEditTask={startOpenEditTask}
+                    startCloseEditStart={startCloseEditStart}
+                    updateDesTask={updateDesTask}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className={gClasses.wrapperAddTask}>
+        <Fab
+            variant="round"
+            size="small"
+            color="secondary"
+            aria-label="add"
+          >
+            <AddIcon />
+          </Fab>
       </div>
     </div>
   );
 }
 
-function TasksInbox({ tasks }) {
-  const cloneTasks = tasks.slice();
-  const tasksInbox = splitObjectByKey('section', cloneTasks);
-
+function TaskWrapp (props) {
   return (
-    <div>
-      {tasksInbox.map(({ section, items }, index) => (
-        <div className="task-by-section" key={`taskBySection${index}`}>
-          <div className="task-by-section-header">{section}</div>
-          <div className="task-by-section-body">
-            {items.map(taskItem => (
-              <TaskItem
-                key={taskItem._id}
-                taskItem={taskItem}
-                isShowSchedule={true}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TasksToday({ tasks }) {
-  const tasksToday = filterTaskByToday(tasks);
-  return (
-    <div>
-      {tasksToday.map(({ section, items }, index) => (
-        <div
-          className="task-by-schedule-today"
-          key={`taskByScheduleToday${index}`}
-        >
-          <div className="task-by-schedule-today-header">{section}</div>
-          <div className="task-by-schedule-today-body">
-            {items.map(taskItem => (
-              <TaskItem
-                key={taskItem._id}
-                taskItem={taskItem}
-                isShowSchedule={false}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TaskHeader({ pathname }) {
-  let taskHeader = '';
-  const gClasses = muiTaskGeneral();
-
-  if (pathname === TASK_ALL) {
-    taskHeader = 'Inbox';
-  } else if (pathname === TASK_OTHER) {
-    taskHeader = 'Next 7 days';
-  } else if (pathname === TASK_TODAY) {
-    taskHeader = 'Today';
-  }
-
-  return (
-    <header className={gClasses.wrapperHeader}>
-      <h1 className={gClasses.wrapperHeaderTitle}>{taskHeader}</h1>
-    </header>
+    <React.Fragment>
+      <TaskHeader pathname={props.location.pathname} />
+      <TaskList {...props} />
+    </React.Fragment>
   );
 }
 
 function TaskMain(props) {
-  const { location, tasks, getTask } = props;
-  const pathname = location.pathname;
-
+  const taskMainProps = props;
+  const { tasks, getTask } = props;
   useEffect(() => {
     getTask(); // get All Tasks by User
     console.log('running fetch Task done');
   }, [getTask]);
 
-  const renderTaskList = () => {
-    if (!tasks || tasks.length === 0) return <div>Loading...</div>;
-    if (tasks.length > 0) {
-      if (pathname === TASK_ALL) return <TasksInbox tasks={tasks} />;
-      if (pathname === TASK_TODAY) return <TasksToday tasks={tasks} />;
-      if (pathname === TASK_OTHER) return <div>TASK_OTHER</div>;
-      return null;
-    }
-  };
-
+  if (!tasks.fetchDone) return <div>Loading...</div>;
   return (
-    <div>
-      <TaskHeader pathname={pathname} />
-      {/* render Tasks Main */}
-      {renderTaskList()}
+    <div className="task-main">
+      <Switch>
+        <Route exact path={TASK_ALL} render={props => <TaskWrapp {...props} {...taskMainProps} />} />
+        <Route path={TASK_TODAY} render={props => <TaskWrapp {...props} {...taskMainProps} />} />
+        <Route path={TASK_OTHER} render={() => <div>Other</div>} />
+      </Switch>
     </div>
   );
 }
 
 TaskMain.propTypes = {
   auth: PropTypes.object.isRequired,
-  tasks: PropTypes.array
+  tasks: PropTypes.object
 };
 
 const mapStateToProps = state => ({
@@ -234,4 +396,4 @@ const mapStateToProps = state => ({
   tasks: state.taskReducer
 });
 
-export default connect(mapStateToProps, { getTask })(TaskMain);
+export default connect(mapStateToProps, { getTask, setTask })(TaskMain);

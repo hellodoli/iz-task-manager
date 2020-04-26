@@ -1,11 +1,10 @@
 import React from 'react';
 import clsx from 'clsx';
-import { muiDashBoard } from './styled';
 import { Switch, Route } from 'react-router-dom';
-
+import { muiDashBoard } from './styled';
 // Components
 import MenuLeft from '../../components/MenuLeftDashBoard';
-import Task from '../../components/MainDashBoard/Task';
+import MainTask from '../../components/MainDashBoard/Task';
 
 function DashBoard() {
   const classes = muiDashBoard();
@@ -19,7 +18,7 @@ function DashBoard() {
         <div className={classes.wrapperRightMenu}>
           <div className={classes.innerRightMenu}>
             <Switch>
-              <Route path="/app/tasks" component={Task} />
+              <Route path="/app/tasks" component={MainTask} />
             </Switch>
           </div>
         </div>

@@ -1,9 +1,18 @@
-import { GET_TASK } from '../constants/task';
+import { GET_TASK, SET_TASK } from '../constants/task';
 
-const taskReducer = (state = [], action) => {
+const INTIAL_STATE = {
+  tasksInbox: [],
+  tasksToday: [],
+  tasksOther: [],
+  fetchDone: false
+};
+
+const taskReducer = (state = INTIAL_STATE, action) => {
   switch (action.type) {
     case GET_TASK:
-      return [...state, ...action.payload];
+      return { ...state, ...action.payload.tasks, fetchDone: true };
+    case SET_TASK:
+      return { ...state, ...action.payload.tasks };
     default:
       return state;
   }

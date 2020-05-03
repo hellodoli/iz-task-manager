@@ -1,5 +1,4 @@
-import { GET_TASK, SET_TASK } from '../constants/task';
-import { getCookie } from '../utils/cookies';
+import { GET_TASK, SET_TASK, ADD_TASK } from '../constants/task';
 import { splitObjectByKey } from '../utils/ob';
 import Task from '../apis/task';
 
@@ -39,39 +38,37 @@ function filterTaskByToday(cloneTasks) {
 
 export const getTask = schedule => async dispatch => {
   try {
-    const token = getCookie('emailToken');
-    if (token !== '') {
-      const taskAPI = new Task();
-      await taskAPI.getAllTask(token, schedule);
-      const tasks = taskAPI.tasks;
-      if (tasks.length > 0) {
-        // filter tasks before dispatch
-        tasks.forEach(item => {
-          item.isOpen = false;
-          item.originDes = item.des;
-        });
-        const cloneTask01 = JSON.parse(JSON.stringify(tasks));
-        const cloneTask02 = JSON.parse(JSON.stringify(tasks));
-        
-        // filter by section group (inbox)
-        const tasksInbox = splitObjectByKey('section', cloneTask01);
-        // filter by today group (today)
-        const tasksToday = filterTaskByToday(cloneTask02);
-        // filter by next 7 days (other)
-        const tasksOther = [];
-      
-        dispatch({
-          type: GET_TASK,
-          payload: {
-            tasks: {
-              tasksInbox,
-              tasksToday,
-              tasksOther
-            }
-          }
-        });
+    const taskAPI = new Task();
+    await taskAPI.getAllTask(schedule);
+    const tasks = taskAPI.tasks;
+    
+    // filter tasks before dispatch
+    tasks.forEach(item => {
+      item.isOpen = false;
+      item.originDes = item.des;
+    });
+    const cloneTask01 = JSON.parse(JSON.stringify(tasks));
+    const cloneTask02 = JSON.parse(JSON.stringify(tasks));
+    
+    // filter by section group (inbox)
+    const key = 'section';
+    const tasksInbox = splitObjectByKey(key, cloneTask01);
+    const sectionTasks = tasksInbox.map(tasks => tasks[key]);
+    // filter by today group (today)
+    const tasksToday = filterTaskByToday(cloneTask02);
+    // filter by next 7 days (other)
+    const tasksOther = [];
+    dispatch({
+      type: GET_TASK,
+      payload: {
+        tasks: {
+          tasksInbox,
+          tasksToday,
+          tasksOther,
+          sectionTasks
+        }
       }
-    }
+    });
   } catch (error) {
     console.log(error);
   }
@@ -87,6 +84,17 @@ export const setTask = updateTask => async dispatch => {
         }
       }
     });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const addTask = newTask => async dispatch => {
+  try {
+    const taskAPI = new Task();
+    await taskAPI.addTask(newTask);
+    if (taskAPI.newTask !== null)
+      getTask();
   } catch (error) {
     console.log(error);
   }

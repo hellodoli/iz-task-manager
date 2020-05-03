@@ -14,20 +14,17 @@ export const muiTaskGeneral = makeStyles(theme => ({
     fontWeight: theme.typography.fontWeightBold,
     marginBottom: 0
   },
-  wrapperSection: {},
   sectionHeader: {
     fontSize: theme.typography.pxToRem(14),
     fontWeight: theme.typography.fontWeightBold,
     textTransform: "capitalize",
     paddingBottom: '.5em'
   },
-  wrapperAddTask: {
+  wrapperSection: {},
+  wrapperQuickAddTask: {
     '$wrapperSection + &': {
       marginTop: theme.typography.pxToRem(15)
     }
-  },
-  wrapperAddSection: {
-    marginBottom: theme.typography.pxToRem(20)
   }
 }));
 
@@ -93,6 +90,15 @@ export const muiTaskItem = makeStyles(theme => {
     itemDueDay: {
       fontSize: pxToRem(12),
       color: props => props.color
+    }
+  }
+});
+
+export const muiAddTaskModal = makeStyles(theme => {
+  return {
+    addIconText: {
+      fontWeight: theme.typography.fontWeightBold,
+      marginLeft: theme.typography.pxToRem(10)
     }
   }
 });

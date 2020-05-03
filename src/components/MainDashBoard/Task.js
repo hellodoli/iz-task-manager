@@ -13,24 +13,34 @@ import { TASK_ALL, TASK_TODAY, TASK_OTHER } from '../../constants/location';
 import { setScheduleDate } from '../../utils/time';
 import { getCookie } from '../../utils/cookies';
 
-import { getTask, setTask } from '../../actions/task';
+import { getTask, setTask, addTask } from '../../actions/task';
 
 // Styling
 import {
   FormControlLabel,
+  FormHelperText,
   Checkbox,
   Paper,
   IconButton,
   TextField,
   Button,
-  Fab
+  Fab,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@material-ui/core';
-import { Edit, Add as AddIcon } from '@material-ui/icons';
+import { Edit, Add as AddIcon, AddCircle } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
-import { muiTaskGeneral, muiTaskItem } from './styled';
+import { muiTaskGeneral, muiTaskItem, muiAddTaskModal } from './styled';
 
 let prevPathNameTask = null;
 let prevEditTask = null;
+let numberSectionTasks = null;
 
 function setScheduleStatusColor(scheduleText, schedule) {
   let color = '';
@@ -184,9 +194,217 @@ function TaskItem({
   );
 }
 
-function TaskHeader({ pathname }) {
+function ModalCreateSection (props) {
+  const { isOpen, handleClose, cbSave } = props;
+  const [value, setValue] = useState('');
+  const [errorText, setErrorText] = useState('');
+
+  const handleChange = e => {
+    setValue(e.target.value);
+  };
+
+  const handleSave = () => {
+    let isValidSection = null;
+    if (value.trim() === '') {
+      isValidSection = false;
+      setErrorText("Section name isn't valid");
+    } else {
+      isValidSection = true;
+      setErrorText('');
+    }
+
+    if (isValidSection) cbSave(value);
+  };
+
+  return (
+    <Dialog
+      fullWidth={true}
+      open={isOpen}
+      onClose={handleClose}
+    >
+      <DialogTitle>Create section</DialogTitle>
+      <DialogContent>
+        <TextField
+          variant="outlined"
+          placeholder="Write your new section here e.g working..."
+          size="small"
+          color="primary"
+          fullWidth={true}
+          autoFocus={true}
+          value={value}
+          onChange={handleChange}
+          error={errorText !== ''}
+          helperText={errorText}
+        />
+      </DialogContent>
+      <DialogContent>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+        >Save</Button>{'  '}
+        <Button
+          variant="text"
+          onClick={handleClose}
+        >Cancel</Button>
+      </DialogContent>
+      {/* Empty DialogContent make free spacing */}
+      <DialogContent></DialogContent>
+    </Dialog>
+  );
+}
+
+function ModalAddTask(props) {
+  const { isOpen, handleClose, sectionTasks, addTask } = props;
+  const classes = muiAddTaskModal();
+  const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
+  const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
+  const [valueTaskName, setValueTaskName] = useState(''); // task name value
+  const [errorTaskName, setErrorTaskName] = useState(''); // error task name text
+  const [openCreateSection, setOpenCreateSection] = useState(false);
+
+  if (numberSectionTasks === null)
+    numberSectionTasks = allSectionTasks.length;
+  
+  const handleChangeSelect = e => {
+    const value = e.target.value;
+    if (value === '') { // create new section
+      setValueTaskSection('');
+      setOpenCreateSection(true);
+    } else {
+      setValueTaskSection(value);
+    }
+  };
+
+  const handleChangeInput = e => {
+    setValueTaskName(e.target.value);
+  };
+
+  const handleSave = () => {
+    let isValid = null;
+    if (valueTaskName.trim() === '') {
+      isValid = false;
+      setErrorTaskName("Name isn't valid");
+    } else {
+      isValid = true;
+      setErrorTaskName('');
+    }
+
+    if (isValid) {
+      const newTask = {
+        des: valueTaskName,
+        section: valueTaskSection === '' ? null : valueTaskSection,
+        schedule: null // temp
+      };
+      addTask(newTask);
+      handleClose();
+    }
+  };
+
+  /* --- START: Handle Create Section Action --- */
+  const handleCloseCreateSection = () => {
+    setOpenCreateSection(false);
+  };
+
+  const cbSaveCreateSection = (sectionName) => {
+    // close ModalCreateSection
+    handleCloseCreateSection();
+
+    const cloneAllSectionTasks = allSectionTasks.slice('');
+    cloneAllSectionTasks.push(sectionName);
+    setAllSectionTasks(cloneAllSectionTasks);
+    setValueTaskSection(sectionName);
+  };
+  /* --- END: Handle Create Section Action --- */
+  return (
+    <React.Fragment>
+      { openCreateSection &&
+          <ModalCreateSection
+            isOpen={openCreateSection}
+            handleClose={handleCloseCreateSection}
+            cbSave={cbSaveCreateSection}
+          />
+      }
+      <Dialog
+        fullWidth={true}
+        open={isOpen}
+        onClose={handleClose}
+        disableBackdropClick={true}
+      >
+        <DialogTitle>Add new task</DialogTitle>
+
+        <DialogContent>
+          <FormControl variant="outlined" size="small" fullWidth={true}>
+            <InputLabel>Section</InputLabel>
+            <Select
+              label="Section"
+              value={valueTaskSection}
+              onChange={handleChangeSelect}
+            >
+              {/* Option creat section */}
+              <MenuItem value={''}>
+                <AddCircle />
+                <span className={classes.addIconText}>Create new section</span>
+              </MenuItem>
+              {/* Option Items */}
+              <MenuItem disabled><em>Your saved section</em></MenuItem>
+              { allSectionTasks.map((section, index) => {
+                  const key = `${section}-${index}`;
+                  if (index === numberSectionTasks)
+                    return [
+                      <MenuItem disabled><em>Your unsaved section</em></MenuItem>,
+                      <MenuItem value={section}>{section}</MenuItem>
+                    ];
+                  return (
+                    <MenuItem key={key} value={section}>{section}</MenuItem>
+                  );
+              })}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        
+        <DialogContent>
+          <TextField
+            variant="outlined"
+            placeholder="Write your new task here e.g check..."
+            size="small"
+            color="primary"
+            fullWidth={true}
+            autoFocus={true}
+            error={errorTaskName !== ''}
+            helperText={errorTaskName}
+            value={valueTaskName}
+            onChange={handleChangeInput}
+          />
+        </DialogContent>
+
+        <DialogContent>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+          >Save</Button>{'  '}
+          <Button
+            variant="text"
+            onClick={handleClose}
+          >Cancel</Button>
+        </DialogContent>
+        {/* Empty DialogContent make free spacing */}
+        <DialogContent></DialogContent>
+      </Dialog>
+    </React.Fragment>
+  );
+}
+
+function TaskHeader(props) {
+  const {
+    location: { pathname },
+    tasks: { sectionTasks },
+    addTask
+  } = props;
   const gClasses = muiTaskGeneral();
   const [isOpen, setIsOpen] = useState(false);
+  console.log('sectionTasks: ', sectionTasks);
 
   const renderHeaderText = () => {
     let taskHeader = '';
@@ -200,13 +418,28 @@ function TaskHeader({ pathname }) {
     return taskHeader;
   };
 
-  const change = () => {
+  /* --- START: Handle Add Task Action --- */
+  const handleClickOpen = () => {
     setIsOpen(true);
-    
   };
-  
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+  /* --- END: Handle Add Task Action --- */
+
   return (
     <React.Fragment>
+      {/* (Modal) Add Task */}
+      { isOpen &&
+        <ModalAddTask
+          isOpen={isOpen}
+          handleClose={handleClose}
+          sectionTasks={sectionTasks}
+          addTask={addTask}
+        />
+      }
+      {/* Task Main Header */}
       <div className={gClasses.wrapperHeader}>
         <h1 className={gClasses.wrapperHeaderTitle}>{ renderHeaderText() }</h1>
         <div>
@@ -214,27 +447,20 @@ function TaskHeader({ pathname }) {
             variant="extended"
             size="small"
             color="secondary"
-            aria-label="add section"
-            onClick={change}
+            aria-label="add task"
+            onClick={handleClickOpen}
           >
             <AddIcon />
-            Add section
+            Add Task
           </Fab>
         </div>
-        
       </div>
-      { isOpen &&
-        <div className={gClasses.wrapperAddSection}>
-          Section Content
-        </div>
-      }
     </React.Fragment>
   );
 }
 
 function TaskList(props) {
-  const { tasks, location, setTask } = props;
-  const pathname = location.pathname;
+  const { tasks, location: { pathname }, setTask } = props;
   const {
     taskClassName,
     taskIdName,
@@ -313,7 +539,8 @@ function TaskList(props) {
   };
 
   return (
-    <div>
+    <Box>
+      {/* Task Main List */}
       <div className={gClasses.wrapperSection}>
         {tasks[taskDataProperty].map(({ section, items }, index) => {
           const parentIndex = index;
@@ -343,7 +570,8 @@ function TaskList(props) {
           );
         })}
       </div>
-      <div className={gClasses.wrapperAddTask}>
+      {/* Quick Add Button */}
+      <div className={gClasses.wrapperQuickAddTask}>
         <Fab
             variant="round"
             size="small"
@@ -353,33 +581,35 @@ function TaskList(props) {
             <AddIcon />
           </Fab>
       </div>
-    </div>
-  );
-}
-
-function TaskWrapp (props) {
-  return (
-    <React.Fragment>
-      <TaskHeader pathname={props.location.pathname} />
-      <TaskList {...props} />
-    </React.Fragment>
+    </Box>
   );
 }
 
 function TaskMain(props) {
   const taskMainProps = props;
   const { tasks, getTask } = props;
+  
   useEffect(() => {
     getTask(); // get All Tasks by User
     console.log('running fetch Task done');
   }, [getTask]);
 
+  const TaskWrapp = (props) => {
+    const allProps = { ...props, ...taskMainProps };
+    return (
+      <React.Fragment>
+        <TaskHeader {...allProps} />
+        <TaskList {...allProps} />
+      </React.Fragment>
+    );
+  }
+
   if (!tasks.fetchDone) return <div>Loading...</div>;
   return (
     <div className="task-main">
       <Switch>
-        <Route exact path={TASK_ALL} render={props => <TaskWrapp {...props} {...taskMainProps} />} />
-        <Route path={TASK_TODAY} render={props => <TaskWrapp {...props} {...taskMainProps} />} />
+        <Route exact path={TASK_ALL} component={TaskWrapp} />
+        <Route path={TASK_TODAY} component={TaskWrapp} />
         <Route path={TASK_OTHER} render={() => <div>Other</div>} />
       </Switch>
     </div>
@@ -396,4 +626,4 @@ const mapStateToProps = state => ({
   tasks: state.taskReducer
 });
 
-export default connect(mapStateToProps, { getTask, setTask })(TaskMain);
+export default connect(mapStateToProps, { getTask, setTask, addTask })(TaskMain);

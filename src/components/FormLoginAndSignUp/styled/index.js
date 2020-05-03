@@ -59,8 +59,5 @@ export const muiForm = makeStyles(theme => ({
     backgroundColor: theme.palette.primary.main,
     borderTopLeftRadius: theme.shape.borderRadius,
     borderTopRightRadius: theme.shape.borderRadius
-  },
-  margin: {
-    margin: theme.spacing(1)
   }
 }));

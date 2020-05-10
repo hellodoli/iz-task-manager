@@ -5,14 +5,6 @@ export const muiDashBoard = makeStyles(theme => ({
     '--widthMenu': '305px',
     '--heightTopbar': '44px'
   },
-  wrapperBg: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    background: theme.palette.background.paper
-  },
   wrapperMainApp: {
     width: '100%',
     minHeight: '100vh'

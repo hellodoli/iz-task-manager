@@ -1,5 +1,5 @@
 import React from 'react';
-import clsx from 'clsx';
+
 import { Switch, Route } from 'react-router-dom';
 import { muiDashBoard } from './styled';
 // Components
@@ -10,7 +10,7 @@ function DashBoard() {
   const classes = muiDashBoard();
 
   return (
-    <div className={clsx(classes.wrapperBg, classes.root)}>
+    <div className={classes.root}>
       <div className={classes.wrapperMainApp}>
         <div className={classes.wrapperLeftMenu}>
           <MenuLeft />

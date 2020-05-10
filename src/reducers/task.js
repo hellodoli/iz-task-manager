@@ -11,7 +11,6 @@ const INTIAL_STATE = {
 const taskReducer = (state = INTIAL_STATE, action) => {
   switch (action.type) {
     case GET_TASK:
-      alert('yes');
       return { ...state, ...action.payload.tasks, fetchDone: true };
     case SET_TASK:
       return { ...state, ...action.payload.tasks };

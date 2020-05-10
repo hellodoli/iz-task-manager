@@ -166,4 +166,44 @@ export function setScheduleDate(schedule) {
     }
   }
   return scheduleText;
-}
+};
+
+export function getCurrentDateUTC () {
+  const d = new Date();
+  const UTCDay = d.getUTCDay();
+  const curDate = d.toJSON();
+
+  const date = parseInt(curDate.substring(8, 10));
+  const month = parseInt(curDate.substring(5, 7));
+  const year = parseInt(curDate.substring(0, 4));
+
+  const hour = parseInt(curDate.substring(11, 13));
+  const minute = parseInt(curDate.substring(14, 16));
+  const second = parseInt(curDate.substring(17, curDate.length - 1));
+
+  return {
+    day: dayNames[UTCDay],
+    date,
+    month,
+    year,
+    hour,
+    minute,
+    second
+  }
+};
+
+export function splitObjectByKey(splitBy, data) {
+  var rowArr = [];
+  var rowOb = [];
+  for (let i = 0; i < data.length; i++) {
+    const s = data[i][splitBy];
+    if (!rowArr.includes(s)) {
+      rowArr.push(s);
+      rowOb.push({ [splitBy]: s, items: [data[i]] });
+    } else {
+      var destiny = rowArr.indexOf(s);
+      rowOb[destiny].items.push(data[i]);
+    }
+  }
+  return rowOb;
+};

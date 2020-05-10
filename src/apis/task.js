@@ -69,6 +69,7 @@ class Task {
         this.newTask = response.data;
       }
     } catch (error) {
+      this.newTask = null;
       console.log(error);
       console.log('error.name: ', error.name);
       console.log('error.message: ', error.message);

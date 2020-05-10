@@ -1,5 +1,5 @@
-import { GET_TASK, SET_TASK, ADD_TASK } from '../constants/task';
-import { splitObjectByKey } from '../utils/ob';
+import { GET_TASK, SET_TASK } from '../constants/task';
+import { splitObjectByKey, getCurrentDateUTC } from '../utils/time';
 import Task from '../apis/task';
 
 function filterTaskByToday(cloneTasks) {
@@ -7,13 +7,7 @@ function filterTaskByToday(cloneTasks) {
   const tasksOverDue = [];
   const finalTask = [];
 
-  const d = new Date();
-  const curDate = d.toJSON(); // transfer to UTC
-  const curDateString = d.toDateString();
-  const date = parseInt(curDate.substring(8, 10));
-  const month = parseInt(curDate.substring(5, 7));
-  const year = parseInt(curDate.substring(0, 4));
-
+  const { date, month, year } = getCurrentDateUTC();
   for (let index = 0; index < cloneTasks.length; index++) {
     const schedule = cloneTasks[index].schedule;
     if (schedule !== null) {
@@ -31,7 +25,7 @@ function filterTaskByToday(cloneTasks) {
   }
 
   if (tasksOverDue.length !== 0) finalTask.push({ section: 'Overdue', items: tasksOverDue });
-  if (tasksToday.length !== 0) finalTask.push({ section: curDateString, items: tasksToday });
+  if (tasksToday.length !== 0) finalTask.push({ section: (new Date().toDateString()), items: tasksToday });
 
   return finalTask;
 }
@@ -47,8 +41,10 @@ export const getTask = schedule => async dispatch => {
       item.isOpen = false;
       item.originDes = item.des;
     });
+    // clone Task
     const cloneTask01 = JSON.parse(JSON.stringify(tasks));
     const cloneTask02 = JSON.parse(JSON.stringify(tasks));
+    const cloneTask03 = JSON.parse(JSON.stringify(tasks));
     
     // filter by section group (inbox)
     const key = 'section';
@@ -56,7 +52,7 @@ export const getTask = schedule => async dispatch => {
     const sectionTasks = tasksInbox.map(tasks => tasks[key]);
     // filter by today group (today)
     const tasksToday = filterTaskByToday(cloneTask02);
-    // filter by next 7 days (other)
+    // filter by next upcoming (upcoming)
     const tasksOther = [];
     dispatch({
       type: GET_TASK,
@@ -79,9 +75,7 @@ export const setTask = updateTask => async dispatch => {
     dispatch({
       type: SET_TASK,
       payload: {
-        tasks: {
-          ...updateTask
-        }
+        tasks: { ...updateTask }
       }
     });
   } catch (error) {

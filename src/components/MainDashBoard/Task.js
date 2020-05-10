@@ -8,9 +8,9 @@ import { Switch, Route } from 'react-router-dom';
 import TaskAPI from '../../apis/task';
 
 import { SCHEDULE_DATE } from '../../constants/schedule';
-import { TASK_ALL, TASK_TODAY, TASK_OTHER } from '../../constants/location';
+import { TASK_ALL, TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
 
-import { setScheduleDate } from '../../utils/time';
+import { setScheduleDate, monthNames, getCurrentDateUTC } from '../../utils/time';
 import { getCookie } from '../../utils/cookies';
 
 import { getTask, setTask, addTask } from '../../actions/task';
@@ -18,7 +18,6 @@ import { getTask, setTask, addTask } from '../../actions/task';
 // Styling
 import {
   FormControlLabel,
-  FormHelperText,
   Checkbox,
   Paper,
   IconButton,
@@ -32,9 +31,16 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  Menu,
+  MenuItem,
+  Tooltip
 } from '@material-ui/core';
-import { Edit, Add as AddIcon, AddCircle } from '@material-ui/icons';
+import {
+  Edit,
+  Add as AddIcon,
+  AddCircle,
+  Schedule
+} from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem, muiAddTaskModal } from './styled';
 
@@ -84,7 +90,7 @@ function checkCurrentPathname (pathname) {
     taskClassName = 'task-by-schedule-today';
     taskIdName = 'taskByScheduleToday';
     taskDataProperty = 'tasksToday';
-  } else if (pathname === TASK_OTHER) {
+  } else if (pathname === TASK_UPCOMING) {
     taskClassName = 'task-next-7-days';
     taskIdName = 'taskNext7Days';
     taskDataProperty = 'tasksOther';
@@ -94,6 +100,33 @@ function checkCurrentPathname (pathname) {
     taskIdName,
     taskDataProperty
   };
+}
+
+// update UI. (for save edit - update)
+function updateCloneTaskItemUI (tasks, currentFilter, currentTask) {
+  function condition(key) {
+    if (key === currentFilter
+      || key === 'sectionTasks'
+      || key === 'fetchDone')
+      return false;
+    return true;
+  };
+  const otherFilter = Object.keys(tasks).filter(condition);
+  const result = {};
+  
+  otherFilter.forEach(key => {
+    result[key] = tasks[key].slice();
+    tasks[key].forEach((section, indexSection) => {
+      section.items.forEach((task,indexTask) => {
+        if (task._id === currentTask._id) {
+          result[key][indexSection].items
+            .splice(indexTask, 1, currentTask);
+        }
+      });
+    });
+  });
+  
+  return result;
 }
 
 function TaskItem({
@@ -107,14 +140,27 @@ function TaskItem({
   handleChange,
   isShowSchedule
 }) {
-  const classes = muiTaskItem();
+  const [anchorEl, setAnchorEl] = useState(null); // handle schedule menu
+
   const scheduleText = setScheduleDate(schedule);
-  const scheduleClasses = muiTaskItem({ color: setScheduleStatusColor(scheduleText, schedule) });
+  const classes = muiTaskItem({
+    color: setScheduleStatusColor(scheduleText, schedule)
+  });
+
   const obIndex = {
     parentIndex,
     childIndex
   };
 
+  // Handle Schedule  
+  const openScheduleMenu = e => {
+    setAnchorEl(e.currentTarget);
+  }
+  const closeScheduleMenu = () => {
+    setAnchorEl(null);
+  }
+    
+  // Handle Edit
   const cancelEdit = () => startCloseEditStart(obIndex);
     
   const openEdit = () => startOpenEditTask(obIndex);
@@ -126,7 +172,11 @@ function TaskItem({
   return (
     <Paper 
       elevation={0}
-      className={clsx('task-item', classes.wrapperItem)}
+      className={clsx(
+        'task-item',
+        classes.wrapperItem,
+        Boolean(anchorEl) && classes.wrapperItemActive
+      )}
     >
       {/* Task Edit */}
       { isOpen &&
@@ -163,6 +213,29 @@ function TaskItem({
           >
             <Edit />
           </IconButton>
+          
+          <IconButton
+            size="small"
+            onClick={openScheduleMenu}
+          >
+            <Schedule />
+          </IconButton>
+          {/* Schedule Menu */}
+          <Menu
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            getContentAnchorEl={null}
+            anchorEl={anchorEl}
+            keepMounted
+            open={Boolean(anchorEl)}
+            onClose={closeScheduleMenu}
+          >
+            <MenuItem>Item 1</MenuItem>
+            <MenuItem>Item 2</MenuItem>
+            <MenuItem>Item 3</MenuItem>
+          </Menu>
         </div>
       }
       {/* Task Detail */}
@@ -184,7 +257,7 @@ function TaskItem({
             <div className={classes.itemDes}>{ des }</div>
             <div className={classes.wrapperItemContentBottom}>
               {isShowSchedule === true && schedule !== null && (
-                <div className={scheduleClasses.itemDueDay}>{scheduleText}</div>
+                <div className={classes.itemDueDay}>{scheduleText}</div>
               )}
             </div>
           </div>
@@ -296,7 +369,12 @@ function ModalAddTask(props) {
         section: valueTaskSection === '' ? null : valueTaskSection,
         schedule: null // temp
       };
-      addTask(newTask);
+      const taskAPI = new TaskAPI();
+      /*await taskAPI.addTask(newTask);
+      if (taskAPI.newTask) {
+        // update UI
+      }*/
+      numberSectionTasks = null;
       handleClose();
     }
   };
@@ -310,7 +388,7 @@ function ModalAddTask(props) {
     // close ModalCreateSection
     handleCloseCreateSection();
 
-    const cloneAllSectionTasks = allSectionTasks.slice('');
+    const cloneAllSectionTasks = allSectionTasks.slice();
     cloneAllSectionTasks.push(sectionName);
     setAllSectionTasks(cloneAllSectionTasks);
     setValueTaskSection(sectionName);
@@ -404,14 +482,14 @@ function TaskHeader(props) {
   } = props;
   const gClasses = muiTaskGeneral();
   const [isOpen, setIsOpen] = useState(false);
-  console.log('sectionTasks: ', sectionTasks);
 
   const renderHeaderText = () => {
     let taskHeader = '';
     if (pathname === TASK_ALL) {
       taskHeader = 'Inbox';
-    } else if (pathname === TASK_OTHER) {
-      taskHeader = 'Next 7 days';
+    } else if (pathname === TASK_UPCOMING) {
+      const d = new Date();
+      taskHeader = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
     } else if (pathname === TASK_TODAY) {
       taskHeader = 'Today';
     }
@@ -460,7 +538,11 @@ function TaskHeader(props) {
 }
 
 function TaskList(props) {
-  const { tasks, location: { pathname }, setTask } = props;
+  const { 
+    tasks,
+    location: { pathname },
+    setTask
+  } = props;
   const {
     taskClassName,
     taskIdName,
@@ -468,9 +550,25 @@ function TaskList(props) {
   }= checkCurrentPathname(pathname);
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
-  // check first
+  // check every time user switch other tab
   if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
     console.log('prevPathname: ', prevPathNameTask);
+    if (prevEditTask !== null) {
+      const { obIndex: { parentIndex, childIndex }} = prevEditTask;
+      const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
+      
+      const cloneTask = tasks[taskDataProperty].slice();
+      const prevTask = cloneTask[parentIndex].items[childIndex];
+      prevTask.originDes = prevTask.des;
+      prevTask.isOpen = false;
+      
+      setTask({
+        ...tasks,
+        [taskDataProperty]: cloneTask
+      });
+      prevEditTask = null;
+    }
+    //numberSectionTasks = null;
   }
   prevPathNameTask = pathname;
   
@@ -511,10 +609,16 @@ function TaskList(props) {
       const { parentIndex, childIndex } = obIndex;
       const cloneTask = tasks[taskDataProperty].slice();
       const curTask = cloneTask[parentIndex].items[childIndex];
-      // set current isOpen status
+      // set current isOpen status and update originDes
       curTask.originDes = curTask.des;
       curTask.isOpen = false;
-      setTask({ ...tasks, [taskDataProperty]: cloneTask });
+      // find other clone Task and update
+      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask);
+      setTask({ 
+        ...tasks,
+        [taskDataProperty]: cloneTask,
+        ...otherCloneTask
+      });
     } else {
       // fail
       alert('update fail');
@@ -541,11 +645,11 @@ function TaskList(props) {
   return (
     <Box>
       {/* Task Main List */}
-      <div className={gClasses.wrapperSection}>
+      <div className={gClasses.wrapperAllSection}>
         {tasks[taskDataProperty].map(({ section, items }, index) => {
           const parentIndex = index;
           return (
-            <div className={taskClassName} key={`${taskIdName}${parentIndex}`}>
+            <div className={clsx(taskClassName, gClasses.section)} key={`${taskIdName}${parentIndex}`}>
               <h3 className={clsx(`${taskClassName}-header`, gClasses.sectionHeader)}>
                 {section}
               </h3>
@@ -595,6 +699,8 @@ function TaskMain(props) {
   }, [getTask]);
 
   const TaskWrapp = (props) => {
+    // props: props from Route
+    // taskMainProps: props from TaskMain
     const allProps = { ...props, ...taskMainProps };
     return (
       <React.Fragment>
@@ -610,7 +716,7 @@ function TaskMain(props) {
       <Switch>
         <Route exact path={TASK_ALL} component={TaskWrapp} />
         <Route path={TASK_TODAY} component={TaskWrapp} />
-        <Route path={TASK_OTHER} render={() => <div>Other</div>} />
+        <Route path={TASK_UPCOMING} component={TaskWrapp} />
       </Switch>
     </div>
   );

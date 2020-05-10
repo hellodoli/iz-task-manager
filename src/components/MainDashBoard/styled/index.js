@@ -14,15 +14,20 @@ export const muiTaskGeneral = makeStyles(theme => ({
     fontWeight: theme.typography.fontWeightBold,
     marginBottom: 0
   },
+  section: {
+    '& + $section': {
+      marginTop: theme.typography.pxToRem(20)
+    }
+  },
   sectionHeader: {
     fontSize: theme.typography.pxToRem(14),
     fontWeight: theme.typography.fontWeightBold,
     textTransform: "capitalize",
     paddingBottom: '.5em'
   },
-  wrapperSection: {},
+  wrapperAllSection: {},
   wrapperQuickAddTask: {
-    '$wrapperSection + &': {
+    '$wrapperAllSection + &': {
       marginTop: theme.typography.pxToRem(15)
     }
   }
@@ -49,6 +54,13 @@ export const muiTaskItem = makeStyles(theme => {
           visibility: 'visible'
         }
       },
+    },
+    wrapperItemActive: {
+      boxShadow: theme.shadows[2],
+      '& > $wrapperItemAction': {
+        opacity: 1,
+        visibility: 'visible'
+      }
     },
     wrapperItemEdit: {
       fontSize: pxToRem(14),

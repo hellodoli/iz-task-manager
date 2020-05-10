@@ -2,9 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 // Icons
-import Inbox from '@material-ui/icons/Inbox';
-import CalendarToday from '@material-ui/icons/CalendarToday';
-import DateRange from '@material-ui/icons/DateRange';
+import {
+  Inbox,
+  CalendarToday,
+  DateRange
+} from '@material-ui/icons';
 
 import { muiFilterMenu, muiFilterMenuIcon } from './styled';
 
@@ -40,11 +42,11 @@ function MenuLeft() {
         </li>
 
         <li>
-          <NavLink to={`${pathname}/tasks/other`} activeClassName="selected">
+          <NavLink to={`${pathname}/tasks/upcoming`} activeClassName="selected">
             <span className={iconClasses.other}>
               <DateRange fontSize="inherit" />
             </span>
-            <span>Next 7 days</span>
+            <span>Upcoming</span>
           </NavLink>
         </li>
       </ul>

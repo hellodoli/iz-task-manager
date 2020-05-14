@@ -1,9 +1,9 @@
-import { GET_TASK, SET_TASK, ADD_TASK } from '../constants/task';
+import { GET_TASK, SET_TASK } from '../constants/task';
 
 const INTIAL_STATE = {
   tasksInbox: [],
   tasksToday: [],
-  tasksOther: [],
+  tasksUpcoming: [],
   sectionTasks: [],
   fetchDone: false
 };

@@ -31,8 +31,7 @@ export const muiDashBoard = makeStyles(theme => ({
       'opacity .25s cubic-bezier(.4,0,.6,1), margin-left .25s cubic-bezier(.4,0,.2,1)'
   },
   innerRightMenu: {
-    padding: theme.typography.pxToRem(74),
+    padding: `${theme.typography.pxToRem(80)} ${theme.typography.pxToRem(55)}`,
     width: '100%',
-    maxWidth: '1000px'
   }
 }));

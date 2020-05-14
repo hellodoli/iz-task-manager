@@ -1,19 +1,33 @@
 import { GET_TASK, SET_TASK } from '../constants/task';
-import { splitObjectByKey, getCurrentDateUTC } from '../utils/time';
+import { SCHEDULE_DATE } from '../constants/schedule';
+import { splitObjectByKey, getCurrentDateUTC, setScheduleDate } from '../utils/time';
 import Task from '../apis/task';
 
-function filterTaskByToday(cloneTasks) {
+// get Sche
+function getSchedulePiece (schedule) {
+  if (schedule !== null) {
+    const scheduleDate = parseInt(schedule.substring(8, 10));
+    const scheduleMonth = parseInt(schedule.substring(5, 7));
+    const scheduleYear = parseInt(schedule.substring(0, 4));
+    return {
+      scheduleDate,
+      scheduleMonth,
+      scheduleYear
+    };
+  }
+  return {};
+}
+
+function filterTaskByToday(cloneTasks, currentDate) {
   const tasksToday = [];
   const tasksOverDue = [];
   const finalTask = [];
 
-  const { date, month, year } = getCurrentDateUTC();
+  const { date, month, year } =  currentDate;
   for (let index = 0; index < cloneTasks.length; index++) {
     const schedule = cloneTasks[index].schedule;
     if (schedule !== null) {
-      const scheduleDate = parseInt(schedule.substring(8, 10));
-      const scheduleMonth = parseInt(schedule.substring(5, 7));
-      const scheduleYear = parseInt(schedule.substring(0, 4));
+      const { scheduleDate, scheduleMonth, scheduleYear } = getSchedulePiece(schedule);
       if (scheduleYear === year && scheduleMonth === month) {
         if (scheduleDate === date) {
           tasksToday.push(cloneTasks[index]);
@@ -30,16 +44,52 @@ function filterTaskByToday(cloneTasks) {
   return finalTask;
 }
 
+function filterTaskByUpcoming(cloneTasks, currentDate) {
+  const tasksOverDue = [];
+  const tasksUpcoming = [];
+  const finalTask = [];
+
+  const { date, month, year } =  currentDate;
+  for (let index = 0; index < cloneTasks.length; index++) {
+    const schedule = cloneTasks[index].schedule;
+    if (schedule !== null) {
+      const { scheduleDate, scheduleMonth, scheduleYear } = getSchedulePiece(schedule);
+      if (scheduleMonth === month && scheduleYear === year) {
+        if (scheduleDate < date) { // overdue
+          tasksOverDue.push(cloneTasks[index]);
+        } else {
+          tasksUpcoming.push(cloneTasks[index]);
+        }
+      }
+    }
+  }
+
+  if (tasksOverDue.length !== 0) finalTask.push({ section: 'Overdue', items: tasksOverDue });
+  if (tasksUpcoming.length !== 0) {
+    const transTasksUpComing = splitObjectByKey('scheduleText', tasksUpcoming);
+    transTasksUpComing.forEach(section => finalTask.push({
+      section: section.scheduleText,
+      items: section.items
+    }));
+  }
+
+  return finalTask;
+}
+
 export const getTask = schedule => async dispatch => {
   try {
     const taskAPI = new Task();
     await taskAPI.getAllTask(schedule);
     const tasks = taskAPI.tasks;
-    
+
+    // get soon as possible
+    const curDate = getCurrentDateUTC();
+
     // filter tasks before dispatch
     tasks.forEach(item => {
       item.isOpen = false;
       item.originDes = item.des;
+      item.scheduleText = setScheduleDate(item.schedule);
     });
     // clone Task
     const cloneTask01 = JSON.parse(JSON.stringify(tasks));
@@ -51,16 +101,16 @@ export const getTask = schedule => async dispatch => {
     const tasksInbox = splitObjectByKey(key, cloneTask01);
     const sectionTasks = tasksInbox.map(tasks => tasks[key]);
     // filter by today group (today)
-    const tasksToday = filterTaskByToday(cloneTask02);
-    // filter by next upcoming (upcoming)
-    const tasksOther = [];
+    const tasksToday = filterTaskByToday(cloneTask02, curDate);
+    // filter by next upcoming (upcoming) - 3 months
+    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);
     dispatch({
       type: GET_TASK,
       payload: {
         tasks: {
           tasksInbox,
           tasksToday,
-          tasksOther,
+          tasksUpcoming,
           sectionTasks
         }
       }

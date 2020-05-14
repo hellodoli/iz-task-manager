@@ -2,14 +2,19 @@ import { makeStyles } from '@material-ui/core/styles';
 import { grey } from '@material-ui/core/colors';
 
 export const muiTaskGeneral = makeStyles(theme => ({
-  wrapperHeader: {
+  header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    color: theme.palette.text.primary,
+    color: theme.palette.text.primary
+  },
+  headerMgBottom: {
     marginBottom: theme.typography.pxToRem(24)
   },
-  wrapperHeaderTitle: {
+  headerMgBottomL: {
+    marginBottom: theme.typography.pxToRem(50)
+  },
+  headerTitle: {
     fontSize: theme.typography.pxToRem(20),
     fontWeight: theme.typography.fontWeightBold,
     marginBottom: 0
@@ -17,13 +22,15 @@ export const muiTaskGeneral = makeStyles(theme => ({
   section: {
     '& + $section': {
       marginTop: theme.typography.pxToRem(20)
+    },
+    '& .MuiExpansionPanelDetails-root': {
+      display: 'block'
     }
   },
   sectionHeader: {
     fontSize: theme.typography.pxToRem(14),
     fontWeight: theme.typography.fontWeightBold,
-    textTransform: "capitalize",
-    paddingBottom: '.5em'
+    textTransform: "capitalize"
   },
   wrapperAllSection: {},
   wrapperQuickAddTask: {
@@ -41,7 +48,7 @@ export const muiTaskItem = makeStyles(theme => {
       fontSize: pxToRem(14),
       padding: `${pxToRem(12)} ${pxToRem(16)}`,
       border: `1px solid ${grey[400]}`,
-      borderRadius: pxToRem(8),
+      borderRadius: pxToRem(4),
       pageBreakInside: 'avoid',
       cursor: 'pointer',
       '&:not(:last-child)': {

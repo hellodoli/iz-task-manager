@@ -14,6 +14,8 @@ import Loading from './components/Loading';
 import FormLoginAndSignUp from './components/FormLoginAndSignUp';
 
 // Containers
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
+import DateFnsUtils from '@date-io/date-fns';
 import SetUp from './containers/SetUp';
 import Main from './containers/Main';
 
@@ -54,17 +56,19 @@ function App(props) {
   };
 
   return (
-    <div className="App">
-      {/* Global CSS */}
-      <GlobalCSS />
-      {/* Set Up */}
-      {renderFirstBootstrap()}
-      {/* Main Route */}
-      <Switch>
-        <Route path="/show" component={FormLoginAndSignUp} />
-        <Route path="/app" component={Main} />
-      </Switch>
-    </div>
+    <MuiPickersUtilsProvider utils={DateFnsUtils}>
+      <div className="App">
+        {/* Global CSS */}
+        <GlobalCSS />
+        {/* Set Up */}
+        {renderFirstBootstrap()}
+        {/* Main Route */}
+        <Switch>
+          <Route path="/show" component={FormLoginAndSignUp} />
+          <Route path="/app" component={Main} />
+        </Switch>
+      </div>
+    </MuiPickersUtilsProvider>
   );
 }
 

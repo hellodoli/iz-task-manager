@@ -1,21 +1,17 @@
 import { GET_TASK, SET_TASK } from '../constants/task';
-import { SCHEDULE_DATE } from '../constants/schedule';
 import { splitObjectByKey, getCurrentDateUTC, setScheduleDate } from '../utils/time';
 import Task from '../apis/task';
 
-// get Sche
 function getSchedulePiece (schedule) {
-  if (schedule !== null) {
-    const scheduleDate = parseInt(schedule.substring(8, 10));
-    const scheduleMonth = parseInt(schedule.substring(5, 7));
-    const scheduleYear = parseInt(schedule.substring(0, 4));
-    return {
-      scheduleDate,
-      scheduleMonth,
-      scheduleYear
-    };
-  }
-  return {};
+  if (schedule === null) return {};
+  const scheduleDate = parseInt(schedule.substring(8, 10));
+  const scheduleMonth = parseInt(schedule.substring(5, 7));
+  const scheduleYear = parseInt(schedule.substring(0, 4));
+  return {
+    scheduleDate,
+    scheduleMonth,
+    scheduleYear
+  };
 }
 
 function filterTaskByToday(cloneTasks, currentDate) {
@@ -39,7 +35,7 @@ function filterTaskByToday(cloneTasks, currentDate) {
   }
 
   if (tasksOverDue.length !== 0) finalTask.push({ section: 'Overdue', items: tasksOverDue });
-  if (tasksToday.length !== 0) finalTask.push({ section: (new Date().toDateString()), items: tasksToday });
+  if (tasksToday.length !== 0) finalTask.push({ section: `Today - ${(new Date().toDateString())}`, items: tasksToday });
 
   return finalTask;
 }
@@ -88,7 +84,6 @@ export const getTask = schedule => async dispatch => {
     // filter tasks before dispatch
     tasks.forEach(item => {
       item.isOpen = false;
-      item.originDes = item.des;
       item.scheduleText = setScheduleDate(item.schedule);
     });
     // clone Task

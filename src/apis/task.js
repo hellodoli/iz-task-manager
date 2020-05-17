@@ -6,6 +6,7 @@ class Task {
   constructor() {
     this.tasks = [];
     this.isUpdateSuccess = null;
+    this.isDeleteSuccess = null;
     this.newTask = null;
   }
 
@@ -30,14 +31,14 @@ class Task {
     }
   }
 
-  async updateTask(token, obTask) {
+  async updateTask(obTask) {
     try {
       this.isUpdateSuccess = null;
       const { id, ...updateInfo } = obTask;
       const url = '/tasks/' + id;
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + token
+        Authorization: 'Bearer ' + getCookie('emailToken')
       };
       const response = await api.patch(url, { ...updateInfo }, { headers });
       if (response.status === 200) {
@@ -70,6 +71,30 @@ class Task {
       }
     } catch (error) {
       this.newTask = null;
+      console.log(error);
+      console.log('error.name: ', error.name);
+      console.log('error.message: ', error.message);
+    }
+  }
+
+  async deleteTask(id) {
+    try {
+      this.isDeleteSuccess = null;
+      const headers = {
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + getCookie('emailToken')
+      };
+
+      const url = '/tasks/' + id;
+      const response = await apis.delete(url, { headers });
+      console.log(response);
+      if (response.status === 200) {
+        this.isDeleteSuccess = true;
+      } else {
+        this.isDeleteSuccess = false;
+      }
+    } catch (error) {
+      this.isDeleteSuccess = false;
       console.log(error);
       console.log('error.name: ', error.name);
       console.log('error.message: ', error.message);

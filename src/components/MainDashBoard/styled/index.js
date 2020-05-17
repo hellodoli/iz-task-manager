@@ -1,12 +1,15 @@
 import { makeStyles } from '@material-ui/core/styles';
-import { grey } from '@material-ui/core/colors';
+import { grey, red } from '@material-ui/core/colors';
 
 export const muiTaskGeneral = makeStyles(theme => ({
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    color: theme.palette.text.primary
+    color: theme.palette.text.primary,
+    '& .MuiFab-root': {
+      textTransform: 'initial'
+    }
   },
   headerMgBottom: {
     marginBottom: theme.typography.pxToRem(24)
@@ -70,6 +73,7 @@ export const muiTaskItem = makeStyles(theme => {
       }
     },
     wrapperItemEdit: {
+      width: '100%',
       fontSize: pxToRem(14),
       color: theme.palette.text.primary,
       '& .MuiTextField-root': {
@@ -113,11 +117,25 @@ export const muiTaskItem = makeStyles(theme => {
   }
 });
 
-export const muiAddTaskModal = makeStyles(theme => {
+export const muiModal = makeStyles(theme => {
   return {
+    dialogDeleteTitle: {
+
+    },
     addIconText: {
       fontWeight: theme.typography.fontWeightBold,
       marginLeft: theme.typography.pxToRem(10)
+    },
+    borderDialogTitle: {
+      borderBottom: `1px solid ${theme.palette.divider}`
+    },
+    deleteButton: {
+      backgroundColor: red[700],
+      color: theme.palette.common.white,
+      '&:hover': {
+        backgroundColor: red[700],
+        color: theme.palette.common.white
+      }
     }
   }
 });

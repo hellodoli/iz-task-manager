@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
@@ -10,10 +10,15 @@ import TaskAPI from '../../apis/task';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 import { TASK_ALL, TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
 
-import { dayNames, monthNames, getWeekByDate } from '../../utils/time';
-import { getCookie } from '../../utils/cookies';
+import { dayNames, getWeekByDate } from '../../utils/time';
 
 import { getTask, setTask } from '../../actions/task';
+
+// Components
+import {
+  ModalAddTask,
+  ModalConFirm
+} from './Dialog';
 
 // Styling
 import {
@@ -25,12 +30,6 @@ import {
   Button,
   Fab,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  FormControl,
-  InputLabel,
-  Select,
   Menu,
   MenuItem,
   Tabs,
@@ -44,16 +43,15 @@ import {
 import {
   Edit,
   Add as AddIcon,
-  AddCircle,
+  Delete as DeleteIcon,
   Schedule,
   ExpandMore
 } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
-import { muiTaskGeneral, muiTaskItem, muiAddTaskModal } from './styled';
+import { muiTaskGeneral, muiTaskItem } from './styled';
 
 let prevPathNameTask = null;
 let prevEditTask = null;
-let numberSectionTasks = null;
 
 // helper function
 function setScheduleStatusColor(scheduleText, schedule) {
@@ -111,7 +109,7 @@ function checkCurrentPathname (pathname) {
 }
 
 // update UI. (for save edit - update)
-function updateCloneTaskItemUI (tasks, currentFilter, currentTask) {
+function updateCloneTaskItemUI (tasks, currentFilter, currentTask, status) {
   function condition(key) {
     if (key === currentFilter
       || key === 'sectionTasks'
@@ -125,10 +123,15 @@ function updateCloneTaskItemUI (tasks, currentFilter, currentTask) {
   otherFilter.forEach(key => {
     result[key] = tasks[key].slice();
     tasks[key].forEach((section, indexSection) => {
-      section.items.forEach((task,indexTask) => {
+      section.items.forEach((task, indexTask) => {
         if (task._id === currentTask._id) {
-          result[key][indexSection].items
-            .splice(indexTask, 1, currentTask);
+          if (status === 'delete') {
+            result[key][indexSection].items
+              .splice(indexTask, 1);
+          } else {
+            result[key][indexSection].items
+              .splice(indexTask, 1, currentTask);
+          }
         }
       });
     });
@@ -146,14 +149,21 @@ function TaskItem({
   isShowSchedule,
   startOpenEditTask,
   startCloseEditStart,
-  updateDesTask
+  updateDesTask,
+  updateCompletedTask,
+  deleteTask
 }) {
-  const [anchorEl, setAnchorEl] = useState(null); // handle schedule menu
-  const [valueEdit, setValueEdit] = useState(des);
+  const [anchorEl, setAnchorEl] = useState(null); // schedule menu
+  const [isOpenModalDelete, setIsOpenModalDelete] = useState(false); // modal confirm delete
+  const [fakeEditValue, setFakeEditValue] = useState(des); // fake des
   const classes = muiTaskItem({
     color: setScheduleStatusColor(scheduleText, schedule)
   });
   const obIndex = { parentIndex, childIndex };
+
+  // Handle Modal Delete
+  const openModalDelete = () => setIsOpenModalDelete(true);
+  const closeModalDelete = () => setIsOpenModalDelete(false);
 
   // Handle Schedule  
   const openScheduleMenu = e => setAnchorEl(e.currentTarget);
@@ -164,9 +174,18 @@ function TaskItem({
     
   const openEdit = () => startOpenEditTask(obIndex);
 
-  const editing = e => setValueEdit(e.target.value);
+  const editting = e => setFakeEditValue(e.target.value);
     
-  const saveEdit = () => updateDesTask(obIndex, { id: _id, des: valueEdit });
+  const saveEdit = () => updateDesTask(obIndex, { id: _id, des: fakeEditValue });
+
+  const check = e => updateCompletedTask(obIndex, { id: _id, completed: e.target.checked });
+
+  const removeTask = () => deleteTask(obIndex, _id);
+
+  useEffect(() => {
+    if (!isOpen && fakeEditValue !== des)
+      setFakeEditValue(des);
+  }, [isOpen, fakeEditValue, des]);
 
   return (
     <ListItem
@@ -182,12 +201,12 @@ function TaskItem({
           <div className={clsx("task-item-edit", classes.wrapperItemEdit)}>
             <TextField
               variant="outlined"
-              value={valueEdit}
+              value={fakeEditValue}
               size="small"
               color="primary"
               fullWidth={true}
               autoFocus={true}
-              onChange={editing}
+              onChange={editting}
             />
             <div className={classes.buttonEditGroup}>
               <Button
@@ -235,6 +254,24 @@ function TaskItem({
             <MenuItem>Item 2</MenuItem>
             <MenuItem>Item 3</MenuItem>
           </Menu>
+          
+          <IconButton
+            style={{ color: red[500] }}
+            size="small"
+            color="default"
+            onClick={openModalDelete}
+          >
+            <DeleteIcon />
+          </IconButton>
+          {/* Modal Delete */}
+          { isOpenModalDelete &&
+              <ModalConFirm
+                removeTask={removeTask}
+                isOpen={isOpenModalDelete}
+                handleClose={closeModalDelete}
+              />
+          }
+
         </div>
       }
       {/* Task Detail */}
@@ -245,6 +282,7 @@ function TaskItem({
               control={
                 <Checkbox
                   checked={completed}
+                  onChange={check}
                   size="small"
                   color="primary"
                 />
@@ -252,7 +290,9 @@ function TaskItem({
             />
           </div>
           <div className={classes.wrapperItemContent}>
-            <div className={classes.itemDes}>{ valueEdit }</div>
+            <div className={classes.itemDes}>
+              { isOpen ? fakeEditValue : des }
+            </div>
             <div className={classes.wrapperItemContentBottom}>
               {isShowSchedule === true && schedule !== null && (
                 <div className={classes.itemDueDay}>{scheduleText}</div>
@@ -265,213 +305,6 @@ function TaskItem({
   );
 }
 
-function ModalCreateSection (props) {
-  const { isOpen, handleClose, cbSave } = props;
-  const [value, setValue] = useState('');
-  const [errorText, setErrorText] = useState('');
-
-  const handleChange = e => {
-    setValue(e.target.value);
-  };
-
-  const handleSave = () => {
-    let isValidSection = null;
-    if (value.trim() === '') {
-      isValidSection = false;
-      setErrorText("Section name isn't valid");
-    } else {
-      isValidSection = true;
-      setErrorText('');
-    }
-
-    if (isValidSection) cbSave(value);
-  };
-
-  return (
-    <Dialog
-      fullWidth={true}
-      open={isOpen}
-      onClose={handleClose}
-    >
-      <DialogTitle>Create section</DialogTitle>
-      <DialogContent>
-        <TextField
-          variant="outlined"
-          placeholder="Write your new section here e.g working..."
-          size="small"
-          color="primary"
-          fullWidth={true}
-          autoFocus={true}
-          value={value}
-          onChange={handleChange}
-          error={errorText !== ''}
-          helperText={errorText}
-        />
-      </DialogContent>
-      <DialogContent>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSave}
-        >Save</Button>{'  '}
-        <Button
-          variant="text"
-          onClick={handleClose}
-        >Cancel</Button>
-      </DialogContent>
-      {/* Empty DialogContent make free spacing */}
-      <DialogContent></DialogContent>
-    </Dialog>
-  );
-}
-
-function ModalAddTask(props) {
-  const { isOpen, handleClose, sectionTasks } = props;
-  const classes = muiAddTaskModal();
-  const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
-  const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
-  const [valueTaskName, setValueTaskName] = useState(''); // task name value
-  const [errorTaskName, setErrorTaskName] = useState(''); // error task name text
-  const [openCreateSection, setOpenCreateSection] = useState(false);
-
-  if (numberSectionTasks === null)
-    numberSectionTasks = allSectionTasks.length;
-  
-  const handleChangeSelect = e => {
-    const value = e.target.value;
-    if (value === '') { // create new section
-      setValueTaskSection('');
-      setOpenCreateSection(true);
-    } else {
-      setValueTaskSection(value);
-    }
-  };
-
-  const handleChangeInput = e => {
-    setValueTaskName(e.target.value);
-  };
-
-  const handleSave = () => {
-    let isValid = null;
-    if (valueTaskName.trim() === '') {
-      isValid = false;
-      setErrorTaskName("Name isn't valid");
-    } else {
-      isValid = true;
-      setErrorTaskName('');
-    }
-
-    if (isValid) {
-      const newTask = {
-        des: valueTaskName,
-        section: valueTaskSection === '' ? null : valueTaskSection,
-        schedule: null // temp
-      };
-      const taskAPI = new TaskAPI();
-      /*await taskAPI.addTask(newTask);
-      if (taskAPI.newTask) {
-        // update UI
-      }*/
-      numberSectionTasks = null;
-      handleClose();
-    }
-  };
-
-  /* --- START: Handle Create Section Action --- */
-  const handleCloseCreateSection = () => {
-    setOpenCreateSection(false);
-  };
-
-  const cbSaveCreateSection = (sectionName) => {
-    // close ModalCreateSection
-    handleCloseCreateSection();
-
-    const cloneAllSectionTasks = allSectionTasks.slice();
-    cloneAllSectionTasks.push(sectionName);
-    setAllSectionTasks(cloneAllSectionTasks);
-    setValueTaskSection(sectionName);
-  };
-  /* --- END: Handle Create Section Action --- */
-  return (
-    <React.Fragment>
-      { openCreateSection &&
-          <ModalCreateSection
-            isOpen={openCreateSection}
-            handleClose={handleCloseCreateSection}
-            cbSave={cbSaveCreateSection}
-          />
-      }
-      <Dialog
-        fullWidth={true}
-        open={isOpen}
-        onClose={handleClose}
-        disableBackdropClick={true}
-      >
-        <DialogTitle>Add new task</DialogTitle>
-
-        <DialogContent>
-          <FormControl variant="outlined" size="small" fullWidth={true}>
-            <InputLabel>Section</InputLabel>
-            <Select
-              label="Section"
-              value={valueTaskSection}
-              onChange={handleChangeSelect}
-            >
-              {/* Option creat section */}
-              <MenuItem value={''}>
-                <AddCircle />
-                <span className={classes.addIconText}>Create new section</span>
-              </MenuItem>
-              {/* Option Items */}
-              <MenuItem disabled><em>Your saved section</em></MenuItem>
-              { allSectionTasks.map((section, index) => {
-                  const key = `${section}-${index}`;
-                  if (index === numberSectionTasks)
-                    return [
-                      <MenuItem disabled><em>Your unsaved section</em></MenuItem>,
-                      <MenuItem value={section}>{section}</MenuItem>
-                    ];
-                  return (
-                    <MenuItem key={key} value={section}>{section}</MenuItem>
-                  );
-              })}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        
-        <DialogContent>
-          <TextField
-            variant="outlined"
-            placeholder="Write your new task here e.g check..."
-            size="small"
-            color="primary"
-            fullWidth={true}
-            autoFocus={true}
-            error={errorTaskName !== ''}
-            helperText={errorTaskName}
-            value={valueTaskName}
-            onChange={handleChangeInput}
-          />
-        </DialogContent>
-
-        <DialogContent>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSave}
-          >Save</Button>{'  '}
-          <Button
-            variant="text"
-            onClick={handleClose}
-          >Cancel</Button>
-        </DialogContent>
-        {/* Empty DialogContent make free spacing */}
-        <DialogContent></DialogContent>
-      </Dialog>
-    </React.Fragment>
-  );
-}
-
 function TaskHeader(props) {
   const {
     location: { pathname },
@@ -479,24 +312,35 @@ function TaskHeader(props) {
     addTask
   } = props;
   const gClasses = muiTaskGeneral();
-  
+
   /* --- START: Handle Add Task Action --- */
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleClickOpen = () => {
-    setIsOpen(true);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  const handleClickOpen = () => setIsOpen(true);
+    
+  const handleClose = () => setIsOpen(false);
   /* --- END: Handle Add Task Action --- */
 
+  const  renderTitleHeaderText = () => {
+    let titleHeader = '';
+    if (pathname === TASK_ALL)  titleHeader = 'Inbox';
+    else if (pathname === TASK_TODAY) titleHeader = 'Today';
+    return titleHeader;
+  };
+
+  const renderAddTaskText = () => {
+    let titleAddTaskText = '';
+    if (pathname === TASK_ALL) titleAddTaskText = 'Add task';
+    else if (pathname === TASK_TODAY) titleAddTaskText = 'Add task for today';
+    return titleAddTaskText;
+  };
+
   return (
-    <React.Fragment>
+    <Fragment>
       {/* (Modal) Add Task */}
       { isOpen &&
         <ModalAddTask
+          pathname={pathname} // pathname use for render text
           isOpen={isOpen}
           handleClose={handleClose}
           sectionTasks={sectionTasks}
@@ -505,9 +349,7 @@ function TaskHeader(props) {
       }
       {/* Task Main Header */}
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>
-          { pathname === TASK_ALL ? 'Inbox' : 'Today' }
-        </h1>
+        <h1 className={gClasses.headerTitle}>{ renderTitleHeaderText() }</h1>
         <div>
           <Fab
             variant="extended"
@@ -517,11 +359,11 @@ function TaskHeader(props) {
             onClick={handleClickOpen}
           >
             <AddIcon />
-            Add Task
+            { renderAddTaskText() }
           </Fab>
         </div>
       </div>
-    </React.Fragment>
+    </Fragment>
   );
 }
 
@@ -609,12 +451,6 @@ function TaskList(props) {
   
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
-  const [expanded, setExpanded] = useState(false);
-
-  const handleChangeExpand = (panel) => (e, isExpanded) => {
-    setExpanded(isExpanded ? panel : false);
-  };
-
   // check every time user switch other tab
   if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
     console.log('prevPathname: ', prevPathNameTask);
@@ -624,9 +460,8 @@ function TaskList(props) {
       
       const cloneTask = tasks[taskDataProperty].slice();
       const prevTask = cloneTask[parentIndex].items[childIndex];
-      prevTask.originDes = prevTask.des;
       prevTask.isOpen = false;
-      
+
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask
@@ -639,10 +474,6 @@ function TaskList(props) {
   
   const startOpenEditTask = (obIndex) => {
     const cloneTask = tasks[taskDataProperty].slice();
-    // get current Task
-    const { parentIndex, childIndex } = obIndex;
-    const curTask = cloneTask[parentIndex].items[childIndex];
-
     if (prevEditTask !== null) {
       const {
         obIndex: {
@@ -650,14 +481,16 @@ function TaskList(props) {
           childIndex: prevChildIndex
         }
       } = prevEditTask;
-      
       // get prev Task
       const prevTask = cloneTask[prevParentIndex].items[prevChildIndex];
-      // set Task
-      prevTask.des = prevTask.originDes;
       prevTask.isOpen = false;
     }
+
+    // get current Task
+    const { parentIndex, childIndex } = obIndex;
+    const curTask = cloneTask[parentIndex].items[childIndex];
     curTask.isOpen = true;
+
     setTask({ ...tasks, [taskDataProperty]: cloneTask });
     prevEditTask = { obIndex };
   };
@@ -665,37 +498,82 @@ function TaskList(props) {
   const updateDesTask = async (obIndex, taskOb) => {
     prevEditTask = null;
     const taskAPI = new TaskAPI();
-    const token = getCookie('emailToken');
-    await taskAPI.updateTask(token, taskOb);
+    await taskAPI.updateTask(taskOb);
     if (taskAPI.isUpdateSuccess) {
       // change UI after success
       const { parentIndex, childIndex } = obIndex;
       const cloneTask = tasks[taskDataProperty].slice();
       const curTask = cloneTask[parentIndex].items[childIndex];
-      // set current isOpen status and update originDes
-      curTask.originDes = curTask.des;
+      // set current isOpen status
       curTask.isOpen = false;
+      curTask.des = taskOb.des;
       // find other clone Task and update
       const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask);
-      setTask({ 
+      setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
         ...otherCloneTask
       });
     } else {
       // fail
-      alert('update fail');
+      alert('update des fail');
     }
-  }
+  };
 
   const startCloseEditStart = (obIndex) => {
+    prevEditTask = null;
     const { parentIndex, childIndex } = obIndex;
     const cloneTask = tasks[taskDataProperty].slice();
     const curTask = cloneTask[parentIndex].items[childIndex];
     // set current isOpen status
-    curTask.des = curTask.originDes;
     curTask.isOpen = false;
     setTask({ ...tasks, [taskDataProperty]: cloneTask });
+  };
+
+  const updateCompletedTask = async (obIndex, taskOb) => {
+    const taskAPI = new TaskAPI();
+    await taskAPI.updateTask(taskOb);
+    if (taskAPI.isUpdateSuccess) {
+      // change UI after success
+      const { parentIndex, childIndex } = obIndex;
+      const cloneTask = tasks[taskDataProperty].slice();
+      const curTask = cloneTask[parentIndex].items[childIndex];
+      // set current complete status
+      curTask.completed = taskOb.completed;
+      // find other clone Task and update
+      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask);
+      setTask({
+        ...tasks,
+        [taskDataProperty]: cloneTask,
+        ...otherCloneTask
+      });
+    } else {
+      // fail
+      alert('update completed fail');
+    }
+  };
+
+  const deleteTask = async (obIndex, taskId) => {
+    const taskAPI = new TaskAPI();
+    await taskAPI.deleteTask(taskId);
+    if (taskAPI.isDeleteSuccess) {
+      // change UI after success
+      const { parentIndex, childIndex } = obIndex;
+      const cloneTask = tasks[taskDataProperty].slice();
+      const curTask = cloneTask[parentIndex].items[childIndex];
+      // delete current task
+      cloneTask[parentIndex].items.splice(childIndex, 1);
+      // find other clone Task and delete
+      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask, 'delete');
+      setTask({
+        ...tasks,
+        [taskDataProperty]: cloneTask,
+        ...otherCloneTask
+      });
+    } else {
+      // fail
+      alert('delete fail');
+    }
   };
 
   return (
@@ -704,14 +582,11 @@ function TaskList(props) {
       <div className={gClasses.wrapperAllSection}>
         {tasks[taskDataProperty].map(({ section, items }, index) => {
           const parentIndex = index;
-          const panelName = `panel-${taskClassName}-${parentIndex}`;
           return (
             <ExpansionPanel
               // TransitionProps={{ unmountOnExit: true }}
               key={`${taskIdName}${parentIndex}`}
               className={clsx(taskClassName, gClasses.section)}
-              //expanded={expanded === panelName}
-              //onChange={handleChangeExpand(panelName)}
             >
               <ExpansionPanelSummary
                 className={clsx(`${taskClassName}-header`, gClasses.sectionHeader)}
@@ -734,6 +609,8 @@ function TaskList(props) {
                       startOpenEditTask={startOpenEditTask}
                       startCloseEditStart={startCloseEditStart}
                       updateDesTask={updateDesTask}
+                      updateCompletedTask={updateCompletedTask}
+                      deleteTask={deleteTask}
                     />
                   ))}  
                 </List>
@@ -757,19 +634,41 @@ function TaskList(props) {
   );
 }
 
-// TaskWrapper Component for Route
+// TaskWrapper type
 function TaskWrapper (props) {
   return (
-    <React.Fragment>
+    <Fragment>
       <TaskHeader {...props} />
       <TaskList {...props} />
-    </React.Fragment>
+    </Fragment>
   );
 }
 
-function TaskMain(props) {
-  const { tasks, getTask, location } = props;
+function TaskWrapperUpcoming (props) {
+  return (
+    <Fragment>
+      <TaskHeaderUpcoming {...props} />
+      <TaskList {...props} />
+    </Fragment>
+  );
+}
 
+// RouteWrapper
+function RouteWrapper ({ component: Component, passesProps, ...rest }) {
+  // important: passesProps contains history, location, match but we dont need
+  // rest: exact, path
+  return (
+    <Route
+      {...rest}
+      render={routerProps =>
+        <Component {...passesProps} {...routerProps} />
+      }
+    />
+  );
+}
+
+function TaskMain (props) {
+  const { tasks, getTask, location } = props;
   const taskLocationInfo = checkCurrentPathname(location.pathname); // get info location pathname
   const taskMainProps = { ...props, ...taskLocationInfo };
 
@@ -778,39 +677,28 @@ function TaskMain(props) {
     console.log('running fetch Task done');
   }, [getTask]);
 
-  const TaskSection = (props) => {
-    // routerProps: props from Route
-    // taskMainProps: props from TaskMain
-    const routerProps = props;
-    const allProps = { ...routerProps, ...taskMainProps };
-    return (
-      <React.Fragment>
-        <TaskHeader {...allProps} />
-        <TaskList {...allProps} />
-      </React.Fragment>
-    );
-  }
-
-  const TaskUpcoming = (props) => {
-    // routerProps: props from Route
-    // taskMainProps: props from TaskMain
-    const routerProps = props;
-    const allProps = { ...routerProps, ...taskMainProps };
-    return (
-      <React.Fragment>
-        <TaskHeaderUpcoming {...allProps} />
-        <TaskList {...allProps} />
-      </React.Fragment>
-    );
-  }
-  
   if (!tasks.fetchDone) return <div>Loading...</div>;
   return (
     <div className="task-main">
       <Switch>
-        <Route exact path={TASK_ALL} render={props => <TaskWrapper {...props} {...taskMainProps} />} />
-        <Route path={TASK_TODAY} render={props => <TaskWrapper {...props} {...taskMainProps} />} />
-        <Route path={TASK_UPCOMING} render={props => <TaskWrapper {...props} {...taskMainProps} />} />
+        <RouteWrapper
+          exact={true}
+          path={TASK_ALL}
+          passesProps={taskMainProps}
+          component={TaskWrapper}
+        />
+        <RouteWrapper
+          exact={false}
+          path={TASK_TODAY}
+          passesProps={taskMainProps}
+          component={TaskWrapper}
+        />
+        <RouteWrapper
+          exact={false}
+          path={TASK_UPCOMING}
+          passesProps={taskMainProps}
+          component={TaskWrapperUpcoming}
+        />
       </Switch>
     </div>
   );

@@ -14,7 +14,7 @@ import {
   Select,
   MenuItem
 } from '@material-ui/core';
-import { AddCircle } from '@material-ui/icons';
+import { AddCircle, Today } from '@material-ui/icons';
 import { red } from '@material-ui/core/colors';
 import { muiModal } from './styled';
 
@@ -22,7 +22,7 @@ import { DatePicker, TimePicker } from '@material-ui/pickers';
 
 let numberSectionTasks = null; // use for render select section
 
-export function ModalCreateSection (props) {
+export function ModalCreateSection(props) {
   const { isOpen, handleClose, cbSave } = props;
   const [value, setValue] = useState('');
   const [errorText, setErrorText] = useState('');
@@ -45,11 +45,7 @@ export function ModalCreateSection (props) {
   };
 
   return (
-    <Dialog
-      fullWidth={true}
-      open={isOpen}
-      onClose={handleClose}
-    >
+    <Dialog fullWidth={true} open={isOpen} onClose={handleClose}>
       <DialogTitle>Create section</DialogTitle>
       <DialogContent>
         <TextField
@@ -66,15 +62,13 @@ export function ModalCreateSection (props) {
         />
       </DialogContent>
       <DialogContent>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSave}
-        >Save</Button>{'  '}
-        <Button
-          variant="text"
-          onClick={handleClose}
-        >Cancel</Button>
+        <Button variant="contained" color="primary" onClick={handleSave}>
+          Save
+        </Button>
+        {'  '}
+        <Button variant="text" onClick={handleClose}>
+          Cancel
+        </Button>
       </DialogContent>
       {/* Empty DialogContent make free spacing */}
       <DialogContent></DialogContent>
@@ -82,22 +76,24 @@ export function ModalCreateSection (props) {
   );
 }
 
-export function ModalAddTask (props) {
+export function ModalAddTask(props) {
   const { isOpen, handleClose, sectionTasks } = props;
   const classes = muiModal();
   const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
+  const [valueTaskSchedule, setValueTaskSchedule] = useState(''); // task schedule value (select)
+
   const [valueTaskName, setValueTaskName] = useState(''); // task name value
   const [errorTaskName, setErrorTaskName] = useState(''); // error task name text
   const [selectedDate, setSelectedDate] = useState(new Date()); // set select schedule date
   const [openCreateSection, setOpenCreateSection] = useState(false);
 
-  if (numberSectionTasks === null)
-    numberSectionTasks = allSectionTasks.length;
-  
-  const handleChangeSelect = e => {
+  if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;
+
+  const handleChangeSelectSection = e => {
     const value = e.target.value;
-    if (value === '') { // create new section
+    if (value === 'create') {
+      // create new section
       setValueTaskSection('');
       setOpenCreateSection(true);
     } else {
@@ -105,9 +101,7 @@ export function ModalAddTask (props) {
     }
   };
 
-  const handleChangeInput = e => {
-    setValueTaskName(e.target.value);
-  };
+  const handleChangeSelectSchedule = e => setValueTaskSchedule(e.target.value);
 
   const handleSave = () => {
     let isValid = null;
@@ -135,7 +129,7 @@ export function ModalAddTask (props) {
     }
   };
 
-  const handleDateChange = (date) => {
+  const handleDateChange = date => {
     setSelectedDate(date);
   };
 
@@ -144,7 +138,7 @@ export function ModalAddTask (props) {
     setOpenCreateSection(false);
   };
 
-  const cbSaveCreateSection = (sectionName) => {
+  const cbSaveCreateSection = sectionName => {
     // close ModalCreateSection
     handleCloseCreateSection();
 
@@ -156,13 +150,13 @@ export function ModalAddTask (props) {
   /* --- END: Handle Create Section Action --- */
   return (
     <Fragment>
-      { openCreateSection &&
-          <ModalCreateSection
-            isOpen={openCreateSection}
-            handleClose={handleCloseCreateSection}
-            cbSave={cbSaveCreateSection}
-          />
-      }
+      {openCreateSection && (
+        <ModalCreateSection
+          isOpen={openCreateSection}
+          handleClose={handleCloseCreateSection}
+          cbSave={cbSaveCreateSection}
+        />
+      )}
       <Dialog
         fullWidth={true}
         open={isOpen}
@@ -176,47 +170,58 @@ export function ModalAddTask (props) {
             <Select
               label="Section"
               value={valueTaskSection}
-              onChange={handleChangeSelect}
+              onChange={handleChangeSelectSection}
             >
               {/* Option creat section */}
-              <MenuItem value={''}>
+              <MenuItem value={'create'}>
                 <AddCircle />
                 <span className={classes.addIconText}>Create new section</span>
               </MenuItem>
               {/* Option Items */}
-              <MenuItem disabled><em>Your saved section</em></MenuItem>
-              { allSectionTasks.map((section, index) => {
-                  const key = `${section}-${index}`;
-                  if (index === numberSectionTasks)
-                    return [
-                      <MenuItem disabled><em>Your unsaved section</em></MenuItem>,
-                      <MenuItem value={section}>{section}</MenuItem>
-                    ];
-                  return (
-                    <MenuItem key={key} value={section}>{section}</MenuItem>
-                  );
+              <MenuItem disabled>
+                <em>Your saved section</em>
+              </MenuItem>
+              {allSectionTasks.map((section, index) => {
+                const key = `${section}-${index}`;
+                if (index === numberSectionTasks)
+                  return [
+                    <MenuItem value={''} disabled>
+                      <em>Your unsaved section</em>
+                    </MenuItem>,
+                    <MenuItem value={section}>{section}</MenuItem>
+                  ];
+                return (
+                  <MenuItem key={key} value={section}>
+                    {section}
+                  </MenuItem>
+                );
               })}
             </Select>
           </FormControl>
         </DialogContent>
 
         <DialogContent>
-          <DatePicker
-            variant="inline"
-            label="Schedule date"
-            inputVariant="outlined"
-            size="small"
-            value={selectedDate}
-            onChange={handleDateChange}
-          />
-          <TimePicker
-            variant="inline"
-            label="Schedule time"
-            inputVariant="outlined"
-            size="small"
-            //value={selectedDate}
-            //onChange={handleDateChange}
-          />
+          <FormControl variant="outlined" size="small" fullWidth={true}>
+            <InputLabel>Schedule</InputLabel>
+            <Select
+              label="Schedule"
+              value={valueTaskSchedule}
+              onChange={handleChangeSelectSchedule}
+            >
+              <MenuItem disabled value={''}>
+                Choose your schedule
+              </MenuItem>
+              <MenuItem value={'today'}>
+                <Today />
+                <span>Today</span>
+              </MenuItem>
+              <MenuItem value={'tomorrow'}>Tomorrow</MenuItem>
+              <MenuItem value={'nextweek'}>Next week</MenuItem>
+              <MenuItem value={'nodate'}>No date</MenuItem>
+              <MenuItem disabled>- or choose your time</MenuItem>
+              <MenuItem>New date</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
 
         <DialogContent>
@@ -233,16 +238,15 @@ export function ModalAddTask (props) {
             onChange={handleDateChange}
           />
         </DialogContent>
+
         <DialogContent>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSave}
-          >Save</Button>{'  '}
-          <Button
-            variant="text"
-            onClick={handleClose}
-          >Cancel</Button>
+          <Button variant="contained" color="primary" onClick={handleSave}>
+            Save
+          </Button>
+          {'  '}
+          <Button variant="text" onClick={handleClose}>
+            Cancel
+          </Button>
         </DialogContent>
         {/* Empty DialogContent make free spacing */}
         <DialogContent></DialogContent>
@@ -251,18 +255,15 @@ export function ModalAddTask (props) {
   );
 }
 
-export function ModalConFirm (props) {
+export function ModalConFirm(props) {
   const { isOpen, handleClose, removeTask } = props;
   const classes = muiModal();
   return (
-    <Dialog
-      fullWidth={true}
-      open={isOpen}
-      onClose={handleClose}
-    >
+    <Dialog fullWidth={true} open={isOpen} onClose={handleClose}>
       <DialogTitle
         className={classes.borderDialogTitle}
-        style={{ color: red[500] }}>
+        style={{ color: red[500] }}
+      >
         Are you sure delete task ?
       </DialogTitle>
       <DialogContent>
@@ -271,12 +272,12 @@ export function ModalConFirm (props) {
           className={classes.deleteButton}
           onClick={removeTask}
         >
-          Delete 
-        </Button>{'  '}
-        <Button
-          variant="text"
-          onClick={handleClose}
-        >Cancel</Button>
+          Delete
+        </Button>
+        {'  '}
+        <Button variant="text" onClick={handleClose}>
+          Cancel
+        </Button>
       </DialogContent>
       {/* Empty DialogContent make free spacing */}
       <DialogContent></DialogContent>

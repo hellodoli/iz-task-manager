@@ -166,9 +166,9 @@ export function setScheduleDate(schedule) {
     }
   }
   return scheduleText;
-};
+}
 
-export function getCurrentDateUTC () {
+export function getCurrentDateUTC() {
   const d = new Date();
   const UTCDay = d.getUTCDay();
   const curDate = d.toJSON();
@@ -189,8 +189,8 @@ export function getCurrentDateUTC () {
     hour,
     minute,
     second
-  }
-};
+  };
+}
 
 export function splitObjectByKey(splitBy, data) {
   var rowArr = [];
@@ -206,18 +206,19 @@ export function splitObjectByKey(splitBy, data) {
     }
   }
   return rowOb;
-};
+}
 
-function trans2Date(d) { // custom format you want return
+function trans2Date(d) {
+  // custom format you want return
   const { date, month, year } = d;
   return new Date(`${year}-${month}-${date}`);
 }
 
-export function getWeekByDate (inputDate) {
+export function getWeekByDate(inputDate) {
   let d = inputDate;
   if (d === 'today') d = new Date();
-    console.log('input date:', d);
-    
+  console.log('input date:', d);
+
   const day = d.getDay();
   const date = d.getDate();
   const month = d.getMonth() + 1;
@@ -226,41 +227,50 @@ export function getWeekByDate (inputDate) {
   const maxPrevDay = 6;
   let monday = null; // start day of week
   let arrWeekDay = [];
-  
-  const prefix = (day === 0) ? maxPrevDay : (day - 1);
+
+  const prefix = day === 0 ? maxPrevDay : day - 1;
   monday = date - prefix;
-    
-  if (monday <= 0) { // has monday at previous month
-    const prevMonth = (month === 1) ? 12 : (month - 1);
-    const y = (month === 1) ? (year - 1) : year;
+
+  if (monday <= 0) {
+    // has monday at previous month
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const y = month === 1 ? year - 1 : year;
     const maxDatePrevMonth = getLastDateOfMonth(prevMonth, y);
-    monday = (maxDatePrevMonth + date) - prefix;
-      
-    for(let i = monday; i <= (monday + maxPrevDay); i++) {
-      if (i > maxDatePrevMonth) { // date at current month
-        arrWeekDay.push(trans2Date({
-          year,
-          date: (i - maxDatePrevMonth),
-          month
-        }));
-      } else { // date at prev month
-        arrWeekDay.push(trans2Date({
-          year: y,
-          date: i,
-          month: prevMonth
-        }));
+    monday = maxDatePrevMonth + date - prefix;
+
+    for (let i = monday; i <= monday + maxPrevDay; i++) {
+      if (i > maxDatePrevMonth) {
+        // date at current month
+        arrWeekDay.push(
+          trans2Date({
+            year,
+            date: i - maxDatePrevMonth,
+            month
+          })
+        );
+      } else {
+        // date at prev month
+        arrWeekDay.push(
+          trans2Date({
+            year: y,
+            date: i,
+            month: prevMonth
+          })
+        );
       }
     }
   } else {
     const maxDateCurrentMonth = getLastDateOfMonth(month, year);
-    for(let i = monday; i <= (monday + maxPrevDay); i++) {
+    for (let i = monday; i <= monday + maxPrevDay; i++) {
       if (i > maxDateCurrentMonth) {
         // date at next month
-        arrWeekDay.push(trans2Date({
-          year: month === 12 ? (year + 1) : year,
-          date: (i - maxDateCurrentMonth),
-          month: month === 12 ? 1 : (month + 1)
-        }));
+        arrWeekDay.push(
+          trans2Date({
+            year: month === 12 ? year + 1 : year,
+            date: i - maxDateCurrentMonth,
+            month: month === 12 ? 1 : month + 1
+          })
+        );
       } else {
         // date at current month
         arrWeekDay.push(trans2Date({ year, date: i, month }));
@@ -268,4 +278,4 @@ export function getWeekByDate (inputDate) {
     }
   }
   return arrWeekDay;
-};
+}

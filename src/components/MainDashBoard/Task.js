@@ -15,10 +15,7 @@ import { dayNames, getWeekByDate } from '../../utils/time';
 import { getTask, setTask } from '../../actions/task';
 
 // Components
-import {
-  ModalAddTask,
-  ModalConFirm
-} from './Dialog';
+import { ModalAddTask, ModalConFirm } from './Dialog';
 
 // Styling
 import {
@@ -84,7 +81,7 @@ function setScheduleStatusColor(scheduleText, schedule) {
   return color;
 }
 
-function checkCurrentPathname (pathname) {
+function checkCurrentPathname(pathname) {
   let taskClassName = '';
   let taskIdName = '';
   let taskDataProperty = '';
@@ -109,34 +106,30 @@ function checkCurrentPathname (pathname) {
 }
 
 // update UI. (for save edit - update)
-function updateCloneTaskItemUI (tasks, currentFilter, currentTask, status) {
+function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
   function condition(key) {
-    if (key === currentFilter
-      || key === 'sectionTasks'
-      || key === 'fetchDone')
+    if (key === currentFilter || key === 'sectionTasks' || key === 'fetchDone')
       return false;
     return true;
-  };
+  }
   const otherFilter = Object.keys(tasks).filter(condition);
   const result = {};
-  
+
   otherFilter.forEach(key => {
     result[key] = tasks[key].slice();
     tasks[key].forEach((section, indexSection) => {
       section.items.forEach((task, indexTask) => {
         if (task._id === currentTask._id) {
           if (status === 'delete') {
-            result[key][indexSection].items
-              .splice(indexTask, 1);
+            result[key][indexSection].items.splice(indexTask, 1);
           } else {
-            result[key][indexSection].items
-              .splice(indexTask, 1, currentTask);
+            result[key][indexSection].items.splice(indexTask, 1, currentTask);
           }
         }
       });
     });
   });
-  
+
   return result;
 }
 
@@ -165,26 +158,27 @@ function TaskItem({
   const openModalDelete = () => setIsOpenModalDelete(true);
   const closeModalDelete = () => setIsOpenModalDelete(false);
 
-  // Handle Schedule  
+  // Handle Schedule
   const openScheduleMenu = e => setAnchorEl(e.currentTarget);
   const closeScheduleMenu = () => setAnchorEl(null);
-    
+
   // Handle Edit
   const cancelEdit = () => startCloseEditStart(obIndex);
-    
+
   const openEdit = () => startOpenEditTask(obIndex);
 
   const editting = e => setFakeEditValue(e.target.value);
-    
-  const saveEdit = () => updateDesTask(obIndex, { id: _id, des: fakeEditValue });
 
-  const check = e => updateCompletedTask(obIndex, { id: _id, completed: e.target.checked });
+  const saveEdit = () =>
+    updateDesTask(obIndex, { id: _id, des: fakeEditValue });
+
+  const check = e =>
+    updateCompletedTask(obIndex, { id: _id, completed: e.target.checked });
 
   const removeTask = () => deleteTask(obIndex, _id);
 
   useEffect(() => {
-    if (!isOpen && fakeEditValue !== des)
-      setFakeEditValue(des);
+    if (!isOpen && fakeEditValue !== des) setFakeEditValue(des);
   }, [isOpen, fakeEditValue, des]);
 
   return (
@@ -197,52 +191,43 @@ function TaskItem({
       )}
     >
       {/* Task Edit */}
-      { isOpen &&
-          <div className={clsx("task-item-edit", classes.wrapperItemEdit)}>
-            <TextField
-              variant="outlined"
-              value={fakeEditValue}
-              size="small"
-              color="primary"
-              fullWidth={true}
-              autoFocus={true}
-              onChange={editting}
-            />
-            <div className={classes.buttonEditGroup}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={saveEdit}
-                >
-                  Save</Button>{'  '}
-              <Button
-                variant="text"
-                onClick={cancelEdit}
-              >Cancel</Button>
-            </div>
-          </div>
-      }
-      {/* Task Action */}
-      { !isOpen &&
-        <div className={clsx('task-item-actions', classes.wrapperItemAction)}>
-          <IconButton
+      {isOpen && (
+        <div className={clsx('task-item-edit', classes.wrapperItemEdit)}>
+          <TextField
+            variant="outlined"
+            value={fakeEditValue}
             size="small"
-            onClick={openEdit}
-          >
+            color="primary"
+            fullWidth={true}
+            autoFocus={true}
+            onChange={editting}
+          />
+          <div className={classes.buttonEditGroup}>
+            <Button variant="contained" color="primary" onClick={saveEdit}>
+              Save
+            </Button>
+            {'  '}
+            <Button variant="text" onClick={cancelEdit}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+      {/* Task Action */}
+      {!isOpen && (
+        <div className={clsx('task-item-actions', classes.wrapperItemAction)}>
+          <IconButton size="small" onClick={openEdit}>
             <Edit />
           </IconButton>
-          
-          <IconButton
-            size="small"
-            onClick={openScheduleMenu}
-          >
+
+          <IconButton size="small" onClick={openScheduleMenu}>
             <Schedule />
           </IconButton>
           {/* Schedule Menu */}
           <Menu
             anchorOrigin={{
               vertical: 'bottom',
-              horizontal: 'center',
+              horizontal: 'center'
             }}
             getContentAnchorEl={null}
             anchorEl={anchorEl}
@@ -254,7 +239,7 @@ function TaskItem({
             <MenuItem>Item 2</MenuItem>
             <MenuItem>Item 3</MenuItem>
           </Menu>
-          
+
           <IconButton
             style={{ color: red[500] }}
             size="small"
@@ -264,18 +249,17 @@ function TaskItem({
             <DeleteIcon />
           </IconButton>
           {/* Modal Delete */}
-          { isOpenModalDelete &&
-              <ModalConFirm
-                removeTask={removeTask}
-                isOpen={isOpenModalDelete}
-                handleClose={closeModalDelete}
-              />
-          }
-
+          {isOpenModalDelete && (
+            <ModalConFirm
+              removeTask={removeTask}
+              isOpen={isOpenModalDelete}
+              handleClose={closeModalDelete}
+            />
+          )}
         </div>
-      }
+      )}
       {/* Task Detail */}
-      { !isOpen &&
+      {!isOpen && (
         <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
           <div className="task-item-detail-checkbox">
             <FormControlLabel
@@ -291,7 +275,7 @@ function TaskItem({
           </div>
           <div className={classes.wrapperItemContent}>
             <div className={classes.itemDes}>
-              { isOpen ? fakeEditValue : des }
+              {isOpen ? fakeEditValue : des}
             </div>
             <div className={classes.wrapperItemContentBottom}>
               {isShowSchedule === true && schedule !== null && (
@@ -300,7 +284,7 @@ function TaskItem({
             </div>
           </div>
         </div>
-      }
+      )}
     </ListItem>
   );
 }
@@ -317,13 +301,13 @@ function TaskHeader(props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClickOpen = () => setIsOpen(true);
-    
+
   const handleClose = () => setIsOpen(false);
   /* --- END: Handle Add Task Action --- */
 
-  const  renderTitleHeaderText = () => {
+  const renderTitleHeaderText = () => {
     let titleHeader = '';
-    if (pathname === TASK_ALL)  titleHeader = 'Inbox';
+    if (pathname === TASK_ALL) titleHeader = 'Inbox';
     else if (pathname === TASK_TODAY) titleHeader = 'Today';
     return titleHeader;
   };
@@ -338,7 +322,7 @@ function TaskHeader(props) {
   return (
     <Fragment>
       {/* (Modal) Add Task */}
-      { isOpen &&
+      {isOpen && (
         <ModalAddTask
           pathname={pathname} // pathname use for render text
           isOpen={isOpen}
@@ -346,10 +330,10 @@ function TaskHeader(props) {
           sectionTasks={sectionTasks}
           addTask={addTask}
         />
-      }
+      )}
       {/* Task Main Header */}
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>{ renderTitleHeaderText() }</h1>
+        <h1 className={gClasses.headerTitle}>{renderTitleHeaderText()}</h1>
         <div>
           <Fab
             variant="extended"
@@ -359,7 +343,7 @@ function TaskHeader(props) {
             onClick={handleClickOpen}
           >
             <AddIcon />
-            { renderAddTaskText() }
+            {renderAddTaskText()}
           </Fab>
         </div>
       </div>
@@ -367,7 +351,7 @@ function TaskHeader(props) {
   );
 }
 
-function TaskHeaderUpcoming (props) {
+function TaskHeaderUpcoming(props) {
   const gClasses = muiTaskGeneral();
   const defineDate = new Date(); // will set later
   const [indexActiveWeekRow, setIndexActiveWeekRow] = useState(null);
@@ -397,14 +381,12 @@ function TaskHeaderUpcoming (props) {
       // set weekRow
       setWeekRow(weekRow);
     }
-  }, []);
-  
+  }, [defineDate]);
+
   return (
     <div className={gClasses.headerMgBottomL}>
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>
-          { defineDate.getDate() }
-        </h1>
+        <h1 className={gClasses.headerTitle}>{defineDate.getDate()}</h1>
         <div>Button</div>
       </div>
       <div>
@@ -417,20 +399,20 @@ function TaskHeaderUpcoming (props) {
             indicatorColor="secondary"
             textColor="secondary"
           >
-            { weekRow.map(({ dayString, date, month, year, isDisabled }) =>
-                <Tab
-                  key={`${year}-${month}-${date}`}
-                  disabled={isDisabled}
-                  label={
+            {weekRow.map(({ dayString, date, month, year, isDisabled }) => (
+              <Tab
+                key={`${year}-${month}-${date}`}
+                disabled={isDisabled}
+                label={
+                  <div>
+                    <div className="day">{dayString}</div>
                     <div>
-                      <div className="day">{dayString}</div>
-                      <div>
-                        <strong className="date">{date}</strong>
-                      </div>
+                      <strong className="date">{date}</strong>
                     </div>
-                  }
-                />
-            )}
+                  </div>
+                }
+              />
+            ))}
           </Tabs>
         </Paper>
       </div>
@@ -439,7 +421,7 @@ function TaskHeaderUpcoming (props) {
 }
 
 function TaskList(props) {
-  const { 
+  const {
     tasks,
     location: { pathname },
     setTask,
@@ -448,16 +430,18 @@ function TaskList(props) {
     taskIdName,
     taskDataProperty
   } = props;
-  
+
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
   // check every time user switch other tab
   if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
     console.log('prevPathname: ', prevPathNameTask);
     if (prevEditTask !== null) {
-      const { obIndex: { parentIndex, childIndex }} = prevEditTask;
+      const {
+        obIndex: { parentIndex, childIndex }
+      } = prevEditTask;
       const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
-      
+
       const cloneTask = tasks[taskDataProperty].slice();
       const prevTask = cloneTask[parentIndex].items[childIndex];
       prevTask.isOpen = false;
@@ -471,15 +455,12 @@ function TaskList(props) {
     //numberSectionTasks = null;
   }
   prevPathNameTask = pathname;
-  
-  const startOpenEditTask = (obIndex) => {
+
+  const startOpenEditTask = obIndex => {
     const cloneTask = tasks[taskDataProperty].slice();
     if (prevEditTask !== null) {
       const {
-        obIndex: {
-          parentIndex: prevParentIndex,
-          childIndex: prevChildIndex
-        }
+        obIndex: { parentIndex: prevParentIndex, childIndex: prevChildIndex }
       } = prevEditTask;
       // get prev Task
       const prevTask = cloneTask[prevParentIndex].items[prevChildIndex];
@@ -508,7 +489,11 @@ function TaskList(props) {
       curTask.isOpen = false;
       curTask.des = taskOb.des;
       // find other clone Task and update
-      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask);
+      const otherCloneTask = updateCloneTaskItemUI(
+        tasks,
+        taskDataProperty,
+        curTask
+      );
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
@@ -520,7 +505,7 @@ function TaskList(props) {
     }
   };
 
-  const startCloseEditStart = (obIndex) => {
+  const startCloseEditStart = obIndex => {
     prevEditTask = null;
     const { parentIndex, childIndex } = obIndex;
     const cloneTask = tasks[taskDataProperty].slice();
@@ -541,7 +526,11 @@ function TaskList(props) {
       // set current complete status
       curTask.completed = taskOb.completed;
       // find other clone Task and update
-      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask);
+      const otherCloneTask = updateCloneTaskItemUI(
+        tasks,
+        taskDataProperty,
+        curTask
+      );
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
@@ -564,7 +553,12 @@ function TaskList(props) {
       // delete current task
       cloneTask[parentIndex].items.splice(childIndex, 1);
       // find other clone Task and delete
-      const otherCloneTask = updateCloneTaskItemUI(tasks, taskDataProperty, curTask, 'delete');
+      const otherCloneTask = updateCloneTaskItemUI(
+        tasks,
+        taskDataProperty,
+        curTask,
+        'delete'
+      );
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
@@ -589,12 +583,14 @@ function TaskList(props) {
               className={clsx(taskClassName, gClasses.section)}
             >
               <ExpansionPanelSummary
-                className={clsx(`${taskClassName}-header`, gClasses.sectionHeader)}
+                className={clsx(
+                  `${taskClassName}-header`,
+                  gClasses.sectionHeader
+                )}
                 expandIcon={<ExpandMore />}
               >
-                { section }
+                {section}
               </ExpansionPanelSummary>
-              
 
               <ExpansionPanelDetails className={`${taskClassName}-body`}>
                 <List>
@@ -603,7 +599,6 @@ function TaskList(props) {
                       key={taskItem._id}
                       parentIndex={parentIndex}
                       childIndex={index}
-                      
                       taskItem={taskItem}
                       isShowSchedule={true} // temp
                       startOpenEditTask={startOpenEditTask}
@@ -612,7 +607,7 @@ function TaskList(props) {
                       updateCompletedTask={updateCompletedTask}
                       deleteTask={deleteTask}
                     />
-                  ))}  
+                  ))}
                 </List>
               </ExpansionPanelDetails>
             </ExpansionPanel>
@@ -621,21 +616,16 @@ function TaskList(props) {
       </div>
       {/* Quick Add Button */}
       <div className={gClasses.wrapperQuickAddTask}>
-        <Fab
-            variant="round"
-            size="small"
-            color="secondary"
-            aria-label="add"
-          >
-            <AddIcon />
-          </Fab>
+        <Fab variant="round" size="small" color="secondary" aria-label="add">
+          <AddIcon />
+        </Fab>
       </div>
     </Box>
   );
 }
 
 // TaskWrapper type
-function TaskWrapper (props) {
+function TaskWrapper(props) {
   return (
     <Fragment>
       <TaskHeader {...props} />
@@ -644,7 +634,7 @@ function TaskWrapper (props) {
   );
 }
 
-function TaskWrapperUpcoming (props) {
+function TaskWrapperUpcoming(props) {
   return (
     <Fragment>
       <TaskHeaderUpcoming {...props} />
@@ -654,20 +644,18 @@ function TaskWrapperUpcoming (props) {
 }
 
 // RouteWrapper
-function RouteWrapper ({ component: Component, passesProps, ...rest }) {
+function RouteWrapper({ component: Component, passesProps, ...rest }) {
   // important: passesProps contains history, location, match but we dont need
   // rest: exact, path
   return (
     <Route
       {...rest}
-      render={routerProps =>
-        <Component {...passesProps} {...routerProps} />
-      }
+      render={routerProps => <Component {...passesProps} {...routerProps} />}
     />
   );
 }
 
-function TaskMain (props) {
+function TaskMain(props) {
   const { tasks, getTask, location } = props;
   const taskLocationInfo = checkCurrentPathname(location.pathname); // get info location pathname
   const taskMainProps = { ...props, ...taskLocationInfo };

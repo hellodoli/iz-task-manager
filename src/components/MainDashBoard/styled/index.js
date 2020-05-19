@@ -140,6 +140,18 @@ export const muiModal = makeStyles(theme => {
         backgroundColor: red[700],
         color: theme.palette.common.white
       }
+    },
+    selectSchedule: {
+      '& .MuiSelect-root': {
+        display: 'flex',
+        '& > span': {
+          marginLeft: theme.typography.pxToRem(8)
+        }
+      }
+    },
+    optionSchedule: {
+      display: 'flex',
+      justifyContent: 'space-between'
     }
   };
 });

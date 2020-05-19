@@ -1,20 +1,19 @@
 import { GET_TASK, SET_TASK } from '../constants/task';
 import {
   splitObjectByKey,
-  getCurrentDateUTC,
+  getCurrentDate,
   setScheduleDate
 } from '../utils/time';
 import Task from '../apis/task';
 
+// convert UTC schedule to local
 function getSchedulePiece(schedule) {
   if (schedule === null) return {};
-  const scheduleDate = parseInt(schedule.substring(8, 10));
-  const scheduleMonth = parseInt(schedule.substring(5, 7));
-  const scheduleYear = parseInt(schedule.substring(0, 4));
+  const d = new Date(schedule);
   return {
-    scheduleDate,
-    scheduleMonth,
-    scheduleYear
+    scheduleDate: d.getDate(),
+    scheduleMonth: (d.getMonth() + 1),
+    scheduleYear: (d.getFullYear())
   };
 }
 
@@ -96,7 +95,8 @@ export const getTask = schedule => async dispatch => {
     const tasks = taskAPI.tasks;
 
     // get soon as possible
-    const curDate = getCurrentDateUTC();
+    const curDate = getCurrentDate();
+    console.log('curDate: ', curDate);
 
     // filter tasks before dispatch
     tasks.forEach(item => {
@@ -145,12 +145,3 @@ export const setTask = updateTask => async dispatch => {
   }
 };
 
-export const addTask = newTask => async dispatch => {
-  try {
-    const taskAPI = new Task();
-    await taskAPI.addTask(newTask);
-    if (taskAPI.newTask !== null) getTask();
-  } catch (error) {
-    console.log(error);
-  }
-};

@@ -1,5 +1,9 @@
 import React, { Fragment, useState } from 'react';
+
 import clsx from 'clsx';
+
+import { getSuggestScheduleDate } from '../../utils/time';
+
 // Task API Class
 import TaskAPI from '../../apis/task';
 
@@ -25,7 +29,7 @@ import {
   ArrowRightAlt as ArrowRightAltIcon,
   NotInterested as NotInterestedIcon
 } from '@material-ui/icons';
-import { muiModal, muiDateTimePicker } from './styled';
+import { muiModal } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
 let numberSectionTasks = null; // use for render select section
@@ -87,10 +91,10 @@ export function ModalCreateSection(props) {
 export function ModalAddTask(props) {
   const { isOpen, handleClose, sectionTasks } = props;
   const classes = muiModal();
+
   const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
-  // task schedule value (select)
-  const [valueTaskSchedule, setValueTaskSchedule] = useState('nodate');
+  const [valueTaskSchedule, setValueTaskSchedule] = useState('nodate'); // task schedule value (select)
 
   const [switchScheduleType, setSwitchScheduleType] = useState(false);
 
@@ -103,8 +107,9 @@ export function ModalAddTask(props) {
   const [selectedDate, setSelectedDate] = useState(curDate);
 
   const [isOpenCalendar, setIsOpenCalendar] = useState(false);
+  const suggestDate = getSuggestScheduleDate(curDate);
   const [openCreateSection, setOpenCreateSection] = useState(false);
-
+  
   if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;
 
   const handleChangeSelectSection = e => {
@@ -124,7 +129,7 @@ export function ModalAddTask(props) {
 
   const handleValueTaskName = e => setValueTaskName(e.target.value);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let isValid = null;
     if (valueTaskName.trim() === '') {
       isValid = false;
@@ -135,23 +140,23 @@ export function ModalAddTask(props) {
     }
 
     if (isValid) {
-      if (!switchScheduleType) {
-        // user set quick schedule
-        console.log();
-      }
-
-      /*const newTask = {
+      const newTask = {
         des: valueTaskName,
         section: valueTaskSection,
-        schedule: selectedDate.toJSON()
+        schedule: (switchScheduleType)
+          ? selectedDate.toJSON()
+          : suggestDate[valueTaskSchedule] !== null
+            ? suggestDate[valueTaskSchedule].toJSON()
+            : null
       };
+
       const taskAPI = new TaskAPI();
       await taskAPI.addTask(newTask);
       if (taskAPI.newTask) {
         // update UI
       }
       numberSectionTasks = null;
-      handleClose();*/
+      handleClose(); // close Modal
     }
   };
 
@@ -240,21 +245,21 @@ export function ModalAddTask(props) {
 
               {/* Option Items */}
               {allSectionTasks.map((section, index) => {
-                if (section !== null) {
-                  const key = `${section}-${index}`;
-                  if (index === numberSectionTasks)
-                    return [
-                      <MenuItem value={''} disabled>
-                        <em>Your unsaved section</em>
-                      </MenuItem>,
-                      <MenuItem value={section}>{section}</MenuItem>
-                    ];
-                  return (
-                    <MenuItem key={key} value={section}>
-                      {section}
-                    </MenuItem>
-                  );
+                if (section === null) return null;
+                const key = `${section}-${index}`;
+                if (index === numberSectionTasks) {
+                  return [
+                    <MenuItem disabled>
+                      <em>Your unsaved section</em>
+                    </MenuItem>,
+                    <MenuItem value={section}>{section}</MenuItem>
+                  ];
                 }
+                return (
+                  <MenuItem key={key} value={section}>
+                    {section}
+                  </MenuItem>
+                );
               })}
             </Select>
           </FormControl>
@@ -268,7 +273,6 @@ export function ModalAddTask(props) {
               size="small"
               variant="static"
               openTo="date"
-              //orientation="landscape"
               minDate={curDate}
               open={isOpenCalendar}
               value={selectedDate}
@@ -281,36 +285,43 @@ export function ModalAddTask(props) {
                 label="Schedule"
                 value={valueTaskSchedule}
                 onChange={handleChangeSelectSchedule}
+                className={classes.selectSchedule}
               >
                 <MenuItem disabled>Choose quick schedule</MenuItem>
-                <MenuItem value={'today'}>
-                  <TodayIcon fontSize="small" />
-                  <span className={classes.textOptionWithIcon}>Today</span>
+                <MenuItem 
+                  className={classes.optionSchedule}
+                  value={'today'}
+                >
+                  <div>
+                    <TodayIcon fontSize="small" />
+                    <span className={classes.textOptionWithIcon}>Today</span>
+                  </div>
+                  <span>{ suggestDate.today.toDateString() }</span>
                 </MenuItem>
-                <MenuItem value={'tomorrow'}>
-                  <WbSunnyOutlinedIcon fontSize="small" />
-                  <span className={classes.textOptionWithIcon}>Tomorrow</span>
+                <MenuItem 
+                  className={classes.optionSchedule}
+                  value={'tomorrow'}
+                >
+                  <div>
+                    <WbSunnyOutlinedIcon fontSize="small" />
+                    <span className={classes.textOptionWithIcon}>Tomorrow</span>
+                  </div>
+                  <span>{ suggestDate.tomorrow.toDateString() }</span>
                 </MenuItem>
-                <MenuItem value={'nextweek'}>
-                  <ArrowRightAltIcon fontSize="small" />
-                  <span className={classes.textOptionWithIcon}>Next week</span>
+                <MenuItem
+                  className={classes.optionSchedule}
+                  value={'nextweek'}
+                >
+                  <div>
+                    <ArrowRightAltIcon fontSize="small" />
+                    <span className={classes.textOptionWithIcon}>Next week</span>
+                  </div>
+                  <span>{ suggestDate.nextweek.toDateString() }</span>
                 </MenuItem>
                 <MenuItem value={'nodate'}>
                   <NotInterestedIcon fontSize="small" />
                   <span className={classes.textOptionWithIcon}>No date</span>
                 </MenuItem>
-                {/*<MenuItem disabled>- or choose your time</MenuItem>
-                <MenuItem value={'setdatetime'}>
-                  <AddAlarmIcon fontSize="small" />
-                  <span
-                    className={clsx(
-                      classes.textOptionWithIcon,
-                      classes.textOptionWithIconI
-                    )}
-                  >
-                    Add schedule date
-                  </span>
-                </MenuItem>*/}
               </Select>
             </FormControl>
           )}
@@ -321,7 +332,6 @@ export function ModalAddTask(props) {
           <TextField
             variant="outlined"
             placeholder="Write your new task here e.g check..."
-            size="small"
             color="primary"
             fullWidth={true}
             autoFocus={true}

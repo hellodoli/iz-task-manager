@@ -288,13 +288,37 @@ function getSuggestScheduleDate(curDate) {
   if (curDate === null) return {};
   let result = {};
   const dateSet = curDate.substring(0, 10);
-  const date = parseInt(curDate.substring(8, 10));
-  const month = parseInt(curDate.substring(5, 7));
-  const year = parseInt(curDate.substring(0, 4));
-  // get today
+  const date = parseInt(dateSet.substring(8, 10));
+  const month = parseInt(dateSet.substring(5, 7));
+  const year = parseInt(dateSet.substring(0, 4));
+  // today
   result.today = curDate;
   // tomorrow
-  result.tomorrow = '';
-  // next week
+  const lastDate = getLastDateOfMonth(month, year);
+  let date_02 = date + 1;
+  let month_02 = month;
+  let year_02 = year;
+  if (date_02 > lastDate) {
+    // last date of month
+    date_02 = 1;
+    if (month_02 === 12) {
+      // next year
+      month_02 = 1;
+      year_02 += 1;
+    } else month_02 += 1;
+  }
+
+  result.tomorrow = trans2Date({
+    date: date_02,
+    month: month_02,
+    year: year_02
+  });
+
+  // next week (monday)
+  let date_03 = date + 7;
+  if (date_03 > lastDate) {
+    // next month
+  }
+
   return result;
 }

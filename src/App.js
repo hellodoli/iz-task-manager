@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Switch, Route, useLocation } from 'react-router-dom';
-import { useTheme } from '@material-ui/core/styles';
+// import { useTheme } from '@material-ui/core/styles';
 import { checkAuth } from './actions/oauth';
+
+import DateFnsUtils from '@date-io/date-fns';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 
 // CSS
 import './reboot.css';
@@ -14,12 +17,10 @@ import Loading from './components/Loading';
 import FormLoginAndSignUp from './components/FormLoginAndSignUp';
 
 // Containers
-import { MuiPickersUtilsProvider } from '@material-ui/pickers';
-import DateFnsUtils from '@date-io/date-fns';
 import SetUp from './containers/SetUp';
 import Main from './containers/Main';
 
-function useDarkTheme() {
+/*function useDarkTheme() {
   const [theme, setTheme] = useState(useTheme());
   const {
     palette: { type }
@@ -36,7 +37,7 @@ function useDarkTheme() {
     setTheme(updateTheme);
   };
   return [theme, toggleDarkTheme];
-}
+}*/
 
 function App(props) {
   const { auth, checkAuth } = props;

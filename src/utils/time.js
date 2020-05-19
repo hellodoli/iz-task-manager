@@ -279,3 +279,22 @@ export function getWeekByDate(inputDate) {
   }
   return arrWeekDay;
 }
+
+/*
+  - use local time when calculating
+  - input: currentDate 
+*/
+function getSuggestScheduleDate(curDate) {
+  if (curDate === null) return {};
+  let result = {};
+  const dateSet = curDate.substring(0, 10);
+  const date = parseInt(curDate.substring(8, 10));
+  const month = parseInt(curDate.substring(5, 7));
+  const year = parseInt(curDate.substring(0, 4));
+  // get today
+  result.today = curDate;
+  // tomorrow
+  result.tomorrow = '';
+  // next week
+  return result;
+}

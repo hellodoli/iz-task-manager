@@ -33,7 +33,7 @@ export const muiTaskGeneral = makeStyles(theme => ({
   sectionHeader: {
     fontSize: theme.typography.pxToRem(14),
     fontWeight: theme.typography.fontWeightBold,
-    textTransform: "capitalize"
+    textTransform: 'capitalize'
   },
   wrapperAllSection: {},
   wrapperQuickAddTask: {
@@ -55,7 +55,7 @@ export const muiTaskItem = makeStyles(theme => {
       pageBreakInside: 'avoid',
       cursor: 'pointer',
       '&:not(:last-child)': {
-        marginBottom: pxToRem(20),
+        marginBottom: pxToRem(20)
       },
       '&:hover': {
         boxShadow: theme.shadows[2],
@@ -63,7 +63,7 @@ export const muiTaskItem = makeStyles(theme => {
           opacity: 1,
           visibility: 'visible'
         }
-      },
+      }
     },
     wrapperItemActive: {
       boxShadow: theme.shadows[2],
@@ -114,17 +114,21 @@ export const muiTaskItem = makeStyles(theme => {
       fontSize: pxToRem(12),
       color: props => props.color
     }
-  }
+  };
 });
 
 export const muiModal = makeStyles(theme => {
   return {
-    dialogDeleteTitle: {
-
+    gutterTopBottom: {
+      paddingTop: 0,
+      paddingBottom: 0
     },
-    addIconText: {
-      fontWeight: theme.typography.fontWeightBold,
+    dialogDeleteTitle: {},
+    textOptionWithIcon: {
       marginLeft: theme.typography.pxToRem(10)
+    },
+    textOptionWithIconI: {
+      fontWeight: theme.typography.fontWeightBold
     },
     borderDialogTitle: {
       borderBottom: `1px solid ${theme.palette.divider}`
@@ -137,5 +141,11 @@ export const muiModal = makeStyles(theme => {
         color: theme.palette.common.white
       }
     }
-  }
+  };
+});
+
+export const muiDateTimePicker = makeStyles(theme => {
+  return {
+    staticWrapperRoot: {}
+  };
 });

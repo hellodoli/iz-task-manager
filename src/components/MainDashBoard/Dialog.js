@@ -1,8 +1,10 @@
 import React, { Fragment, useState } from 'react';
+import clsx from 'clsx';
 // Task API Class
 import TaskAPI from '../../apis/task';
 
 // Styling
+import { red } from '@material-ui/core/colors';
 import {
   Dialog,
   DialogContent,
@@ -12,13 +14,19 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  FormControlLabel,
+  Switch
 } from '@material-ui/core';
-import { AddCircle, Today } from '@material-ui/icons';
-import { red } from '@material-ui/core/colors';
-import { muiModal } from './styled';
-
-import { DatePicker, TimePicker } from '@material-ui/pickers';
+import {
+  AddCircle as AddCircleIcon,
+  Today as TodayIcon,
+  WbSunnyOutlined as WbSunnyOutlinedIcon,
+  ArrowRightAlt as ArrowRightAltIcon,
+  NotInterested as NotInterestedIcon
+} from '@material-ui/icons';
+import { muiModal, muiDateTimePicker } from './styled';
+import { DateTimePicker } from '@material-ui/pickers';
 
 let numberSectionTasks = null; // use for render select section
 
@@ -81,11 +89,20 @@ export function ModalAddTask(props) {
   const classes = muiModal();
   const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
-  const [valueTaskSchedule, setValueTaskSchedule] = useState(''); // task schedule value (select)
+  // task schedule value (select)
+  const [valueTaskSchedule, setValueTaskSchedule] = useState('nodate');
 
-  const [valueTaskName, setValueTaskName] = useState(''); // task name value
+  const [switchScheduleType, setSwitchScheduleType] = useState(false);
+
+  const [valueTaskName, setValueTaskName] = useState(''); // task name text
   const [errorTaskName, setErrorTaskName] = useState(''); // error task name text
-  const [selectedDate, setSelectedDate] = useState(new Date()); // set select schedule date
+
+  // select schedule date
+  const curDate = new Date();
+  curDate.setHours(0, 0, 0, 0);
+  const [selectedDate, setSelectedDate] = useState(curDate);
+
+  const [isOpenCalendar, setIsOpenCalendar] = useState(false);
   const [openCreateSection, setOpenCreateSection] = useState(false);
 
   if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;
@@ -103,6 +120,10 @@ export function ModalAddTask(props) {
 
   const handleChangeSelectSchedule = e => setValueTaskSchedule(e.target.value);
 
+  const handleChangeSwitch = e => setSwitchScheduleType(e.target.checked);
+
+  const handleValueTaskName = e => setValueTaskName(e.target.value);
+
   const handleSave = () => {
     let isValid = null;
     if (valueTaskName.trim() === '') {
@@ -114,23 +135,24 @@ export function ModalAddTask(props) {
     }
 
     if (isValid) {
-      const newTask = {
+      if (!switchScheduleType) {
+        // user set quick schedule
+        console.log();
+      }
+
+      /*const newTask = {
         des: valueTaskName,
-        section: valueTaskSection === '' ? null : valueTaskSection,
-        schedule: null // temp
+        section: valueTaskSection,
+        schedule: selectedDate.toJSON()
       };
       const taskAPI = new TaskAPI();
-      /*await taskAPI.addTask(newTask);
+      await taskAPI.addTask(newTask);
       if (taskAPI.newTask) {
         // update UI
-      }*/
+      }
       numberSectionTasks = null;
-      handleClose();
+      handleClose();*/
     }
-  };
-
-  const handleDateChange = date => {
-    setSelectedDate(date);
   };
 
   /* --- START: Handle Create Section Action --- */
@@ -148,6 +170,19 @@ export function ModalAddTask(props) {
     setValueTaskSection(sectionName);
   };
   /* --- END: Handle Create Section Action --- */
+
+  const renderSavedOptionSection = () => {
+    if (allSectionTasks.length > 0) {
+      if (allSectionTasks[0] === null) return null;
+      return (
+        <MenuItem disabled>
+          <em>Your saved section</em>
+        </MenuItem>
+      );
+    }
+    return null;
+  };
+
   return (
     <Fragment>
       {openCreateSection && (
@@ -164,6 +199,22 @@ export function ModalAddTask(props) {
         disableBackdropClick={true}
       >
         <DialogTitle>Add new task</DialogTitle>
+
+        {/* Switch */}
+        <DialogContent className={classes.gutterTopBottom}>
+          <FormControlLabel
+            control={
+              <Switch
+                color="primary"
+                checked={switchScheduleType}
+                onChange={handleChangeSwitch}
+              />
+            }
+            label="Switch to set your schedule"
+          />
+        </DialogContent>
+
+        {/* Select section */}
         <DialogContent>
           <FormControl variant="outlined" size="small" fullWidth={true}>
             <InputLabel>Section</InputLabel>
@@ -174,56 +225,98 @@ export function ModalAddTask(props) {
             >
               {/* Option creat section */}
               <MenuItem value={'create'}>
-                <AddCircle />
-                <span className={classes.addIconText}>Create new section</span>
+                <AddCircleIcon />
+                <span
+                  className={clsx(
+                    classes.textOptionWithIcon,
+                    classes.textOptionWithIconI
+                  )}
+                >
+                  Create new section
+                </span>
               </MenuItem>
+
+              {renderSavedOptionSection()}
+
               {/* Option Items */}
-              <MenuItem disabled>
-                <em>Your saved section</em>
-              </MenuItem>
               {allSectionTasks.map((section, index) => {
-                const key = `${section}-${index}`;
-                if (index === numberSectionTasks)
-                  return [
-                    <MenuItem value={''} disabled>
-                      <em>Your unsaved section</em>
-                    </MenuItem>,
-                    <MenuItem value={section}>{section}</MenuItem>
-                  ];
-                return (
-                  <MenuItem key={key} value={section}>
-                    {section}
-                  </MenuItem>
-                );
+                if (section !== null) {
+                  const key = `${section}-${index}`;
+                  if (index === numberSectionTasks)
+                    return [
+                      <MenuItem value={''} disabled>
+                        <em>Your unsaved section</em>
+                      </MenuItem>,
+                      <MenuItem value={section}>{section}</MenuItem>
+                    ];
+                  return (
+                    <MenuItem key={key} value={section}>
+                      {section}
+                    </MenuItem>
+                  );
+                }
               })}
             </Select>
           </FormControl>
         </DialogContent>
 
+        {/* Select schedule and Datetime picker */}
         <DialogContent>
-          <FormControl variant="outlined" size="small" fullWidth={true}>
-            <InputLabel>Schedule</InputLabel>
-            <Select
-              label="Schedule"
-              value={valueTaskSchedule}
-              onChange={handleChangeSelectSchedule}
-            >
-              <MenuItem disabled value={''}>
-                Choose your schedule
-              </MenuItem>
-              <MenuItem value={'today'}>
-                <Today />
-                <span>Today</span>
-              </MenuItem>
-              <MenuItem value={'tomorrow'}>Tomorrow</MenuItem>
-              <MenuItem value={'nextweek'}>Next week</MenuItem>
-              <MenuItem value={'nodate'}>No date</MenuItem>
-              <MenuItem disabled>- or choose your time</MenuItem>
-              <MenuItem>New date</MenuItem>
-            </Select>
-          </FormControl>
+          {switchScheduleType ? (
+            <DateTimePicker
+              autoOk
+              size="small"
+              variant="static"
+              openTo="date"
+              //orientation="landscape"
+              minDate={curDate}
+              open={isOpenCalendar}
+              value={selectedDate}
+              onChange={setSelectedDate}
+            />
+          ) : (
+            <FormControl variant="outlined" size="small" fullWidth={true}>
+              <InputLabel>Schedule</InputLabel>
+              <Select
+                label="Schedule"
+                value={valueTaskSchedule}
+                onChange={handleChangeSelectSchedule}
+              >
+                <MenuItem disabled>Choose quick schedule</MenuItem>
+                <MenuItem value={'today'}>
+                  <TodayIcon fontSize="small" />
+                  <span className={classes.textOptionWithIcon}>Today</span>
+                </MenuItem>
+                <MenuItem value={'tomorrow'}>
+                  <WbSunnyOutlinedIcon fontSize="small" />
+                  <span className={classes.textOptionWithIcon}>Tomorrow</span>
+                </MenuItem>
+                <MenuItem value={'nextweek'}>
+                  <ArrowRightAltIcon fontSize="small" />
+                  <span className={classes.textOptionWithIcon}>Next week</span>
+                </MenuItem>
+                <MenuItem value={'nodate'}>
+                  <NotInterestedIcon fontSize="small" />
+                  <span className={classes.textOptionWithIcon}>No date</span>
+                </MenuItem>
+                {/*<MenuItem disabled>- or choose your time</MenuItem>
+                <MenuItem value={'setdatetime'}>
+                  <AddAlarmIcon fontSize="small" />
+                  <span
+                    className={clsx(
+                      classes.textOptionWithIcon,
+                      classes.textOptionWithIconI
+                    )}
+                  >
+                    Add schedule date
+                  </span>
+                </MenuItem>*/}
+              </Select>
+            </FormControl>
+          )}
         </DialogContent>
 
+        {/* Input task name */}
         <DialogContent>
           <TextField
             variant="outlined"
@@ -235,10 +328,11 @@ export function ModalAddTask(props) {
             error={errorTaskName !== ''}
             helperText={errorTaskName}
             value={valueTaskName}
-            onChange={handleDateChange}
+            onChange={handleValueTaskName}
           />
         </DialogContent>
 
+        {/* Button group */}
         <DialogContent>
           <Button variant="contained" color="primary" onClick={handleSave}>
             Save
@@ -248,6 +342,7 @@ export function ModalAddTask(props) {
             Cancel
           </Button>
         </DialogContent>
+
         {/* Empty DialogContent make free spacing */}
         <DialogContent></DialogContent>
       </Dialog>

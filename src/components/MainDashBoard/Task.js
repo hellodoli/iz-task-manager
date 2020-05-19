@@ -306,18 +306,19 @@ function TaskHeader(props) {
   /* --- END: Handle Add Task Action --- */
 
   const renderTitleHeaderText = () => {
-    let titleHeader = '';
-    if (pathname === TASK_ALL) titleHeader = 'Inbox';
-    else if (pathname === TASK_TODAY) titleHeader = 'Today';
-    return titleHeader;
+    if (pathname === TASK_ALL) return 'Inbox';
+    else if (pathname === TASK_TODAY) return 'Today';
   };
 
   const renderAddTaskText = () => {
-    let titleAddTaskText = '';
-    if (pathname === TASK_ALL) titleAddTaskText = 'Add task';
-    else if (pathname === TASK_TODAY) titleAddTaskText = 'Add task for today';
-    return titleAddTaskText;
+    if (pathname === TASK_ALL) return 'Add task';
+    else if (pathname === TASK_TODAY) return 'Add task for today';
   };
+
+  const addTaskBtnRef = React.useRef(null);
+  useEffect(() => {
+    addTaskBtnRef.current.click();
+  }, []);
 
   return (
     <Fragment>
@@ -336,6 +337,7 @@ function TaskHeader(props) {
         <h1 className={gClasses.headerTitle}>{renderTitleHeaderText()}</h1>
         <div>
           <Fab
+            ref={addTaskBtnRef}
             variant="extended"
             size="small"
             color="secondary"

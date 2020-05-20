@@ -22,8 +22,7 @@ class Task {
       };
 
       const response = await api.get('/tasks', { params, headers });
-      if (response.status === 200)
-        this.tasks = response.data;
+      if (response.status === 200) this.tasks = response.data;
     } catch (error) {
       console.log(error);
       console.log('error.name: ', error.name);
@@ -61,7 +60,11 @@ class Task {
         Accept: 'application/json',
         Authorization: 'Bearer ' + getCookie('emailToken')
       };
-      if (obTask.schedule === undefined || obTask.schedule === 'undefined')
+
+      if (typeof obTask.section === 'undefined' || obTask.section === '')
+        obTask.section = null;
+
+      if (typeof obTask.schedule === 'undefined' || obTask.schedule === '')
         obTask.schedule = null;
 
       const response = await apis.post('/tasks', { ...obTask }, { headers });

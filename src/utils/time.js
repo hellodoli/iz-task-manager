@@ -234,7 +234,10 @@ function trans2Date(d) {
 
 export function getWeekByDate(inputDate) {
   let d = inputDate;
-  if (d === 'today') d = new Date();
+  if (d === 'today') {
+    d = new Date();
+    d.setHours(0, 0, 0, 0);
+  }
   console.log('input date:', d);
 
   const day = d.getDay();
@@ -302,10 +305,19 @@ export function getWeekByDate(inputDate) {
   - use local time when calculating, get current date and return today, tomorrow and nextweek (monday)
   - input: currentDate (type Date)
 */
-export function getSuggestScheduleDate(curDate) {
+export function getSuggestScheduleDate(curDate, options) {
   if (curDate === null || typeof curDate === 'undefined') {
     curDate = new Date();
     curDate.setHours(0, 0, 0, 0);
+  }
+
+  if (options === null || typeof options === 'undefined') {
+    options = {
+      nodate: true,
+      today: true,
+      tomorrow: true,
+      nextweek: true
+    };
   }
 
   let result = {};
@@ -313,44 +325,49 @@ export function getSuggestScheduleDate(curDate) {
   const date = curDate.getDate();
   const month = curDate.getMonth() + 1;
   const year = curDate.getFullYear();
-
-  result.nodate = null;
-  // get today
-  result.today = curDate;
-  // tomorrow
-  let date_02 = date + 1;
-  let month_02 = month;
-  let year_02 = year;
   const lastDate = getLastDateOfMonth(month, year);
-  if (date_02 > lastDate) {
-    date_02 = 1;
-    if (month_02 === 12) {
-      month_02 = 1;
-      year_02 += 1;
-    } else month_02 += 1;
-  }
+  // nodate
+  if (options.nodate) result.nodate = null;
+  // get today
+  if (options.today) result.today = curDate;
+  // tomorrow
+  if (options.tomorrow) {
+    let date_02 = date + 1;
+    let month_02 = month;
+    let year_02 = year;
 
-  result.tomorrow = trans2Date({
-    date: date_02,
-    month: month_02,
-    year: year_02
-  });
+    if (date_02 > lastDate) {
+      date_02 = 1;
+      if (month_02 === 12) {
+        month_02 = 1;
+        year_02 += 1;
+      } else month_02 += 1;
+    }
+
+    result.tomorrow = trans2Date({
+      date: date_02,
+      month: month_02,
+      year: year_02
+    });
+  }
   // next week
-  const prefix = day === 0 ? 1 : 8 - day;
-  let date_03 = date + prefix;
-  let month_03 = month;
-  let year_03 = year;
-  if (date_03 > lastDate) {
-    if (month_03 === 12) {
-      month_03 = 1;
-      year_03 += 1;
-    } else month_03 += 1;
-  }
+  if (options.nextweek) {
+    const prefix = day === 0 ? 1 : 8 - day;
+    let date_03 = date + prefix;
+    let month_03 = month;
+    let year_03 = year;
+    if (date_03 > lastDate) {
+      if (month_03 === 12) {
+        month_03 = 1;
+        year_03 += 1;
+      } else month_03 += 1;
+    }
 
-  result.nextweek = trans2Date({
-    date: date_03,
-    month: month_03,
-    year: year_03
-  });
+    result.nextweek = trans2Date({
+      date: date_03,
+      month: month_03,
+      year: year_03
+    });
+  }
   return result;
 }

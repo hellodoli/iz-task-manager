@@ -1,3 +1,4 @@
+import { createMuiTheme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { grey, red } from '@material-ui/core/colors';
 
@@ -118,6 +119,7 @@ export const muiTaskItem = makeStyles(theme => {
 });
 
 export const muiModal = makeStyles(theme => {
+  const typo = theme.typography;
   return {
     gutterTopBottom: {
       paddingTop: 0,
@@ -125,10 +127,10 @@ export const muiModal = makeStyles(theme => {
     },
     dialogDeleteTitle: {},
     textOptionWithIcon: {
-      marginLeft: theme.typography.pxToRem(10)
+      marginLeft: typo.pxToRem(10)
     },
     textOptionWithIconI: {
-      fontWeight: theme.typography.fontWeightBold
+      fontWeight: typo.fontWeightBold
     },
     borderDialogTitle: {
       borderBottom: `1px solid ${theme.palette.divider}`
@@ -141,23 +143,67 @@ export const muiModal = makeStyles(theme => {
         color: theme.palette.common.white
       }
     },
-    selectSchedule: {
-      '& .MuiSelect-root': {
-        display: 'flex',
-        '& > span': {
-          marginLeft: theme.typography.pxToRem(8)
-        }
-      }
-    },
-    optionSchedule: {
-      display: 'flex',
-      justifyContent: 'space-between'
+    dateTimePicker: {
+      color: 'red'
     }
   };
 });
 
-export const muiDateTimePicker = makeStyles(theme => {
-  return {
-    staticWrapperRoot: {}
-  };
+// Overriding styles with classes
+
+export const muiMenuItemModal = makeStyles(theme => ({
+  root: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    '& .MuiSvgIcon-root + span': {
+      marginLeft: theme.typography.pxToRem(10)
+    }
+  }
+}));
+
+export const muiSelectSchedule = makeStyles(theme => ({
+  root: {
+    display: 'flex',
+    '& > span': {
+      marginLeft: theme.typography.pxToRem(8)
+    }
+  }
+}));
+
+// Overriding styles with createMuiTheme
+export const muiDateTimePicker = createMuiTheme({
+  overrides: {
+    /*MuiTypography: {
+      h4: {
+        fontSize: '1.5rem'
+      },
+      subtitle1: {
+        fontSize: '0.75rem'
+      }
+    },
+    MuiPickersToolbar: {
+      toolbar: {
+        height: '80px'
+      }
+    },*/
+    MuiPickersBasePicker: {
+      pickerView: {
+        width: '100%',
+        margin: '0 auto',
+        maxWidth: 'initial'
+      }
+    },
+    MuiPickersDay: {
+      day: {
+        width: '40px',
+        height: '40px'
+      }
+    }
+    /*MuiPickersToolbarText: {
+      toolbarTxt: {
+        fontSize: '1.5rem'
+      }
+    }*/
+  }
 });

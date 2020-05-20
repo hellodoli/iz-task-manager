@@ -1,14 +1,13 @@
 import React, { Fragment, useState } from 'react';
-
 import clsx from 'clsx';
-
+import { TASK_TODAY } from '../../constants/location';
 import { getSuggestScheduleDate } from '../../utils/time';
-
 // Task API Class
 import TaskAPI from '../../apis/task';
 
 // Styling
 import { red } from '@material-ui/core/colors';
+import { ThemeProvider } from '@material-ui/styles';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,12 @@ import {
   ArrowRightAlt as ArrowRightAltIcon,
   NotInterested as NotInterestedIcon
 } from '@material-ui/icons';
-import { muiModal } from './styled';
+import {
+  muiModal,
+  muiMenuItemModal,
+  muiSelectSchedule,
+  muiDateTimePicker
+} from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
 let numberSectionTasks = null; // use for render select section
@@ -39,9 +43,7 @@ export function ModalCreateSection(props) {
   const [value, setValue] = useState('');
   const [errorText, setErrorText] = useState('');
 
-  const handleChange = e => {
-    setValue(e.target.value);
-  };
+  const handleChange = e => setValue(e.target.value);
 
   const handleSave = () => {
     let isValidSection = null;
@@ -89,12 +91,16 @@ export function ModalCreateSection(props) {
 }
 
 export function ModalAddTask(props) {
-  const { isOpen, handleClose, sectionTasks } = props;
+  const { isOpen, handleClose, sectionTasks, pathname } = props;
   const classes = muiModal();
+  const menuItemClasses = muiMenuItemModal();
+  const selectScheduleClasses = muiSelectSchedule();
 
   const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
-  const [valueTaskSchedule, setValueTaskSchedule] = useState('nodate'); // task schedule value (select)
+  const [valueTaskSchedule, setValueTaskSchedule] = useState(
+    pathname === TASK_TODAY ? 'today' : 'nodate'
+  ); // task schedule value (select)
 
   const [switchScheduleType, setSwitchScheduleType] = useState(false);
 
@@ -106,7 +112,7 @@ export function ModalAddTask(props) {
   curDate.setHours(0, 0, 0, 0);
   const [selectedDate, setSelectedDate] = useState(curDate);
 
-  const [isOpenCalendar, setIsOpenCalendar] = useState(false);
+  const [isOpenCalendar] = useState(false);
   const suggestDate = getSuggestScheduleDate(curDate);
   const [openCreateSection, setOpenCreateSection] = useState(false);
 
@@ -142,10 +148,10 @@ export function ModalAddTask(props) {
     if (isValid) {
       const newTask = {
         des: valueTaskName,
-        section: valueTaskSection,
+        section: valueTaskSection === '' ? null : valueTaskSection,
         schedule: switchScheduleType
-          ? selectedDate.toJSON()
-          : suggestDate[valueTaskSchedule] !== null
+          ? selectedDate.toJSON() // set schedule
+          : suggestDate[valueTaskSchedule] !== null // quick schedule
           ? suggestDate[valueTaskSchedule].toJSON()
           : null
       };
@@ -154,16 +160,21 @@ export function ModalAddTask(props) {
       await taskAPI.addTask(newTask);
       if (taskAPI.newTask) {
         // update UI
+      } else {
+        alert('add Task fail');
       }
       numberSectionTasks = null;
       handleClose(); // close Modal
     }
   };
 
-  /* --- START: Handle Create Section Action --- */
-  const handleCloseCreateSection = () => {
-    setOpenCreateSection(false);
+  const handleCloseModalAddTask = () => {
+    numberSectionTasks = null;
+    handleClose();
   };
+
+  /* --- START: Handle Create Section Action --- */
+  const handleCloseCreateSection = () => setOpenCreateSection(false);
 
   const cbSaveCreateSection = sectionName => {
     // close ModalCreateSection
@@ -177,8 +188,8 @@ export function ModalAddTask(props) {
   /* --- END: Handle Create Section Action --- */
 
   const renderSavedOptionSection = () => {
-    if (allSectionTasks.length > 0) {
-      if (allSectionTasks[0] === null) return null;
+    if (sectionTasks.length > 0) {
+      if (sectionTasks.length === 1 && sectionTasks[0] === null) return null;
       return (
         <MenuItem disabled>
           <em>Your saved section</em>
@@ -200,7 +211,7 @@ export function ModalAddTask(props) {
       <Dialog
         fullWidth={true}
         open={isOpen}
-        onClose={handleClose}
+        onClose={handleCloseModalAddTask}
         disableBackdropClick={true}
       >
         <DialogTitle>Add new task</DialogTitle>
@@ -268,16 +279,18 @@ export function ModalAddTask(props) {
         {/* Select schedule and Datetime picker */}
         <DialogContent>
           {switchScheduleType ? (
-            <DateTimePicker
-              autoOk
-              size="small"
-              variant="static"
-              openTo="date"
-              minDate={curDate}
-              open={isOpenCalendar}
-              value={selectedDate}
-              onChange={setSelectedDate}
-            />
+            <ThemeProvider theme={muiDateTimePicker}>
+              <DateTimePicker
+                autoOk
+                size="small"
+                variant="static"
+                openTo="date"
+                minDate={curDate}
+                open={isOpenCalendar}
+                value={selectedDate}
+                onChange={setSelectedDate}
+              />
+            </ThemeProvider>
           ) : (
             <FormControl variant="outlined" size="small" fullWidth={true}>
               <InputLabel>Schedule</InputLabel>
@@ -285,29 +298,27 @@ export function ModalAddTask(props) {
                 label="Schedule"
                 value={valueTaskSchedule}
                 onChange={handleChangeSelectSchedule}
-                className={classes.selectSchedule}
+                classes={selectScheduleClasses}
               >
                 <MenuItem disabled>Choose quick schedule</MenuItem>
-                <MenuItem className={classes.optionSchedule} value={'today'}>
+                <MenuItem classes={menuItemClasses} value={'today'}>
                   <div>
                     <TodayIcon fontSize="small" />
-                    <span className={classes.textOptionWithIcon}>Today</span>
+                    <span>Today</span>
                   </div>
                   <span>{suggestDate.today.toDateString()}</span>
                 </MenuItem>
-                <MenuItem className={classes.optionSchedule} value={'tomorrow'}>
+                <MenuItem classes={menuItemClasses} value={'tomorrow'}>
                   <div>
                     <WbSunnyOutlinedIcon fontSize="small" />
-                    <span className={classes.textOptionWithIcon}>Tomorrow</span>
+                    <span>Tomorrow</span>
                   </div>
                   <span>{suggestDate.tomorrow.toDateString()}</span>
                 </MenuItem>
-                <MenuItem className={classes.optionSchedule} value={'nextweek'}>
+                <MenuItem classes={menuItemClasses} value={'nextweek'}>
                   <div>
                     <ArrowRightAltIcon fontSize="small" />
-                    <span className={classes.textOptionWithIcon}>
-                      Next week
-                    </span>
+                    <span>Next week</span>
                   </div>
                   <span>{suggestDate.nextweek.toDateString()}</span>
                 </MenuItem>

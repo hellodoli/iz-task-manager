@@ -10,7 +10,12 @@ import TaskAPI from '../../apis/task';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 import { TASK_ALL, TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
 
-import { dayNames, getWeekByDate } from '../../utils/time';
+import {
+  monthNames,
+  dayNames,
+  getWeekByDate,
+  getSuggestScheduleDate
+} from '../../utils/time';
 
 import { getTask, setTask } from '../../actions/task';
 
@@ -25,6 +30,7 @@ import {
   IconButton,
   TextField,
   Button,
+  ButtonGroup,
   Fab,
   Box,
   Menu,
@@ -42,10 +48,15 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Schedule,
-  ExpandMore
+  ExpandMore,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon
 } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
+
+// Components
+import Loading from '../Loading';
 
 let prevPathNameTask = null;
 let prevEditTask = null;
@@ -293,7 +304,7 @@ function TaskHeader(props) {
   const {
     location: { pathname },
     tasks: { sectionTasks },
-    addTask
+    setTask
   } = props;
   const gClasses = muiTaskGeneral();
 
@@ -310,16 +321,6 @@ function TaskHeader(props) {
     else if (pathname === TASK_TODAY) return 'Today';
   };
 
-  const renderAddTaskText = () => {
-    if (pathname === TASK_ALL) return 'Add task';
-    else if (pathname === TASK_TODAY) return 'Add task for today';
-  };
-
-  const addTaskBtnRef = React.useRef(null);
-  useEffect(() => {
-    addTaskBtnRef.current.click();
-  }, []);
-
   return (
     <Fragment>
       {/* (Modal) Add Task */}
@@ -329,7 +330,7 @@ function TaskHeader(props) {
           isOpen={isOpen}
           handleClose={handleClose}
           sectionTasks={sectionTasks}
-          addTask={addTask}
+          setTask={setTask}
         />
       )}
       {/* Task Main Header */}
@@ -337,15 +338,14 @@ function TaskHeader(props) {
         <h1 className={gClasses.headerTitle}>{renderTitleHeaderText()}</h1>
         <div>
           <Fab
-            ref={addTaskBtnRef}
             variant="extended"
             size="small"
-            color="secondary"
+            color="primary"
             aria-label="add task"
             onClick={handleClickOpen}
           >
             <AddIcon />
-            {renderAddTaskText()}
+            Add task
           </Fab>
         </div>
       </div>
@@ -355,11 +355,39 @@ function TaskHeader(props) {
 
 function TaskHeaderUpcoming(props) {
   const gClasses = muiTaskGeneral();
-  const defineDate = new Date(); // will set later
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  const [defineDate] = useState(date);
   const [indexActiveWeekRow, setIndexActiveWeekRow] = useState(null);
   const [weekRow, setWeekRow] = useState([]);
 
   const handleChangeTabList = (e, newValue) => setIndexActiveWeekRow(newValue);
+
+  const goToNextWeek = () => {
+    if (weekRow.length > 0) {
+      const sundayOfWeek = weekRow[weekRow.length - 1];
+      const { date, month, year } = sundayOfWeek;
+      console.log('sundayOfWeek: ', sundayOfWeek);
+      const mondayNextWeek = getSuggestScheduleDate(
+        new Date(`${year}-${month}-${date}`),
+        {
+          tomorrow: true
+        }
+      ).tomorrow;
+      const nextWeek = getWeekByDate(mondayNextWeek);
+      const nextWeekRow = nextWeek.map(date => ({
+        dayString: dayNames[date.getDay()],
+        day: date.getDay(),
+        date: date.getDate(),
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
+        isDisabled: false
+      }));
+      // set weekRow
+      setIndexActiveWeekRow(0);
+      setWeekRow(nextWeekRow);
+    }
+  };
 
   useEffect(() => {
     const week = getWeekByDate(defineDate);
@@ -367,10 +395,8 @@ function TaskHeaderUpcoming(props) {
       let activeIndex = null;
       const weekRow = week.map((date, index) => {
         const day = date.getDay();
-        if (day === defineDate.getDay()) {
-          activeIndex = index;
-          setIndexActiveWeekRow(activeIndex);
-        }
+        if (day === defineDate.getDay()) activeIndex = index;
+
         return {
           dayString: dayNames[day],
           day: date.getDay(),
@@ -381,42 +407,65 @@ function TaskHeaderUpcoming(props) {
         };
       });
       // set weekRow
+      setIndexActiveWeekRow(activeIndex);
       setWeekRow(weekRow);
     }
   }, [defineDate]);
 
+  const renderTitleHeader = () => {
+    if (weekRow.length > 0) {
+      return <div>Hello</div>;
+    }
+    return <div>...Loading</div>;
+  };
+
   return (
     <div className={gClasses.headerMgBottomL}>
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>{defineDate.getDate()}</h1>
-        <div>Button</div>
+        <h1 className={gClasses.headerTitle}>{renderTitleHeader()}</h1>
+        <div className={gClasses.header}>
+          <ButtonGroup variant="outlined" color="secondary">
+            <Button disabled>
+              <ChevronLeftIcon />
+            </Button>
+            <Button onClick={goToNextWeek}>
+              <ChevronRightIcon />
+            </Button>
+          </ButtonGroup>
+          {'  '}
+          <Button>Today</Button>
+        </div>
       </div>
       <div>
+        <Loading />
+        {/*weekRow.length === 0 && <Loading />*/}
         {/* Tab list week row */}
-        <Paper square>
-          <Tabs
-            value={indexActiveWeekRow}
-            onChange={handleChangeTabList}
-            variant="fullWidth"
-            indicatorColor="secondary"
-            textColor="secondary"
-          >
-            {weekRow.map(({ dayString, date, month, year, isDisabled }) => (
-              <Tab
-                key={`${year}-${month}-${date}`}
-                disabled={isDisabled}
-                label={
-                  <div>
-                    <div className="day">{dayString}</div>
+        {weekRow.length > 0 && (
+          <Paper square>
+            <Tabs
+              value={indexActiveWeekRow}
+              onChange={handleChangeTabList}
+              variant="fullWidth"
+              indicatorColor="secondary"
+              textColor="secondary"
+            >
+              {weekRow.map(({ dayString, date, month, year, isDisabled }) => (
+                <Tab
+                  key={`${year}-${month}-${date}`}
+                  disabled={isDisabled}
+                  label={
                     <div>
-                      <strong className="date">{date}</strong>
+                      <div className="day">{dayString}</div>
+                      <div>
+                        <strong className="date">{date}</strong>
+                      </div>
                     </div>
-                  </div>
-                }
-              />
-            ))}
-          </Tabs>
-        </Paper>
+                  }
+                />
+              ))}
+            </Tabs>
+          </Paper>
+        )}
       </div>
     </div>
   );
@@ -435,28 +484,29 @@ function TaskList(props) {
 
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
-  // check every time user switch other tab
-  if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
-    console.log('prevPathname: ', prevPathNameTask);
-    if (prevEditTask !== null) {
-      const {
-        obIndex: { parentIndex, childIndex }
-      } = prevEditTask;
-      const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
+  useEffect(() => {
+    // check every time user switch other tab
+    if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
+      console.log('switch TASK pathname');
+      if (prevEditTask !== null) {
+        const {
+          obIndex: { parentIndex, childIndex }
+        } = prevEditTask;
+        const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
 
-      const cloneTask = tasks[taskDataProperty].slice();
-      const prevTask = cloneTask[parentIndex].items[childIndex];
-      prevTask.isOpen = false;
+        const cloneTask = tasks[taskDataProperty].slice();
+        const prevTask = cloneTask[parentIndex].items[childIndex];
+        prevTask.isOpen = false;
 
-      setTask({
-        ...tasks,
-        [taskDataProperty]: cloneTask
-      });
-      prevEditTask = null;
+        setTask({
+          ...tasks,
+          [taskDataProperty]: cloneTask
+        });
+        prevEditTask = null;
+      }
     }
-    //numberSectionTasks = null;
-  }
-  prevPathNameTask = pathname;
+    prevPathNameTask = pathname;
+  }, [pathname, setTask, tasks]);
 
   const startOpenEditTask = obIndex => {
     const cloneTask = tasks[taskDataProperty].slice();
@@ -591,7 +641,7 @@ function TaskList(props) {
                 )}
                 expandIcon={<ExpandMore />}
               >
-                {section}
+                {section === null ? <em>(No section)</em> : section}
               </ExpansionPanelSummary>
 
               <ExpansionPanelDetails className={`${taskClassName}-body`}>

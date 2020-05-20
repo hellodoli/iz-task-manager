@@ -302,8 +302,12 @@ export function getWeekByDate(inputDate) {
 }
 
 /*
-  - use local time when calculating, get current date and return today, tomorrow and nextweek (monday)
-  - input: currentDate (type Date)
+  * Use local time when calculating
+  * get date and return today, yesterday, tomorrow and nextweek (monday)
+  - input: 
+      + curDate: (type Date)
+      + options: (type object) Ex: { nodate, today, tomorrow, yesterday, nextweek }
+        default: undefined
 */
 export function getSuggestScheduleDate(curDate, options) {
   if (curDate === null || typeof curDate === 'undefined') {
@@ -316,7 +320,8 @@ export function getSuggestScheduleDate(curDate, options) {
       nodate: true,
       today: true,
       tomorrow: true,
-      nextweek: true
+      nextweek: true,
+      yesterday: true
     };
   }
 
@@ -328,7 +333,7 @@ export function getSuggestScheduleDate(curDate, options) {
   const lastDate = getLastDateOfMonth(month, year);
   // nodate
   if (options.nodate) result.nodate = null;
-  // get today
+  // today
   if (options.today) result.today = curDate;
   // tomorrow
   if (options.tomorrow) {
@@ -367,6 +372,24 @@ export function getSuggestScheduleDate(curDate, options) {
       date: date_03,
       month: month_03,
       year: year_03
+    });
+  }
+  // yesterday
+  if (options.yesterday) {
+    let date_04 = date - 1;
+    let month_04 = month;
+    let year_04 = year;
+    if (date_04 === 0) { // prev month
+      if (month_04 === 1) { // prev year
+        month_04 = 12;
+        year_04 -= 1;
+      } else month_04 -= 1;
+      date_04 = getLastDateOfMonth(month_04, year_04);
+    }
+    result.yesterday = trans2Date({
+      date: date_04,
+      month: month_04,
+      year: year_04
     });
   }
   return result;

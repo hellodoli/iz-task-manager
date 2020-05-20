@@ -355,47 +355,76 @@ function TaskHeader(props) {
 
 function TaskHeaderUpcoming(props) {
   const gClasses = muiTaskGeneral();
+  // set min date
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  const [defineDate] = useState(date);
+  const [minDate] = useState(date);
+
   const [indexActiveWeekRow, setIndexActiveWeekRow] = useState(null);
   const [weekRow, setWeekRow] = useState([]);
 
   const handleChangeTabList = (e, newValue) => setIndexActiveWeekRow(newValue);
 
-  const goToNextWeek = () => {
-    if (weekRow.length > 0) {
-      const sundayOfWeek = weekRow[weekRow.length - 1];
-      const { date, month, year } = sundayOfWeek;
-      console.log('sundayOfWeek: ', sundayOfWeek);
-      const mondayNextWeek = getSuggestScheduleDate(
-        new Date(`${year}-${month}-${date}`),
-        {
-          tomorrow: true
+  const goToWeek = (pip) => {
+    if (weekRow && weekRow.length > 0) {
+      const _minDate = minDate.getDate();
+      const _minMonth = minDate.getMonth() + 1;
+      const _minYear = minDate.getFullYear();
+
+      const dateOfWeek = (pip === 'next')
+        ? weekRow[weekRow.length - 1]
+        : weekRow[0];
+      const { date, month, year } = dateOfWeek;
+
+      const dayNextOrPrevWeek = getSuggestScheduleDate(
+        new Date(`${year}-${month}-${date}`), {
+          tomorrow: true,
+          yesterday: true
         }
-      ).tomorrow;
-      const nextWeek = getWeekByDate(mondayNextWeek);
-      const nextWeekRow = nextWeek.map(date => ({
-        dayString: dayNames[date.getDay()],
-        day: date.getDay(),
-        date: date.getDate(),
-        month: date.getMonth() + 1,
-        year: date.getFullYear(),
-        isDisabled: false
-      }));
-      // set weekRow
+      );
+      const nextOrPrevWeek = getWeekByDate(pip === 'next'
+        ? dayNextOrPrevWeek.tomorrow : dayNextOrPrevWeek.yesterday);
+      
+      let activeIndex = null;
+      const nextOrPrevWeekRow = nextOrPrevWeek.map((date, index) => {
+        const day = date.getDay();
+        if (pip !== 'next' && day === minDate.getDay()) activeIndex = index;
+        return {
+          dayString: dayNames[day],
+          day: date.getDay(),
+          date: date.getDate(),
+          month: date.getMonth() + 1,
+          year: date.getFullYear(),
+          isDisabled: (pip === 'next') ? false : (activeIndex === null)
+        };
+      });
       setIndexActiveWeekRow(0);
-      setWeekRow(nextWeekRow);
+      setWeekRow(nextOrPrevWeekRow); // set weekRow
     }
   };
 
+  const isDasbledPrevWeekRow = () => {
+    if (weekRow && weekRow.length > 0) {
+      const _minDate = minDate.getDate();
+      const _minMonth = minDate.getMonth() + 1;
+      const _minYear = minDate.getFullYear();
+      for (let i = 0; i < weekRow.length; i++) {
+        const { date, month, year } = weekRow[i];
+        if (date === _minDate && month === _minMonth && year === _minYear)
+          return true;
+      }
+      return false;
+    }
+    return null;
+  };
+
   useEffect(() => {
-    const week = getWeekByDate(defineDate);
+    const week = getWeekByDate(minDate);
     if (week && week.length > 0) {
       let activeIndex = null;
       const weekRow = week.map((date, index) => {
         const day = date.getDay();
-        if (day === defineDate.getDay()) activeIndex = index;
+        if (day === minDate.getDay()) activeIndex = index;
 
         return {
           dayString: dayNames[day],
@@ -410,25 +439,60 @@ function TaskHeaderUpcoming(props) {
       setIndexActiveWeekRow(activeIndex);
       setWeekRow(weekRow);
     }
-  }, [defineDate]);
+  }, []);
 
   const renderTitleHeader = () => {
     if (weekRow.length > 0) {
-      return <div>Hello</div>;
+      const info = weekRow[0];
+      return <h1 className={gClasses.headerTitle}>{`${monthNames[info.month]} ${info.year}`}</h1>;
     }
-    return <div>...Loading</div>;
+    return <Loading size={20} />;
+  };
+
+  const renderWeekRow = () => {
+    if (weekRow.length === 0) return <Loading size={30} />;
+    return (
+      <Paper square>
+        <Tabs
+          value={indexActiveWeekRow}
+          onChange={handleChangeTabList}
+          variant="fullWidth"
+          indicatorColor="secondary"
+          textColor="secondary"
+        >
+          {weekRow.map(({ dayString, date, month, year, isDisabled }) => (
+            <Tab
+              key={`${year}-${month}-${date}`}
+              disabled={isDisabled}
+              label={
+                <div>
+                  <div className="day">{dayString}</div>
+                  <div>
+                    <strong className="date">{date}</strong>
+                  </div>
+                </div>
+              }
+            />
+          ))}
+        </Tabs>
+      </Paper>
+    );
   };
 
   return (
     <div className={gClasses.headerMgBottomL}>
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>{renderTitleHeader()}</h1>
+        { renderTitleHeader() }
+        {/* Header right */}
         <div className={gClasses.header}>
-          <ButtonGroup variant="outlined" color="secondary">
-            <Button disabled>
+          <ButtonGroup variant="outlined" color="secondary" size="small">
+            <Button
+              disabled={isDasbledPrevWeekRow()}
+              onClick={() => goToWeek('prev')}
+            >
               <ChevronLeftIcon />
             </Button>
-            <Button onClick={goToNextWeek}>
+            <Button onClick={() => goToWeek('next')}>
               <ChevronRightIcon />
             </Button>
           </ButtonGroup>
@@ -436,37 +500,7 @@ function TaskHeaderUpcoming(props) {
           <Button>Today</Button>
         </div>
       </div>
-      <div>
-        <Loading />
-        {/*weekRow.length === 0 && <Loading />*/}
-        {/* Tab list week row */}
-        {weekRow.length > 0 && (
-          <Paper square>
-            <Tabs
-              value={indexActiveWeekRow}
-              onChange={handleChangeTabList}
-              variant="fullWidth"
-              indicatorColor="secondary"
-              textColor="secondary"
-            >
-              {weekRow.map(({ dayString, date, month, year, isDisabled }) => (
-                <Tab
-                  key={`${year}-${month}-${date}`}
-                  disabled={isDisabled}
-                  label={
-                    <div>
-                      <div className="day">{dayString}</div>
-                      <div>
-                        <strong className="date">{date}</strong>
-                      </div>
-                    </div>
-                  }
-                />
-              ))}
-            </Tabs>
-          </Paper>
-        )}
-      </div>
+      <div className={gClasses.flexCenter}>{ renderWeekRow() }</div>
     </div>
   );
 }

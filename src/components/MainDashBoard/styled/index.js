@@ -41,6 +41,11 @@ export const muiTaskGeneral = makeStyles(theme => ({
     '$wrapperAllSection + &': {
       marginTop: theme.typography.pxToRem(15)
     }
+  },
+  flexCenter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 }));
 
@@ -142,9 +147,6 @@ export const muiModal = makeStyles(theme => {
         backgroundColor: red[700],
         color: theme.palette.common.white
       }
-    },
-    dateTimePicker: {
-      color: 'red'
     }
   };
 });

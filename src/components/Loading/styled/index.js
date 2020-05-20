@@ -16,9 +16,7 @@ const normalRootLoading = {
   width: 'auto'
 };
 
-export const muiLoading = makeStyles(theme => {
-  return {
-    root: props =>
-      props.fullScreen ? fullScreenRootLoading : normalRootLoading
-  };
-});
+export const muiLoading = makeStyles(theme => ({
+  root: props =>
+    props.fullScreen ? fullScreenRootLoading : normalRootLoading
+}));

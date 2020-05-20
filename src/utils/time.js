@@ -59,18 +59,23 @@ export const dayNames = [
   SCHEDULE_DATE.sat // 6
 ];
 
+/*
+  - give schedule date and compare it with today, return schedule text
+  - input: schedule (type UTC Date)
+*/
 export function setScheduleDate(schedule) {
   if (schedule === null) return ''; // user not set schedule
   let scheduleText = '';
-  const scheduleSet = schedule.substring(0, 10);
-  const scheduleDate = parseInt(schedule.substring(8, 10));
-  const scheduleMonth = parseInt(schedule.substring(5, 7));
-  const scheduleYear = parseInt(scheduleSet.substring(0, 4));
+  // convert UTC to local
+  const scheduleSet = new Date(schedule);
+  const scheduleDate = scheduleSet.getDate();
+  const scheduleMonth = scheduleSet.getMonth() + 1;
+  const scheduleYear = scheduleSet.getFullYear();
 
   const d = new Date();
-  const date = d.getUTCDate();
-  const month = d.getUTCMonth() + 1;
-  const year = d.getUTCFullYear();
+  const date = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
 
   const tomorrow = date + 1;
   const yesterday = date - 1;
@@ -103,9 +108,10 @@ export function setScheduleDate(schedule) {
           } else if (scheduleDate === tomorrow) {
             scheduleText = SCHEDULE_DATE.tomorrow;
           } else if (scheduleDate > tomorrow && scheduleDate <= next7days) {
-            const d = new Date();
-            d.setUTCDate(scheduleDate);
-            scheduleText = dayNames[d.getUTCDay()];
+            const d = new Date(
+              `${scheduleYear}-${scheduleMonth}-${scheduleDate}`
+            );
+            scheduleText = dayNames[d.getDay()];
           } else {
             scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
           }
@@ -119,10 +125,10 @@ export function setScheduleDate(schedule) {
                 ? lastDateOfMonth + scheduleDate
                 : scheduleDate;
             if (a > tomorrow && a <= next7days) {
-              const d = new Date();
-              d.setUTCMonth(scheduleMonth - 1);
-              d.setUTCDate(scheduleDate);
-              scheduleText = dayNames[d.getUTCDay()];
+              const d = new Date(
+                `${scheduleYear}-${scheduleMonth}-${scheduleDate}`
+              );
+              scheduleText = dayNames[d.getDay()];
             } else {
               scheduleText = `${scheduleDate} ${monthNames[scheduleMonth - 1]}`;
             }
@@ -148,11 +154,10 @@ export function setScheduleDate(schedule) {
             ? lastDateOfMonth + scheduleDate
             : scheduleDate;
         if (a > tomorrow && a <= next7days) {
-          const d = new Date();
-          d.setUTCFullYear(scheduleYear);
-          d.setUTCMonth(scheduleMonth - 1);
-          d.setUTCDate(scheduleDate);
-          scheduleText = dayNames[d.getUTCDay()];
+          const d = new Date(
+            `${scheduleYear}-${scheduleMonth}-${scheduleDate}`
+          );
+          scheduleText = dayNames[d.getDay()];
         } else {
           scheduleText = `${scheduleDate} ${
             monthNames[scheduleMonth - 1]
@@ -189,6 +194,19 @@ export function getCurrentDateUTC() {
     hour,
     minute,
     second
+  };
+}
+
+export function getCurrentDate() {
+  const d = new Date();
+  return {
+    day: dayNames[d.getDay()],
+    date: d.getDate(),
+    month: d.getMonth() + 1,
+    year: d.getFullYear(),
+    hour: d.getHours(),
+    minute: d.getMinutes(),
+    second: d.getSeconds()
   };
 }
 
@@ -281,28 +299,32 @@ export function getWeekByDate(inputDate) {
 }
 
 /*
-  - use local time when calculating
-  - input: currentDate 
+  - use local time when calculating, get current date and return today, tomorrow and nextweek (monday)
+  - input: currentDate (type Date)
 */
-function getSuggestScheduleDate(curDate) {
-  if (curDate === null) return {};
+export function getSuggestScheduleDate(curDate) {
+  if (curDate === null || typeof curDate === 'undefined') {
+    curDate = new Date();
+    curDate.setHours(0, 0, 0, 0);
+  }
+
   let result = {};
-  const dateSet = curDate.substring(0, 10);
-  const date = parseInt(dateSet.substring(8, 10));
-  const month = parseInt(dateSet.substring(5, 7));
-  const year = parseInt(dateSet.substring(0, 4));
-  // today
+  const day = curDate.getDay();
+  const date = curDate.getDate();
+  const month = curDate.getMonth() + 1;
+  const year = curDate.getFullYear();
+
+  result.nodate = null;
+  // get today
   result.today = curDate;
   // tomorrow
-  const lastDate = getLastDateOfMonth(month, year);
   let date_02 = date + 1;
   let month_02 = month;
   let year_02 = year;
+  const lastDate = getLastDateOfMonth(month, year);
   if (date_02 > lastDate) {
-    // last date of month
     date_02 = 1;
     if (month_02 === 12) {
-      // next year
       month_02 = 1;
       year_02 += 1;
     } else month_02 += 1;
@@ -313,12 +335,22 @@ function getSuggestScheduleDate(curDate) {
     month: month_02,
     year: year_02
   });
-
-  // next week (monday)
-  let date_03 = date + 7;
+  // next week
+  const prefix = day === 0 ? 1 : 8 - day;
+  let date_03 = date + prefix;
+  let month_03 = month;
+  let year_03 = year;
   if (date_03 > lastDate) {
-    // next month
+    if (month_03 === 12) {
+      month_03 = 1;
+      year_03 += 1;
+    } else month_03 += 1;
   }
 
+  result.nextweek = trans2Date({
+    date: date_03,
+    month: month_03,
+    year: year_03
+  });
   return result;
 }

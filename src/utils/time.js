@@ -379,8 +379,10 @@ export function getSuggestScheduleDate(curDate, options) {
     let date_04 = date - 1;
     let month_04 = month;
     let year_04 = year;
-    if (date_04 === 0) { // prev month
-      if (month_04 === 1) { // prev year
+    if (date_04 === 0) {
+      // prev month
+      if (month_04 === 1) {
+        // prev year
         month_04 = 12;
         year_04 -= 1;
       } else month_04 -= 1;

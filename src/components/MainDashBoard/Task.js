@@ -365,26 +365,29 @@ function TaskHeaderUpcoming(props) {
 
   const handleChangeTabList = (e, newValue) => setIndexActiveWeekRow(newValue);
 
-  const goToWeek = (pip) => {
+  const goToWeek = pip => {
     if (weekRow && weekRow.length > 0) {
       const _minDate = minDate.getDate();
       const _minMonth = minDate.getMonth() + 1;
       const _minYear = minDate.getFullYear();
 
-      const dateOfWeek = (pip === 'next')
-        ? weekRow[weekRow.length - 1]
-        : weekRow[0];
+      const dateOfWeek =
+        pip === 'next' ? weekRow[weekRow.length - 1] : weekRow[0];
       const { date, month, year } = dateOfWeek;
 
       const dayNextOrPrevWeek = getSuggestScheduleDate(
-        new Date(`${year}-${month}-${date}`), {
+        new Date(`${year}-${month}-${date}`),
+        {
           tomorrow: true,
           yesterday: true
         }
       );
-      const nextOrPrevWeek = getWeekByDate(pip === 'next'
-        ? dayNextOrPrevWeek.tomorrow : dayNextOrPrevWeek.yesterday);
-      
+      const nextOrPrevWeek = getWeekByDate(
+        pip === 'next'
+          ? dayNextOrPrevWeek.tomorrow
+          : dayNextOrPrevWeek.yesterday
+      );
+
       let activeIndex = null;
       const nextOrPrevWeekRow = nextOrPrevWeek.map((date, index) => {
         const day = date.getDay();
@@ -395,7 +398,7 @@ function TaskHeaderUpcoming(props) {
           date: date.getDate(),
           month: date.getMonth() + 1,
           year: date.getFullYear(),
-          isDisabled: (pip === 'next') ? false : (activeIndex === null)
+          isDisabled: pip === 'next' ? false : activeIndex === null
         };
       });
       setIndexActiveWeekRow(0);
@@ -439,12 +442,16 @@ function TaskHeaderUpcoming(props) {
       setIndexActiveWeekRow(activeIndex);
       setWeekRow(weekRow);
     }
-  }, []);
+  }, [minDate]);
 
   const renderTitleHeader = () => {
     if (weekRow.length > 0) {
       const info = weekRow[0];
-      return <h1 className={gClasses.headerTitle}>{`${monthNames[info.month]} ${info.year}`}</h1>;
+      return (
+        <h1 className={gClasses.headerTitle}>{`${monthNames[info.month]} ${
+          info.year
+        }`}</h1>
+      );
     }
     return <Loading size={20} />;
   };
@@ -482,7 +489,7 @@ function TaskHeaderUpcoming(props) {
   return (
     <div className={gClasses.headerMgBottomL}>
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        { renderTitleHeader() }
+        {renderTitleHeader()}
         {/* Header right */}
         <div className={gClasses.header}>
           <ButtonGroup variant="outlined" color="secondary" size="small">
@@ -500,7 +507,7 @@ function TaskHeaderUpcoming(props) {
           <Button>Today</Button>
         </div>
       </div>
-      <div className={gClasses.flexCenter}>{ renderWeekRow() }</div>
+      <div className={gClasses.flexCenter}>{renderWeekRow()}</div>
     </div>
   );
 }

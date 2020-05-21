@@ -17,6 +17,5 @@ const normalRootLoading = {
 };
 
 export const muiLoading = makeStyles(theme => ({
-  root: props =>
-    props.fullScreen ? fullScreenRootLoading : normalRootLoading
+  root: props => (props.fullScreen ? fullScreenRootLoading : normalRootLoading)
 }));

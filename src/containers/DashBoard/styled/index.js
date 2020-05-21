@@ -32,6 +32,6 @@ export const muiDashBoard = makeStyles(theme => ({
   },
   innerRightMenu: {
     padding: `${theme.typography.pxToRem(80)} ${theme.typography.pxToRem(55)}`,
-    width: '100%',
+    width: '100%'
   }
 }));

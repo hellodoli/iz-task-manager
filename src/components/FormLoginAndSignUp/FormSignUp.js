@@ -44,7 +44,7 @@ function FormSignUp() {
     });
   };
 
-  async function callAPISignUp (newUserInput) {
+  async function callAPISignUp(newUserInput) {
     console.log('>>> START SIGN UP <<<');
     await user.signUp(newUserInput);
     const newUser = user.newUserInfo.user;

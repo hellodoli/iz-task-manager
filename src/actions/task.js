@@ -1,4 +1,5 @@
 import { GET_TASK, SET_TASK } from '../constants/task';
+import { SCHEDULE_DATE } from '../constants/schedule';
 import {
   splitObjectByKey,
   getCurrentDate,
@@ -43,7 +44,7 @@ function filterTaskByToday(cloneTasks, currentDate) {
     finalTask.push({ section: 'Overdue', items: tasksOverDue });
   if (tasksToday.length !== 0)
     finalTask.push({
-      section: `Today - ${new Date().toDateString()}`,
+      section: SCHEDULE_DATE.today,
       items: tasksToday
     });
 

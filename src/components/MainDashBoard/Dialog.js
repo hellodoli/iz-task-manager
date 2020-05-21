@@ -1,7 +1,15 @@
 import React, { Fragment, useState } from 'react';
 import clsx from 'clsx';
-import { TASK_TODAY } from '../../constants/location';
-import { getSuggestScheduleDate } from '../../utils/time';
+
+import { TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
+import { SCHEDULE_DATE } from '../../constants/schedule';
+
+import {
+  getSuggestScheduleDate,
+  setScheduleDate,
+  dayNames,
+  monthNames
+} from '../../utils/time';
 // Task API Class
 import TaskAPI from '../../apis/task';
 
@@ -37,6 +45,78 @@ import {
 import { DateTimePicker } from '@material-ui/pickers';
 
 let numberSectionTasks = null; // use for render select section
+
+function updateUITaskAfterAdd(tasks, newTask) {
+  let result = {
+    tasksInbox: tasks.tasksInbox.slice(),
+    tasksToday: tasks.tasksToday.slice(),
+    tasksUpcoming: tasks.tasksUpcoming.slice()
+  };
+  const { schedule, section } = newTask;
+  newTask.isOpen = false;
+  newTask.scheduleText = setScheduleDate(schedule);
+  // Today Task
+  if (schedule !== null && newTask.scheduleText === SCHEDULE_DATE.today) {
+    let isAddTaskToday = false;
+    const cloneTask = tasks.tasksToday.slice();
+    // map and add to section 'Today'
+    for (let i = 0; i < cloneTask.length; i++) {
+      if (cloneTask[i].section === SCHEDULE_DATE.today) {
+        isAddTaskToday = true;
+        result.tasksToday[i].items.push(newTask);
+        break;
+      }
+    }
+
+    // create new section 'Today'
+    if (!isAddTaskToday) {
+      result.tasksToday.push({
+        section: SCHEDULE_DATE.today,
+        items: [{ ...newTask }]
+      });
+    }
+  }
+
+  // Inbox Task
+  let isAddTaskInbox = false;
+  const cloneTasksInbox = tasks.tasksInbox.slice();
+  for (let i = 0; i < cloneTasksInbox.length; i++) {
+    if (cloneTasksInbox[i].section === section) {
+      isAddTaskInbox = true;
+      result.tasksInbox[i].items.push(newTask);
+      break;
+    }
+  }
+  // create new section
+  if (!isAddTaskInbox) {
+    result.tasksInbox.push({
+      section,
+      items: [{ ...newTask }]
+    });
+  }
+
+  // Upcoming Task
+  if (newTask.scheduleText !== '') {
+    let isAddTaskUpComing = false;
+    const cloneTasksUpComing = tasks.tasksUpcoming.slice();
+    for (let i = 0; i < cloneTasksUpComing.length; i++) {
+      if (cloneTasksUpComing[i].section === newTask.scheduleText) {
+        isAddTaskUpComing = true;
+        result.tasksUpcoming[i].items.push(newTask);
+        break;
+      }
+    }
+    // create new section
+    if (!isAddTaskUpComing) {
+      result.tasksUpcoming.push({
+        section: newTask.scheduleText,
+        items: [{ ...newTask }]
+      });
+    }
+  }
+
+  return result;
+}
 
 export function ModalCreateSection(props) {
   const { isOpen, handleClose, cbSave } = props;
@@ -91,15 +171,28 @@ export function ModalCreateSection(props) {
 }
 
 export function ModalAddTask(props) {
-  const { isOpen, handleClose, sectionTasks, pathname } = props;
+  const {
+    isOpen,
+    handleClose,
+    tasks,
+    location: { pathname },
+    setTask,
+    activeDate
+  } = props;
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
 
-  const [allSectionTasks, setAllSectionTasks] = useState(sectionTasks);
+  function chooseDefaultValueTasksSchedule() {
+    if (pathname === TASK_TODAY) return 'today';
+    if (pathname === TASK_UPCOMING) return 'choosedate';
+    return 'nodate';
+  }
+
+  const [allSectionTasks, setAllSectionTasks] = useState(tasks.sectionTasks);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
   const [valueTaskSchedule, setValueTaskSchedule] = useState(
-    pathname === TASK_TODAY ? 'today' : 'nodate'
+    chooseDefaultValueTasksSchedule()
   ); // task schedule value (select)
 
   const [switchScheduleType, setSwitchScheduleType] = useState(false);
@@ -146,20 +239,37 @@ export function ModalAddTask(props) {
     }
 
     if (isValid) {
+      let schedule = null;
+      if (switchScheduleType) {
+        // set schedule
+        schedule = selectedDate.toJSON();
+      } else {
+        // quick schedule
+        if (pathname === TASK_UPCOMING) {
+          const { month, date, year } = activeDate;
+          schedule = new Date(`${year}-${month}-${date}`).toJSON();
+        } else {
+          const suggest = suggestDate[valueTaskSchedule];
+          if (suggest !== null) schedule = suggest.toJSON();
+          else schedule = null;
+        }
+      }
+
       const newTask = {
         des: valueTaskName,
         section: valueTaskSection === '' ? null : valueTaskSection,
-        schedule: switchScheduleType
-          ? selectedDate.toJSON() // set schedule
-          : suggestDate[valueTaskSchedule] !== null // quick schedule
-          ? suggestDate[valueTaskSchedule].toJSON()
-          : null
+        schedule
       };
 
       const taskAPI = new TaskAPI();
       await taskAPI.addTask(newTask);
       if (taskAPI.newTask) {
         // update UI
+        const result = updateUITaskAfterAdd(tasks, taskAPI.newTask);
+        setTask({
+          ...tasks,
+          ...result
+        });
       } else {
         alert('add Task fail');
       }
@@ -188,6 +298,7 @@ export function ModalAddTask(props) {
   /* --- END: Handle Create Section Action --- */
 
   const renderSavedOptionSection = () => {
+    const sectionTasks = tasks.sectionTasks;
     if (sectionTasks.length > 0) {
       if (sectionTasks.length === 1 && sectionTasks[0] === null) return null;
       return (
@@ -197,6 +308,62 @@ export function ModalAddTask(props) {
       );
     }
     return null;
+  };
+
+  const renderSelectSchedule = () => {
+    if (pathname === TASK_UPCOMING) {
+      const { dayString, month, date, year } = activeDate;
+      return (
+        <Select
+          label="Schedule"
+          classes={selectScheduleClasses}
+          value={valueTaskSchedule}
+          onChange={handleChangeSelectSchedule}
+          open={false}
+        >
+          <MenuItem value={'choosedate'}>{`${dayString} ${
+            monthNames[month - 1]
+          } ${date} ${year}`}</MenuItem>
+        </Select>
+      );
+    }
+    return (
+      <Select
+        label="Schedule"
+        classes={selectScheduleClasses}
+        value={valueTaskSchedule}
+        onChange={handleChangeSelectSchedule}
+      >
+        <MenuItem disabled>Choose quick schedule</MenuItem>
+        <MenuItem classes={menuItemClasses} value={'today'}>
+          <div>
+            <TodayIcon fontSize="small" />
+            <span>Today</span>
+          </div>
+          <span>{suggestDate.today.toDateString()}</span>
+        </MenuItem>
+        <MenuItem classes={menuItemClasses} value={'tomorrow'}>
+          <div>
+            <WbSunnyOutlinedIcon fontSize="small" />
+            <span>Tomorrow</span>
+          </div>
+          <span>{suggestDate.tomorrow.toDateString()}</span>
+        </MenuItem>
+        <MenuItem classes={menuItemClasses} value={'nextweek'}>
+          <div>
+            <ArrowRightAltIcon fontSize="small" />
+            <span>Next week</span>
+          </div>
+          <span>{suggestDate.nextweek.toDateString()}</span>
+        </MenuItem>
+        <MenuItem value={'nodate'}>
+          <div>
+            <NotInterestedIcon fontSize="small" />
+            <span className={classes.textOptionWithIcon}>No date</span>
+          </div>
+        </MenuItem>
+      </Select>
+    );
   };
 
   return (
@@ -294,39 +461,7 @@ export function ModalAddTask(props) {
           ) : (
             <FormControl variant="outlined" size="small" fullWidth={true}>
               <InputLabel>Schedule</InputLabel>
-              <Select
-                label="Schedule"
-                value={valueTaskSchedule}
-                onChange={handleChangeSelectSchedule}
-                classes={selectScheduleClasses}
-              >
-                <MenuItem disabled>Choose quick schedule</MenuItem>
-                <MenuItem classes={menuItemClasses} value={'today'}>
-                  <div>
-                    <TodayIcon fontSize="small" />
-                    <span>Today</span>
-                  </div>
-                  <span>{suggestDate.today.toDateString()}</span>
-                </MenuItem>
-                <MenuItem classes={menuItemClasses} value={'tomorrow'}>
-                  <div>
-                    <WbSunnyOutlinedIcon fontSize="small" />
-                    <span>Tomorrow</span>
-                  </div>
-                  <span>{suggestDate.tomorrow.toDateString()}</span>
-                </MenuItem>
-                <MenuItem classes={menuItemClasses} value={'nextweek'}>
-                  <div>
-                    <ArrowRightAltIcon fontSize="small" />
-                    <span>Next week</span>
-                  </div>
-                  <span>{suggestDate.nextweek.toDateString()}</span>
-                </MenuItem>
-                <MenuItem value={'nodate'}>
-                  <NotInterestedIcon fontSize="small" />
-                  <span className={classes.textOptionWithIcon}>No date</span>
-                </MenuItem>
-              </Select>
+              {renderSelectSchedule()}
             </FormControl>
           )}
         </DialogContent>

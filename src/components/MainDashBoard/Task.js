@@ -41,7 +41,8 @@ import {
   ExpansionPanelSummary,
   ExpansionPanelDetails,
   List,
-  ListItem
+  ListItem,
+  Typography
 } from '@material-ui/core';
 import {
   Edit,
@@ -278,7 +279,6 @@ function TaskItem({
                 <Checkbox
                   checked={completed}
                   onChange={check}
-                  size="small"
                   color="primary"
                 />
               }
@@ -301,11 +301,6 @@ function TaskItem({
 }
 
 function TaskHeader(props) {
-  const {
-    location: { pathname },
-    tasks: { sectionTasks },
-    setTask
-  } = props;
   const gClasses = muiTaskGeneral();
 
   /* --- START: Handle Add Task Action --- */
@@ -317,6 +312,9 @@ function TaskHeader(props) {
   /* --- END: Handle Add Task Action --- */
 
   const renderTitleHeaderText = () => {
+    const {
+      location: { pathname }
+    } = props;
     if (pathname === TASK_ALL) return 'Inbox';
     else if (pathname === TASK_TODAY) return 'Today';
   };
@@ -325,13 +323,7 @@ function TaskHeader(props) {
     <Fragment>
       {/* (Modal) Add Task */}
       {isOpen && (
-        <ModalAddTask
-          pathname={pathname} // pathname use for render text
-          isOpen={isOpen}
-          handleClose={handleClose}
-          sectionTasks={sectionTasks}
-          setTask={setTask}
-        />
+        <ModalAddTask {...props} isOpen={isOpen} handleClose={handleClose} />
       )}
       {/* Task Main Header */}
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
@@ -358,7 +350,7 @@ function TaskHeaderUpcoming(props) {
   // set min date
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  const [minDate] = useState(date);
+  const [minDate, setMinDate] = useState(date);
 
   const [indexActiveWeekRow, setIndexActiveWeekRow] = useState(null);
   const [weekRow, setWeekRow] = useState([]);
@@ -367,6 +359,7 @@ function TaskHeaderUpcoming(props) {
 
   const goToWeek = pip => {
     if (weekRow && weekRow.length > 0) {
+      const _minDay = minDate.getDay();
       const _minDate = minDate.getDate();
       const _minMonth = minDate.getMonth() + 1;
       const _minYear = minDate.getFullYear();
@@ -389,21 +382,51 @@ function TaskHeaderUpcoming(props) {
       );
 
       let activeIndex = null;
+      if (pip !== 'next') {
+        for (let i = 0; i < nextOrPrevWeek.length; i++) {
+          const date = nextOrPrevWeek[i];
+          if (
+            date.getDay() === _minDay &&
+            date.getDate() === _minDate &&
+            date.getMonth() + 1 === _minMonth &&
+            date.getFullYear() === _minYear
+          ) {
+            activeIndex = i;
+            break;
+          }
+        }
+      }
+
+      let isDisabled = null;
       const nextOrPrevWeekRow = nextOrPrevWeek.map((date, index) => {
-        const day = date.getDay();
-        if (pip !== 'next' && day === minDate.getDay()) activeIndex = index;
+        if (pip === 'next') {
+          isDisabled = false;
+        } else {
+          if (activeIndex) isDisabled = index < activeIndex;
+          else isDisabled = false;
+        }
+
         return {
-          dayString: dayNames[day],
+          dayString: dayNames[date.getDay()],
           day: date.getDay(),
           date: date.getDate(),
           month: date.getMonth() + 1,
           year: date.getFullYear(),
-          isDisabled: pip === 'next' ? false : activeIndex === null
+          isDisabled
         };
       });
-      setIndexActiveWeekRow(0);
+
+      if (pip !== 'next' && activeIndex) setIndexActiveWeekRow(activeIndex);
+      else setIndexActiveWeekRow(0);
+
       setWeekRow(nextOrPrevWeekRow); // set weekRow
     }
+  };
+
+  const goToCurrentWeek = () => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    setMinDate(date);
   };
 
   const isDasbledPrevWeekRow = () => {
@@ -421,6 +444,14 @@ function TaskHeaderUpcoming(props) {
     return null;
   };
 
+  /* --- START: Handle Add Task Action --- */
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleClickOpen = () => setIsOpen(true);
+
+  const handleClose = () => setIsOpen(false);
+  /* --- END: Handle Add Task Action --- */
+
   useEffect(() => {
     const week = getWeekByDate(minDate);
     if (week && week.length > 0) {
@@ -428,7 +459,6 @@ function TaskHeaderUpcoming(props) {
       const weekRow = week.map((date, index) => {
         const day = date.getDay();
         if (day === minDate.getDay()) activeIndex = index;
-
         return {
           dayString: dayNames[day],
           day: date.getDay(),
@@ -448,10 +478,18 @@ function TaskHeaderUpcoming(props) {
     if (weekRow.length > 0) {
       const info = weekRow[0];
       return (
-        <h1 className={gClasses.headerTitle}>{`${monthNames[info.month]} ${
+        <h1 className={gClasses.headerTitle}>{`${monthNames[info.month - 1]} ${
           info.year
         }`}</h1>
       );
+    }
+    return <Loading size={20} />;
+  };
+
+  const renderActiveDateText = () => {
+    if (weekRow.length > 0) {
+      const info = weekRow[indexActiveWeekRow];
+      return <div>{`${info.date} ${monthNames[info.month - 1]}`}</div>;
     }
     return <Loading size={20} />;
   };
@@ -474,9 +512,7 @@ function TaskHeaderUpcoming(props) {
               label={
                 <div>
                   <div className="day">{dayString}</div>
-                  <div>
-                    <strong className="date">{date}</strong>
-                  </div>
+                  <strong className="date">{date}</strong>
                 </div>
               }
             />
@@ -487,28 +523,56 @@ function TaskHeaderUpcoming(props) {
   };
 
   return (
-    <div className={gClasses.headerMgBottomL}>
-      <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        {renderTitleHeader()}
-        {/* Header right */}
-        <div className={gClasses.header}>
-          <ButtonGroup variant="outlined" color="secondary" size="small">
+    <Fragment>
+      <div className={gClasses.headerMgBottom}>
+        <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
+          {/* Header left */}
+          {renderTitleHeader()}
+          {/* Header right */}
+          <div className={gClasses.header}>
+            <ButtonGroup variant="outlined" color="secondary" size="small">
+              <Button
+                disabled={isDasbledPrevWeekRow()}
+                onClick={() => goToWeek('prev')}
+              >
+                <ChevronLeftIcon />
+              </Button>
+              <Button onClick={() => goToWeek('next')}>
+                <ChevronRightIcon />
+              </Button>
+            </ButtonGroup>
             <Button
-              disabled={isDasbledPrevWeekRow()}
-              onClick={() => goToWeek('prev')}
+              variant="outlined"
+              size="small"
+              className={gClasses.todayButton}
+              onClick={goToCurrentWeek}
             >
-              <ChevronLeftIcon />
+              Today
             </Button>
-            <Button onClick={() => goToWeek('next')}>
-              <ChevronRightIcon />
-            </Button>
-          </ButtonGroup>
-          {'  '}
-          <Button>Today</Button>
+          </div>
+        </div>
+        {/* Week row */}
+        <div className={gClasses.wrapperWeekRow}>{renderWeekRow()}</div>
+      </div>
+
+      <div className={gClasses.headerMgBottom}>
+        <div className={gClasses.wrapperUpcomingAddTask}>
+          <Typography variant="subtitle1">{renderActiveDateText()}</Typography>
+          <Button variant="contained" color="primary" onClick={handleClickOpen}>
+            Add task
+          </Button>
         </div>
       </div>
-      <div className={gClasses.flexCenter}>{renderWeekRow()}</div>
-    </div>
+      {/* Modal Add task */}
+      {isOpen && (
+        <ModalAddTask
+          {...props}
+          isOpen={isOpen}
+          handleClose={handleClose}
+          activeDate={weekRow[indexActiveWeekRow]}
+        />
+      )}
+    </Fragment>
   );
 }
 
@@ -522,7 +586,6 @@ function TaskList(props) {
     taskIdName,
     taskDataProperty
   } = props;
-
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
   useEffect(() => {
@@ -708,11 +771,11 @@ function TaskList(props) {
         })}
       </div>
       {/* Quick Add Button */}
-      <div className={gClasses.wrapperQuickAddTask}>
+      {/*<div className={gClasses.wrapperQuickAddTask}>
         <Fab variant="round" size="small" color="secondary" aria-label="add">
           <AddIcon />
         </Fab>
-      </div>
+      </div>*/}
     </Box>
   );
 }

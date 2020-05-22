@@ -8,14 +8,15 @@ const fullScreenRootLoading = {
   height: '100vh',
   display: 'flex',
   justifyContent: 'center',
-  alignItems: 'center'
+  alignItems: 'center',
 };
 
 const normalRootLoading = {
   display: 'inline-flex',
-  width: 'auto'
+  width: 'auto',
 };
 
-export const muiLoading = makeStyles(theme => ({
-  root: props => (props.fullScreen ? fullScreenRootLoading : normalRootLoading)
+export const muiLoading = makeStyles((theme) => ({
+  root: (props) =>
+    props.fullScreen ? fullScreenRootLoading : normalRootLoading,
 }));

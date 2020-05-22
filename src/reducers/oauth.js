@@ -2,7 +2,7 @@ import { CHECK_AUTH, SIGN_OUT, SIGN_IN } from '../constants/oauth';
 
 const INTIAL_STATE = {
   isSignedIn: null,
-  user: {}
+  user: {},
 };
 
 const oauthReducer = (state = INTIAL_STATE, action) => {
@@ -11,19 +11,19 @@ const oauthReducer = (state = INTIAL_STATE, action) => {
       return {
         ...state,
         isSignedIn: action.payload.isSignedIn,
-        user: action.payload.user
+        user: action.payload.user,
       };
     case SIGN_IN:
       return {
         ...state,
         isSignedIn: true,
-        user: action.payload
+        user: action.payload,
       };
     case SIGN_OUT:
       return {
         ...state,
         isSignedIn: false,
-        user: {}
+        user: {},
       };
     default:
       return state;

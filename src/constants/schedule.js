@@ -8,5 +8,5 @@ export const SCHEDULE_DATE = {
   wed: 'Wednesday',
   thurs: 'Thursday',
   fri: 'Friday',
-  sat: 'Saturday' // 6
+  sat: 'Saturday', // 6
 };

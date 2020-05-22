@@ -11,7 +11,7 @@ function checkColorIcons(name) {
   return typeIcon;
 }
 
-export const muiFilterMenu = makeStyles(theme => ({
+export const muiFilterMenu = makeStyles((theme) => ({
   wrapperFilterMenuLeft: {
     margin: 0,
     padding: 0,
@@ -28,20 +28,20 @@ export const muiFilterMenu = makeStyles(theme => ({
         paddingRight: '1rem',
         borderRadius: '.15rem',
         '&.selected': {
-          fontWeight: theme.typography.fontWeightBold
-        }
-      }
-    }
-  }
+          fontWeight: theme.typography.fontWeightBold,
+        },
+      },
+    },
+  },
 }));
 
-export const muiFilterMenuIcon = makeStyles(theme => ({
+export const muiFilterMenuIcon = makeStyles((theme) => ({
   wrapperIcon: {
     marginRight: '1rem',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: '1rem',
-    color: props => checkColorIcons(props.name)
-  }
+    color: (props) => checkColorIcons(props.name),
+  },
 }));

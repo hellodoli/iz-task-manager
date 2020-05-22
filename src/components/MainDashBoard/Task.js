@@ -14,7 +14,7 @@ import {
   monthNames,
   dayNames,
   getWeekByDate,
-  getSuggestScheduleDate
+  getSuggestScheduleDate,
 } from '../../utils/time';
 
 import { getTask, setTask } from '../../actions/task';
@@ -42,7 +42,7 @@ import {
   ExpansionPanelDetails,
   List,
   ListItem,
-  Typography
+  Typography,
 } from '@material-ui/core';
 import {
   Edit,
@@ -51,7 +51,7 @@ import {
   Schedule,
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
 } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
@@ -113,7 +113,7 @@ function checkCurrentPathname(pathname) {
   return {
     taskClassName,
     taskIdName,
-    taskDataProperty
+    taskDataProperty,
   };
 }
 
@@ -127,7 +127,7 @@ function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
   const otherFilter = Object.keys(tasks).filter(condition);
   const result = {};
 
-  otherFilter.forEach(key => {
+  otherFilter.forEach((key) => {
     result[key] = tasks[key].slice();
     tasks[key].forEach((section, indexSection) => {
       section.items.forEach((task, indexTask) => {
@@ -156,13 +156,13 @@ function TaskItem({
   startCloseEditStart,
   updateDesTask,
   updateCompletedTask,
-  deleteTask
+  deleteTask,
 }) {
   const [anchorEl, setAnchorEl] = useState(null); // schedule menu
   const [isOpenModalDelete, setIsOpenModalDelete] = useState(false); // modal confirm delete
   const [fakeEditValue, setFakeEditValue] = useState(des); // fake des
   const classes = muiTaskItem({
-    color: setScheduleStatusColor(scheduleText, schedule)
+    color: setScheduleStatusColor(scheduleText, schedule),
   });
   const obIndex = { parentIndex, childIndex };
 
@@ -171,7 +171,7 @@ function TaskItem({
   const closeModalDelete = () => setIsOpenModalDelete(false);
 
   // Handle Schedule
-  const openScheduleMenu = e => setAnchorEl(e.currentTarget);
+  const openScheduleMenu = (e) => setAnchorEl(e.currentTarget);
   const closeScheduleMenu = () => setAnchorEl(null);
 
   // Handle Edit
@@ -179,12 +179,12 @@ function TaskItem({
 
   const openEdit = () => startOpenEditTask(obIndex);
 
-  const editting = e => setFakeEditValue(e.target.value);
+  const editting = (e) => setFakeEditValue(e.target.value);
 
   const saveEdit = () =>
     updateDesTask(obIndex, { id: _id, des: fakeEditValue });
 
-  const check = e =>
+  const check = (e) =>
     updateCompletedTask(obIndex, { id: _id, completed: e.target.checked });
 
   const removeTask = () => deleteTask(obIndex, _id);
@@ -239,7 +239,7 @@ function TaskItem({
           <Menu
             anchorOrigin={{
               vertical: 'bottom',
-              horizontal: 'center'
+              horizontal: 'center',
             }}
             getContentAnchorEl={null}
             anchorEl={anchorEl}
@@ -313,7 +313,7 @@ function TaskHeader(props) {
 
   const renderTitleHeaderText = () => {
     const {
-      location: { pathname }
+      location: { pathname },
     } = props;
     if (pathname === TASK_ALL) return 'Inbox';
     else if (pathname === TASK_TODAY) return 'Today';
@@ -357,7 +357,7 @@ function TaskHeaderUpcoming(props) {
 
   const handleChangeTabList = (e, newValue) => setIndexActiveWeekRow(newValue);
 
-  const goToWeek = pip => {
+  const goToWeek = (pip) => {
     if (weekRow && weekRow.length > 0) {
       const _minDay = minDate.getDay();
       const _minDate = minDate.getDate();
@@ -372,7 +372,7 @@ function TaskHeaderUpcoming(props) {
         new Date(`${year}-${month}-${date}`),
         {
           tomorrow: true,
-          yesterday: true
+          yesterday: true,
         }
       );
       const nextOrPrevWeek = getWeekByDate(
@@ -412,7 +412,7 @@ function TaskHeaderUpcoming(props) {
           date: date.getDate(),
           month: date.getMonth() + 1,
           year: date.getFullYear(),
-          isDisabled
+          isDisabled,
         };
       });
 
@@ -465,7 +465,7 @@ function TaskHeaderUpcoming(props) {
           date: date.getDate(),
           month: date.getMonth() + 1,
           year: date.getFullYear(),
-          isDisabled: activeIndex === null
+          isDisabled: activeIndex === null,
         };
       });
       // set weekRow
@@ -584,7 +584,7 @@ function TaskList(props) {
 
     taskClassName,
     taskIdName,
-    taskDataProperty
+    taskDataProperty,
   } = props;
   const gClasses = muiTaskGeneral(); // mui class (general class)
 
@@ -594,7 +594,7 @@ function TaskList(props) {
       console.log('switch TASK pathname');
       if (prevEditTask !== null) {
         const {
-          obIndex: { parentIndex, childIndex }
+          obIndex: { parentIndex, childIndex },
         } = prevEditTask;
         const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
 
@@ -604,7 +604,7 @@ function TaskList(props) {
 
         setTask({
           ...tasks,
-          [taskDataProperty]: cloneTask
+          [taskDataProperty]: cloneTask,
         });
         prevEditTask = null;
       }
@@ -612,11 +612,11 @@ function TaskList(props) {
     prevPathNameTask = pathname;
   }, [pathname, setTask, tasks]);
 
-  const startOpenEditTask = obIndex => {
+  const startOpenEditTask = (obIndex) => {
     const cloneTask = tasks[taskDataProperty].slice();
     if (prevEditTask !== null) {
       const {
-        obIndex: { parentIndex: prevParentIndex, childIndex: prevChildIndex }
+        obIndex: { parentIndex: prevParentIndex, childIndex: prevChildIndex },
       } = prevEditTask;
       // get prev Task
       const prevTask = cloneTask[prevParentIndex].items[prevChildIndex];
@@ -653,7 +653,7 @@ function TaskList(props) {
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
-        ...otherCloneTask
+        ...otherCloneTask,
       });
     } else {
       // fail
@@ -661,7 +661,7 @@ function TaskList(props) {
     }
   };
 
-  const startCloseEditStart = obIndex => {
+  const startCloseEditStart = (obIndex) => {
     prevEditTask = null;
     const { parentIndex, childIndex } = obIndex;
     const cloneTask = tasks[taskDataProperty].slice();
@@ -690,7 +690,7 @@ function TaskList(props) {
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
-        ...otherCloneTask
+        ...otherCloneTask,
       });
     } else {
       // fail
@@ -718,7 +718,7 @@ function TaskList(props) {
       setTask({
         ...tasks,
         [taskDataProperty]: cloneTask,
-        ...otherCloneTask
+        ...otherCloneTask,
       });
     } else {
       // fail
@@ -806,7 +806,7 @@ function RouteWrapper({ component: Component, passesProps, ...rest }) {
   return (
     <Route
       {...rest}
-      render={routerProps => <Component {...passesProps} {...routerProps} />}
+      render={(routerProps) => <Component {...passesProps} {...routerProps} />}
     />
   );
 }
@@ -850,12 +850,12 @@ function TaskMain(props) {
 
 TaskMain.propTypes = {
   auth: PropTypes.object.isRequired,
-  tasks: PropTypes.object
+  tasks: PropTypes.object,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   auth: state.oauthReducer,
-  tasks: state.taskReducer
+  tasks: state.taskReducer,
 });
 
 export default connect(mapStateToProps, { getTask, setTask })(TaskMain);

@@ -17,7 +17,7 @@ import {
   Button,
   FormControlLabel,
   FormHelperText,
-  Checkbox
+  Checkbox,
 } from '@material-ui/core';
 
 function FormSignIn(props) {
@@ -27,7 +27,7 @@ function FormSignIn(props) {
     email: '',
     password: '',
     isShowPassword: false,
-    checked: false
+    checked: false,
   });
 
   const [eMailError, setEmailError] = useState('');
@@ -48,10 +48,10 @@ function FormSignIn(props) {
   }
 
   // handle change username, password
-  const handleChange = prop => event => {
+  const handleChange = (prop) => (event) => {
     setValues({
       ...values,
-      [prop]: event.target.value
+      [prop]: event.target.value,
     });
 
     // clear error text when user type input
@@ -59,10 +59,10 @@ function FormSignIn(props) {
   };
 
   // handle click check 'keep login'
-  const handleCheck = props => event => {
+  const handleCheck = (props) => (event) => {
     setValues({
       ...values,
-      [props]: event.target.checked
+      [props]: event.target.checked,
     });
   };
 
@@ -70,7 +70,7 @@ function FormSignIn(props) {
   const handleClickShowpassword = () => {
     setValues({
       ...values,
-      isShowPassword: !values.isShowPassword
+      isShowPassword: !values.isShowPassword,
     });
   };
 
@@ -220,7 +220,7 @@ function FormSignIn(props) {
 }
 
 FormSignIn.propTypes = {
-  signIn: PropTypes.func.isRequired
+  signIn: PropTypes.func.isRequired,
 };
 
 export default connect(null, { signIn })(FormSignIn);

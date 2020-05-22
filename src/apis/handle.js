@@ -1,4 +1,4 @@
-export const handleSuccess = response => {
+export const handleSuccess = (response) => {
   const data = response.data;
   if (data) {
     return new Promise((resolve, reject) => {

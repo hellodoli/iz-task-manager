@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 
 // Icons
 import { Inbox, CalendarToday, DateRange } from '@material-ui/icons';
-
 import { muiFilterMenu, muiFilterMenuIcon } from './styled';
 
 function MenuLeft() {

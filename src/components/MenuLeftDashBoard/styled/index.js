@@ -20,7 +20,7 @@ export const muiFilterMenu = makeStyles((theme) => ({
       '& > a': {
         display: 'flex',
         alignItems: 'center',
-        fontSize: '.875rem',
+        //fontSize: '.875rem',
         fontWeight: 400,
         color: theme.palette.text.primary,
         minHeight: '24px',
@@ -41,7 +41,7 @@ export const muiFilterMenuIcon = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: '1rem',
+    fontSize: '1.5rem',
     color: (props) => checkColorIcons(props.name),
   },
 }));

@@ -63,7 +63,7 @@ export const dayNames = [
   - give schedule date and compare it with today, return schedule text
   - input: schedule (type UTC Date)
 */
-export function setScheduleDate(schedule) {
+export function getScheduleText(schedule) {
   if (schedule === null) return ''; // user not set schedule
   let scheduleText = '';
   // convert UTC to local
@@ -197,10 +197,33 @@ export function getCurrentDateUTC() {
   };
 }
 
-export function getCurrentDate() {
-  const d = new Date();
+function checkTypeInputDate({ inputDate, isStartDate }) {
+  let date = inputDate; // defaut is Date format
+  // check type inputDate
+  if (typeof inputDate === 'undefined' || inputDate === 'today')
+    date = new Date();
+  else if (typeof inputDate === 'string') date = new Date(inputDate);
+
+  if (typeof isStartDate === 'undefined' || isStartDate === true)
+    date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+/*
+  * get date and return object date info
+  - input:
+    + obDate:
+      + inputDate: (type String || Date(object))
+          ex: 2020-02-15, ISO String, new Date(dateString) ...
+      + isStartDate: (type Boolean)
+*/
+export function getInfoDate(obDate) {
+  const d = checkTypeInputDate(obDate);
+  const day = d.getDay();
   return {
-    day: dayNames[d.getDay()],
+    day,
+    dayString: dayNames[day],
+    dayStringShort: dayNames[day].substring(0, 3),
     date: d.getDate(),
     month: d.getMonth() + 1,
     year: d.getFullYear(),
@@ -208,6 +231,16 @@ export function getCurrentDate() {
     minute: d.getMinutes(),
     second: d.getSeconds(),
   };
+}
+
+/*
+  * get date and return time from default start to 0h of inputDate
+  - input:
+      + obDate
+*/
+export function getTime(obDate) {
+  const d = checkTypeInputDate(obDate);
+  return d.getTime();
 }
 
 export function splitObjectByKey(splitBy, data) {
@@ -232,12 +265,13 @@ function trans2Date(d) {
   return new Date(`${year}-${month}-${date}`);
 }
 
-export function getWeekByDate(inputDate) {
-  let d = inputDate;
-  if (d === 'today') {
-    d = new Date();
-    d.setHours(0, 0, 0, 0);
-  }
+/*
+  * get date and return a week of date
+  - input:
+      + obDate
+*/
+export function getWeekByDate(obDate) {
+  const d = checkTypeInputDate(obDate);
   console.log('input date:', d);
 
   const day = d.getDay();
@@ -302,19 +336,14 @@ export function getWeekByDate(inputDate) {
 }
 
 /*
-  * Use local time when calculating
   * get date and return today, yesterday, tomorrow and nextweek (monday)
-  - input: 
-      + curDate: (type Date)
+  - input:
+      + obDate
       + options: (type object) Ex: { nodate, today, tomorrow, yesterday, nextweek }
-        default: undefined
+          default: undefined
 */
-export function getSuggestScheduleDate(curDate, options) {
-  if (curDate === null || typeof curDate === 'undefined') {
-    curDate = new Date();
-    curDate.setHours(0, 0, 0, 0);
-  }
-
+export function getSuggestScheduleDate(obDate, options) {
+  const curDate = checkTypeInputDate(obDate);
   if (options === null || typeof options === 'undefined') {
     options = {
       nodate: true,

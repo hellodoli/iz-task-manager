@@ -137,7 +137,7 @@ export const muiTaskItem = makeStyles((theme) => {
       marginTop: pxToRem(4),
     },
     itemDueDay: {
-      fontSize: pxToRem(12),
+      fontSize: pxToRem(14),
       color: (props) => props.color,
     },
   };

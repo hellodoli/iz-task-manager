@@ -369,7 +369,7 @@ function TaskHeaderUpcoming(props) {
       const { date, month, year } = dateOfWeek;
 
       const dayNextOrPrevWeek = getSuggestScheduleDate(
-        new Date(`${year}-${month}-${date}`),
+        { inputDate: `${year}-${month}-${date}` },
         {
           tomorrow: true,
           yesterday: true,
@@ -377,8 +377,8 @@ function TaskHeaderUpcoming(props) {
       );
       const nextOrPrevWeek = getWeekByDate(
         pip === 'next'
-          ? dayNextOrPrevWeek.tomorrow
-          : dayNextOrPrevWeek.yesterday
+          ? { inputDate: dayNextOrPrevWeek.tomorrow }
+          : { inputDate: dayNextOrPrevWeek.yesterday }
       );
 
       let activeIndex = null;
@@ -453,7 +453,7 @@ function TaskHeaderUpcoming(props) {
   /* --- END: Handle Add Task Action --- */
 
   useEffect(() => {
-    const week = getWeekByDate(minDate);
+    const week = getWeekByDate({ inputDate: minDate });
     if (week && week.length > 0) {
       let activeIndex = null;
       const weekRow = week.map((date, index) => {

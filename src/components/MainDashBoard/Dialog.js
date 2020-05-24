@@ -6,7 +6,7 @@ import { SCHEDULE_DATE } from '../../constants/schedule';
 
 import {
   getSuggestScheduleDate,
-  setScheduleDate,
+  getScheduleText,
   dayNames,
   monthNames,
 } from '../../utils/time';
@@ -51,10 +51,16 @@ function updateUITaskAfterAdd(tasks, newTask) {
     tasksInbox: tasks.tasksInbox.slice(),
     tasksToday: tasks.tasksToday.slice(),
     tasksUpcoming: tasks.tasksUpcoming.slice(),
+    sectionTasks: tasks.sectionTasks.slice(),
   };
   const { schedule, section } = newTask;
   newTask.isOpen = false;
-  newTask.scheduleText = setScheduleDate(schedule);
+  newTask.scheduleText = getScheduleText(schedule);
+
+  if (section !== null) {
+    result.sectionTasks.push(section);
+  }
+
   // Today Task
   if (schedule !== null && newTask.scheduleText === SCHEDULE_DATE.today) {
     let isAddTaskToday = false;
@@ -206,7 +212,7 @@ export function ModalAddTask(props) {
   const [selectedDate, setSelectedDate] = useState(curDate);
 
   const [isOpenCalendar] = useState(false);
-  const suggestDate = getSuggestScheduleDate(curDate);
+  const suggestDate = getSuggestScheduleDate({ inputDate: curDate });
   const [openCreateSection, setOpenCreateSection] = useState(false);
 
   if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;

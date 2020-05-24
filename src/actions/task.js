@@ -2,21 +2,11 @@ import { GET_TASK, SET_TASK } from '../constants/task';
 import { SCHEDULE_DATE } from '../constants/schedule';
 import {
   splitObjectByKey,
-  getCurrentDate,
-  setScheduleDate,
+  getInfoDate,
+  getScheduleText,
+  getTime,
 } from '../utils/time';
 import Task from '../apis/task';
-
-// convert UTC schedule to local
-function getSchedulePiece(schedule) {
-  if (schedule === null) return {};
-  const d = new Date(schedule);
-  return {
-    scheduleDate: d.getDate(),
-    scheduleMonth: d.getMonth() + 1,
-    scheduleYear: d.getFullYear(),
-  };
-}
 
 function filterTaskByToday(cloneTasks, currentDate) {
   const tasksToday = [];
@@ -27,15 +17,14 @@ function filterTaskByToday(cloneTasks, currentDate) {
   for (let index = 0; index < cloneTasks.length; index++) {
     const schedule = cloneTasks[index].schedule;
     if (schedule !== null) {
-      const { scheduleDate, scheduleMonth, scheduleYear } = getSchedulePiece(
-        schedule
-      );
-      if (scheduleYear === year && scheduleMonth === month) {
-        if (scheduleDate === date) {
-          tasksToday.push(cloneTasks[index]);
-        } else if (scheduleDate < date) {
-          tasksOverDue.push(cloneTasks[index]);
-        }
+      const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
+      const scheduleTime = getTime({ inputDate: new Date(schedule) });
+
+      if (scheduleTime === toDayTime) {
+        console.log(cloneTasks[index].schedule);
+        tasksToday.push(cloneTasks[index]);
+      } else if (scheduleTime < toDayTime) {
+        tasksOverDue.push(cloneTasks[index]);
       }
     }
   }
@@ -60,16 +49,14 @@ function filterTaskByUpcoming(cloneTasks, currentDate) {
   for (let index = 0; index < cloneTasks.length; index++) {
     const schedule = cloneTasks[index].schedule;
     if (schedule !== null) {
-      const { scheduleDate, scheduleMonth, scheduleYear } = getSchedulePiece(
-        schedule
-      );
-      if (scheduleMonth === month && scheduleYear === year) {
-        if (scheduleDate < date) {
-          // overdue
-          tasksOverDue.push(cloneTasks[index]);
-        } else {
-          tasksUpcoming.push(cloneTasks[index]);
-        }
+      const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
+      const scheduleTime = getTime({ inputDate: new Date(schedule) });
+
+      if (scheduleTime < toDayTime) {
+        // overdue
+        tasksOverDue.push(cloneTasks[index]);
+      } else if (scheduleTime > toDayTime) {
+        tasksUpcoming.push(cloneTasks[index]); // upcoming
       }
     }
   }
@@ -96,13 +83,13 @@ export const getTask = (schedule) => async (dispatch) => {
     const tasks = taskAPI.tasks;
 
     // get soon as possible
-    const curDate = getCurrentDate();
+    const curDate = getInfoDate({ inputDate: 'today' });
     console.log('curDate: ', curDate);
 
     // filter tasks before dispatch
     tasks.forEach((item) => {
       item.isOpen = false;
-      item.scheduleText = setScheduleDate(item.schedule);
+      item.scheduleText = getScheduleText(item.schedule);
     });
     // clone Task
     const cloneTask01 = JSON.parse(JSON.stringify(tasks));

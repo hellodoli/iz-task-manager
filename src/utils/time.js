@@ -259,6 +259,15 @@ export function splitObjectByKey(splitBy, data) {
   return rowOb;
 }
 
+export function splitObjectByKey_simp(splitBy, data) {
+  var rowOb = {};
+  for (let i = 0; i < data.length; i++) {
+    const s = data[i][splitBy];
+    rowOb[s] = data[i];
+  }
+  return rowOb;
+}
+
 function trans2Date(d) {
   // custom format you want return
   const { date, month, year } = d;

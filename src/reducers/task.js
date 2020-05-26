@@ -5,7 +5,7 @@ const INTIAL_STATE = {
   tasksToday: [],
   tasksUpcoming: [],
   sectionTasks: [],
-  fetchDone: false,
+  fetchDone: false
 };
 
 const taskReducer = (state = INTIAL_STATE, action) => {

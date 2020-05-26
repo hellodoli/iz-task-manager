@@ -12,7 +12,7 @@ function MenuLeft() {
   const iconClasses = {
     inbox: muiFilterMenuIcon({ name: '/' }).wrapperIcon,
     today: muiFilterMenuIcon({ name: 'today' }).wrapperIcon,
-    other: muiFilterMenuIcon({ name: 'other' }).wrapperIcon,
+    other: muiFilterMenuIcon({ name: 'other' }).wrapperIcon
   };
 
   return (

@@ -8,7 +8,7 @@ import {
   getSuggestScheduleDate,
   getScheduleText,
   dayNames,
-  monthNames,
+  monthNames
 } from '../../utils/time';
 // Task API Class
 import TaskAPI from '../../apis/task';
@@ -27,20 +27,20 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  Switch,
+  Switch
 } from '@material-ui/core';
 import {
   AddCircle as AddCircleIcon,
   Today as TodayIcon,
   WbSunnyOutlined as WbSunnyOutlinedIcon,
   ArrowRightAlt as ArrowRightAltIcon,
-  NotInterested as NotInterestedIcon,
+  NotInterested as NotInterestedIcon
 } from '@material-ui/icons';
 import {
   muiModal,
   muiMenuItemModal,
   muiSelectSchedule,
-  muiDateTimePicker,
+  muiDateTimePicker
 } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
@@ -51,7 +51,7 @@ function updateUITaskAfterAdd(tasks, newTask) {
     tasksInbox: tasks.tasksInbox.slice(),
     tasksToday: tasks.tasksToday.slice(),
     tasksUpcoming: tasks.tasksUpcoming.slice(),
-    sectionTasks: tasks.sectionTasks.slice(),
+    sectionTasks: tasks.sectionTasks.slice()
   };
   const { schedule, section } = newTask;
   newTask.isOpen = false;
@@ -78,7 +78,7 @@ function updateUITaskAfterAdd(tasks, newTask) {
     if (!isAddTaskToday) {
       result.tasksToday.push({
         section: SCHEDULE_DATE.today,
-        items: [{ ...newTask }],
+        items: [{ ...newTask }]
       });
     }
   }
@@ -97,7 +97,7 @@ function updateUITaskAfterAdd(tasks, newTask) {
   if (!isAddTaskInbox) {
     result.tasksInbox.push({
       section,
-      items: [{ ...newTask }],
+      items: [{ ...newTask }]
     });
   }
 
@@ -116,7 +116,7 @@ function updateUITaskAfterAdd(tasks, newTask) {
     if (!isAddTaskUpComing) {
       result.tasksUpcoming.push({
         section: newTask.scheduleText,
-        items: [{ ...newTask }],
+        items: [{ ...newTask }]
       });
     }
   }
@@ -129,7 +129,7 @@ export function ModalCreateSection(props) {
   const [value, setValue] = useState('');
   const [errorText, setErrorText] = useState('');
 
-  const handleChange = (e) => setValue(e.target.value);
+  const handleChange = e => setValue(e.target.value);
 
   const handleSave = () => {
     let isValidSection = null;
@@ -183,7 +183,7 @@ export function ModalAddTask(props) {
     tasks,
     location: { pathname },
     setTask,
-    activeDate,
+    activeDate
   } = props;
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
@@ -217,7 +217,7 @@ export function ModalAddTask(props) {
 
   if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;
 
-  const handleChangeSelectSection = (e) => {
+  const handleChangeSelectSection = e => {
     const value = e.target.value;
     if (value === 'create') {
       // create new section
@@ -228,12 +228,11 @@ export function ModalAddTask(props) {
     }
   };
 
-  const handleChangeSelectSchedule = (e) =>
-    setValueTaskSchedule(e.target.value);
+  const handleChangeSelectSchedule = e => setValueTaskSchedule(e.target.value);
 
-  const handleChangeSwitch = (e) => setSwitchScheduleType(e.target.checked);
+  const handleChangeSwitch = e => setSwitchScheduleType(e.target.checked);
 
-  const handleValueTaskName = (e) => setValueTaskName(e.target.value);
+  const handleValueTaskName = e => setValueTaskName(e.target.value);
 
   const handleSave = async () => {
     let isValid = null;
@@ -265,7 +264,7 @@ export function ModalAddTask(props) {
       const newTask = {
         des: valueTaskName,
         section: valueTaskSection === '' ? null : valueTaskSection,
-        schedule,
+        schedule
       };
 
       const taskAPI = new TaskAPI();
@@ -275,7 +274,7 @@ export function ModalAddTask(props) {
         const result = updateUITaskAfterAdd(tasks, taskAPI.newTask);
         setTask({
           ...tasks,
-          ...result,
+          ...result
         });
       } else {
         alert('add Task fail');
@@ -293,7 +292,7 @@ export function ModalAddTask(props) {
   /* --- START: Handle Create Section Action --- */
   const handleCloseCreateSection = () => setOpenCreateSection(false);
 
-  const cbSaveCreateSection = (sectionName) => {
+  const cbSaveCreateSection = sectionName => {
     // close ModalCreateSection
     handleCloseCreateSection();
 
@@ -437,7 +436,7 @@ export function ModalAddTask(props) {
                     <MenuItem disabled>
                       <em>Your unsaved section</em>
                     </MenuItem>,
-                    <MenuItem value={section}>{section}</MenuItem>,
+                    <MenuItem value={section}>{section}</MenuItem>
                   ];
                 }
                 return (

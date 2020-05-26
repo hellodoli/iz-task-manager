@@ -10,7 +10,7 @@ import {
   InputAdornment,
   FormHelperText,
   IconButton,
-  Button,
+  Button
 } from '@material-ui/core';
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 
@@ -21,7 +21,7 @@ function FormSignUp() {
     username: '',
     password: '',
     email: '',
-    isShowPassword: false,
+    isShowPassword: false
   });
 
   const [nameError, setNameError] = useState('');
@@ -29,10 +29,10 @@ function FormSignUp() {
   const [passwordError, setPasswordError] = useState('');
 
   // handle change name, email, username, password
-  const handleChange = (prop) => (event) => {
+  const handleChange = prop => event => {
     setValues({
       ...values,
-      [prop]: event.target.value,
+      [prop]: event.target.value
     });
   };
 
@@ -40,7 +40,7 @@ function FormSignUp() {
   const handleClickShowpassword = () => {
     setValues({
       ...values,
-      isShowPassword: !values.isShowPassword,
+      isShowPassword: !values.isShowPassword
     });
   };
 

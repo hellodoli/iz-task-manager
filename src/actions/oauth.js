@@ -2,7 +2,7 @@ import { CHECK_AUTH, SIGN_IN, SIGN_OUT } from '../constants/oauth';
 import { getCookie } from '../utils/cookies';
 import User from '../apis/user';
 
-export const checkAuth = () => async (dispatch) => {
+export const checkAuth = () => async dispatch => {
   try {
     let user = {};
     let isSignedIn = false;
@@ -18,18 +18,18 @@ export const checkAuth = () => async (dispatch) => {
     }
     dispatch({
       type: CHECK_AUTH,
-      payload: { isSignedIn, user },
+      payload: { isSignedIn, user }
     });
   } catch (error) {
     console.log(error);
   }
 };
 
-export const signIn = (userInfo) => ({
+export const signIn = userInfo => ({
   type: SIGN_IN,
-  payload: userInfo,
+  payload: userInfo
 });
 
 export const signOut = () => ({
-  type: SIGN_OUT,
+  type: SIGN_OUT
 });

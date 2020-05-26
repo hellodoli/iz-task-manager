@@ -22,11 +22,11 @@ function Main(props) {
 }
 
 Main.propTypes = {
-  auth: PropTypes.object.isRequired,
+  auth: PropTypes.object.isRequired
 };
 
-const mapStateToProps = (state) => ({
-  auth: state.oauthReducer,
+const mapStateToProps = state => ({
+  auth: state.oauthReducer
 });
 
 export default connect(mapStateToProps)(Main);

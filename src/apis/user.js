@@ -43,7 +43,7 @@ class User {
     try {
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + token,
+        Authorization: 'Bearer ' + token
       };
       const response = await api.get('/users/me', { headers });
       console.log(response);

@@ -18,7 +18,7 @@ class Task {
 
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + getCookie('emailToken'),
+        Authorization: 'Bearer ' + getCookie('emailToken')
       };
 
       const response = await api.get('/tasks', { params, headers });
@@ -37,7 +37,7 @@ class Task {
       const url = '/tasks/' + id;
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + getCookie('emailToken'),
+        Authorization: 'Bearer ' + getCookie('emailToken')
       };
       const response = await api.patch(url, { ...updateInfo }, { headers });
       if (response.status === 200) {
@@ -58,7 +58,7 @@ class Task {
       this.newTask = null;
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + getCookie('emailToken'),
+        Authorization: 'Bearer ' + getCookie('emailToken')
       };
 
       if (typeof obTask.section === 'undefined' || obTask.section === '')
@@ -85,7 +85,7 @@ class Task {
       this.isDeleteSuccess = null;
       const headers = {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + getCookie('emailToken'),
+        Authorization: 'Bearer ' + getCookie('emailToken')
       };
 
       const url = '/tasks/' + id;

@@ -5,9 +5,9 @@ import { Typography, Box } from '@material-ui/core';
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
-  const getAttrTabpanel = (index) => ({
+  const getAttrTabpanel = index => ({
     id: `form-tabpanel-${index}`,
-    'aria-labelledby': `form-tab-${index}`,
+    'aria-labelledby': `form-tab-${index}`
   });
 
   return (
@@ -26,7 +26,7 @@ function TabPanel(props) {
 TabPanel.propTypes = {
   children: PropTypes.node,
   index: PropTypes.any.isRequired,
-  value: PropTypes.any.isRequired,
+  value: PropTypes.any.isRequired
 };
 
 export default TabPanel;

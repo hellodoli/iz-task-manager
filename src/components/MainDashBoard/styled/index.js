@@ -2,7 +2,7 @@ import { createMuiTheme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { grey, red } from '@material-ui/core/colors';
 
-export const muiTaskGeneral = makeStyles(theme => {
+export const muiTaskGeneral = makeStyles((theme) => {
   const typo = theme.typography;
   const palette = theme.palette;
   return {
@@ -12,49 +12,49 @@ export const muiTaskGeneral = makeStyles(theme => {
       alignItems: 'center',
       color: palette.text.primary,
       '& .MuiFab-root': {
-        textTransform: 'initial'
-      }
+        textTransform: 'initial',
+      },
     },
     headerMgBottom: {
-      marginBottom: typo.pxToRem(24)
+      marginBottom: typo.pxToRem(24),
     },
     headerMgBottomL: {
-      marginBottom: typo.pxToRem(50)
+      marginBottom: typo.pxToRem(50),
     },
     headerTitle: {
       fontSize: typo.pxToRem(20),
       fontWeight: typo.fontWeightBold,
-      marginBottom: 0
+      marginBottom: 0,
     },
     section: {
       '& + $section': {
-        marginTop: typo.pxToRem(20)
+        marginTop: typo.pxToRem(20),
       },
       '& .MuiExpansionPanelDetails-root': {
-        display: 'block'
-      }
+        display: 'block',
+      },
     },
     sectionHeader: {
       fontSize: typo.pxToRem(14),
       fontWeight: typo.fontWeightBold,
-      textTransform: 'capitalize'
+      textTransform: 'capitalize',
     },
     wrapperAllSection: {},
     wrapperQuickAddTask: {
       '$wrapperAllSection + &': {
-        marginTop: typo.pxToRem(15)
-      }
+        marginTop: typo.pxToRem(15),
+      },
     },
     todayButton: {
-      marginLeft: typo.pxToRem(10)
+      marginLeft: typo.pxToRem(10),
     },
     wrapperWeekRow: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       '& .MuiPaper-root': {
-        width: '100%'
-      }
+        width: '100%',
+      },
     },
     wrapperUpcomingAddTask: {
       display: 'flex',
@@ -63,13 +63,13 @@ export const muiTaskGeneral = makeStyles(theme => {
       border: `2px solid ${palette.primary.main}`,
       borderRadius: theme.shape.borderRadius,
       '& .MuiTypography-root': {
-        marginRight: typo.pxToRem(10)
-      }
-    }
+        marginRight: typo.pxToRem(10),
+      },
+    },
   };
 });
 
-export const muiTaskItem = makeStyles(theme => {
+export const muiTaskItem = makeStyles((theme) => {
   const pxToRem = theme.typography.pxToRem;
   return {
     wrapperItem: {
@@ -81,35 +81,35 @@ export const muiTaskItem = makeStyles(theme => {
       pageBreakInside: 'avoid',
       cursor: 'pointer',
       '&:not(:last-child)': {
-        marginBottom: pxToRem(20)
+        marginBottom: pxToRem(20),
       },
       '&:hover': {
         boxShadow: theme.shadows[2],
         '& > $wrapperItemAction': {
           opacity: 1,
-          visibility: 'visible'
-        }
-      }
+          visibility: 'visible',
+        },
+      },
     },
     wrapperItemActive: {
       boxShadow: theme.shadows[2],
       '& > $wrapperItemAction': {
         opacity: 1,
-        visibility: 'visible'
-      }
+        visibility: 'visible',
+      },
     },
     wrapperItemEdit: {
       width: '100%',
       fontSize: pxToRem(14),
       color: theme.palette.text.primary,
       '& .MuiTextField-root': {
-        marginBottom: pxToRem(10)
-      }
+        marginBottom: pxToRem(10),
+      },
     },
     buttonEditGroup: {
       '& .MuiButton-root:not(:last-child)': {
-        marginRight: pxToRem(10)
-      }
+        marginRight: pxToRem(10),
+      },
     },
     wrapperItemAction: {
       position: 'absolute',
@@ -119,85 +119,85 @@ export const muiTaskItem = makeStyles(theme => {
       visibility: 'hidden',
       transition: 'opacity 195ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
       '& .MuiIconButton-root': {
-        color: theme.palette.text.primary
+        color: theme.palette.text.primary,
       },
       '& .MuiSvgIcon-root': {
-        fontSize: '1.25rem'
-      }
+        fontSize: '1.25rem',
+      },
     },
     wrapperItemDetail: {
       display: 'flex',
       // fontSize: pxToRem(14),
-      color: theme.palette.text.primary
+      color: theme.palette.text.primary,
     },
     wrapperItemContentBottom: {
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'wrap',
-      marginTop: pxToRem(4)
+      marginTop: pxToRem(4),
     },
     itemDueDay: {
       fontSize: pxToRem(14),
-      color: props => props.color
-    }
+      color: (props) => props.color,
+    },
   };
 });
 
-export const muiModal = makeStyles(theme => {
+export const muiModal = makeStyles((theme) => {
   const typo = theme.typography;
   const palette = theme.palette;
   return {
     gutterTopBottom: {
       paddingTop: 0,
-      paddingBottom: 0
+      paddingBottom: 0,
     },
     dialogDeleteTitle: {},
     textOptionWithIcon: {
-      marginLeft: typo.pxToRem(10)
+      marginLeft: typo.pxToRem(10),
     },
     textOptionWithIconI: {
-      fontWeight: typo.fontWeightBold
+      fontWeight: typo.fontWeightBold,
     },
     borderDialogTitle: {
-      borderBottom: `1px solid ${palette.divider}`
+      borderBottom: `1px solid ${palette.divider}`,
     },
     deleteButton: {
       backgroundColor: red[700],
       color: palette.common.white,
       '&:hover': {
         backgroundColor: red[700],
-        color: palette.common.white
-      }
-    }
+        color: palette.common.white,
+      },
+    },
   };
 });
 
 // Overriding styles with classes
 
-export const muiMenuItemModal = makeStyles(theme => ({
+export const muiMenuItemModal = makeStyles((theme) => ({
   root: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     '& .MuiSvgIcon-root + span': {
-      marginLeft: theme.typography.pxToRem(10)
-    }
-  }
+      marginLeft: theme.typography.pxToRem(10),
+    },
+  },
 }));
 
-export const muiSelectSchedule = makeStyles(theme => {
+export const muiSelectSchedule = makeStyles((theme) => {
   const typo = theme.typography;
   return {
     root: {
       display: 'flex',
       '& > span': {
         display: 'none',
-        marginLeft: typo.pxToRem(8)
+        marginLeft: typo.pxToRem(8),
       },
       '& .MuiSvgIcon-root + span': {
-        marginLeft: typo.pxToRem(10)
-      }
-    }
+        marginLeft: typo.pxToRem(10),
+      },
+    },
   };
 });
 
@@ -221,19 +221,19 @@ export const muiDateTimePicker = createMuiTheme({
       pickerView: {
         width: '100%',
         margin: '0 auto',
-        maxWidth: 'initial'
-      }
+        maxWidth: 'initial',
+      },
     },
     MuiPickersDay: {
       /*day: {
         width: '40px',
         height: '40px'
       }*/
-    }
+    },
     /*MuiPickersToolbarText: {
       toolbarTxt: {
         fontSize: '1.5rem'
       }
     }*/
-  }
+  },
 });

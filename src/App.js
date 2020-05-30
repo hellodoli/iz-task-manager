@@ -75,11 +75,11 @@ function App(props) {
 
 App.propTypes = {
   auth: PropTypes.object.isRequired,
-  checkAuth: PropTypes.func.isRequired
+  checkAuth: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = state => ({
-  auth: state.oauthReducer
+const mapStateToProps = (state) => ({
+  auth: state.oauthReducer,
 });
 
 export default connect(mapStateToProps, { checkAuth })(App);

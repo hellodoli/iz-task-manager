@@ -1,13 +1,13 @@
 import { makeStyles } from '@material-ui/core/styles';
 
-export const muiDashBoard = makeStyles(theme => ({
+export const muiDashBoard = makeStyles((theme) => ({
   root: {
     '--widthMenu': '305px',
-    '--heightTopbar': '44px'
+    '--heightTopbar': '44px',
   },
   wrapperMainApp: {
     width: '100%',
-    minHeight: '100vh'
+    minHeight: '100vh',
   },
   wrapperLeftMenu: {
     position: 'fixed',
@@ -18,7 +18,7 @@ export const muiDashBoard = makeStyles(theme => ({
     paddingLeft: theme.typography.pxToRem(35),
     background: theme.palette.background.default,
     overflow: 'hidden',
-    transition: 'left .25s cubic-bezier(.4,0,.2,1)'
+    transition: 'left .25s cubic-bezier(.4,0,.2,1)',
   },
   wrapperRightMenu: {
     backgroundColor: theme.palette.background.paper,
@@ -28,10 +28,10 @@ export const muiDashBoard = makeStyles(theme => ({
     justifyContent: 'center',
     position: 'relative',
     transition:
-      'opacity .25s cubic-bezier(.4,0,.6,1), margin-left .25s cubic-bezier(.4,0,.2,1)'
+      'opacity .25s cubic-bezier(.4,0,.6,1), margin-left .25s cubic-bezier(.4,0,.2,1)',
   },
   innerRightMenu: {
     padding: `${theme.typography.pxToRem(80)} ${theme.typography.pxToRem(55)}`,
-    width: '100%'
-  }
+    width: '100%',
+  },
 }));

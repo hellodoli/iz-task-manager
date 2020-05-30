@@ -8,9 +8,9 @@ function FormTabHeader(props) {
   const classes = muiForm(); // use style from makeStyles
   const { value, handleChange, ...other } = props;
 
-  const a11yProps = index => ({
+  const a11yProps = (index) => ({
     id: `form-tab-${index}`,
-    'aria-controls': `form-tabpanel-${index}`
+    'aria-controls': `form-tabpanel-${index}`,
   });
 
   return (
@@ -31,7 +31,7 @@ function FormTabHeader(props) {
 
 FormTabHeader.propTypes = {
   value: PropTypes.any.isRequired,
-  handleChange: PropTypes.func.isRequired
+  handleChange: PropTypes.func.isRequired,
 };
 
 export default FormTabHeader;

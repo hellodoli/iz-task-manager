@@ -12,7 +12,7 @@ function SetUp(props) {
 }
 
 SetUp.propTypes = {
-  isSignedIn: PropTypes.bool.isRequired
+  isSignedIn: PropTypes.bool.isRequired,
 };
 
 export default withRouter(SetUp);

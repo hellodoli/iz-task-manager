@@ -46,7 +46,7 @@ export const monthNames = [
   'September',
   'October',
   'November',
-  'December'
+  'December',
 ];
 
 export const dayNames = [
@@ -56,7 +56,7 @@ export const dayNames = [
   SCHEDULE_DATE.wed,
   SCHEDULE_DATE.thurs,
   SCHEDULE_DATE.fri,
-  SCHEDULE_DATE.sat // 6
+  SCHEDULE_DATE.sat, // 6
 ];
 
 /*
@@ -193,7 +193,7 @@ export function getCurrentDateUTC() {
     year,
     hour,
     minute,
-    second
+    second,
   };
 }
 
@@ -229,7 +229,7 @@ export function getInfoDate(obDate) {
     year: d.getFullYear(),
     hour: d.getHours(),
     minute: d.getMinutes(),
-    second: d.getSeconds()
+    second: d.getSeconds(),
   };
 }
 
@@ -309,7 +309,7 @@ export function getWeekByDate(obDate) {
           trans2Date({
             year,
             date: i - maxDatePrevMonth,
-            month
+            month,
           })
         );
       } else {
@@ -318,7 +318,7 @@ export function getWeekByDate(obDate) {
           trans2Date({
             year: y,
             date: i,
-            month: prevMonth
+            month: prevMonth,
           })
         );
       }
@@ -332,7 +332,7 @@ export function getWeekByDate(obDate) {
           trans2Date({
             year: month === 12 ? year + 1 : year,
             date: i - maxDateCurrentMonth,
-            month: month === 12 ? 1 : month + 1
+            month: month === 12 ? 1 : month + 1,
           })
         );
       } else {
@@ -359,7 +359,7 @@ export function getSuggestScheduleDate(obDate, options) {
       today: true,
       tomorrow: true,
       nextweek: true,
-      yesterday: true
+      yesterday: true,
     };
   }
 
@@ -390,7 +390,7 @@ export function getSuggestScheduleDate(obDate, options) {
     result.tomorrow = trans2Date({
       date: date_02,
       month: month_02,
-      year: year_02
+      year: year_02,
     });
   }
   // next week
@@ -409,7 +409,7 @@ export function getSuggestScheduleDate(obDate, options) {
     result.nextweek = trans2Date({
       date: date_03,
       month: month_03,
-      year: year_03
+      year: year_03,
     });
   }
   // yesterday
@@ -429,7 +429,7 @@ export function getSuggestScheduleDate(obDate, options) {
     result.yesterday = trans2Date({
       date: date_04,
       month: month_04,
-      year: year_04
+      year: year_04,
     });
   }
   return result;

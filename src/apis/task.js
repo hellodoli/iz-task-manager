@@ -1,6 +1,5 @@
 import api from './index';
 import { getCookie } from '../utils/cookies';
-import apis from './index';
 
 class Task {
   constructor() {
@@ -12,6 +11,7 @@ class Task {
 
   async getAllTask(schedule) {
     try {
+      this.tasks = [];
       let params = {};
       // options schedule
       if (typeof schedule !== 'undefined') params = { schedule };
@@ -67,7 +67,7 @@ class Task {
       if (typeof obTask.schedule === 'undefined' || obTask.schedule === '')
         obTask.schedule = null;
 
-      const response = await apis.post('/tasks', { ...obTask }, { headers });
+      const response = await api.post('/tasks', { ...obTask }, { headers });
       console.log(response);
       if (response.status === 201) {
         this.newTask = response.data;
@@ -89,7 +89,7 @@ class Task {
       };
 
       const url = '/tasks/' + id;
-      const response = await apis.delete(url, { headers });
+      const response = await api.delete(url, { headers });
       console.log(response);
       if (response.status === 200) {
         this.isDeleteSuccess = true;

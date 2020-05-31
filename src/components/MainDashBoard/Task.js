@@ -127,6 +127,13 @@ function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
   const otherFilter = Object.keys(tasks).filter(condition);
   const result = {};
 
+  for (let i = 0; i < otherFilter.length; i++) {
+    const key = otherFilter[i];
+    result[key] = { ...tasks[key] }; // clone
+
+    // logic here
+  }
+
   otherFilter.forEach((key) => {
     result[key] = tasks[key].slice();
     tasks[key].forEach((section, indexSection) => {
@@ -730,7 +737,9 @@ function TaskList(props) {
     <Box>
       {/* Task Main List */}
       <div className={gClasses.wrapperAllSection}>
-        {tasks[taskDataProperty].map(({ section, items }, index) => {
+        {Object.values(tasks[taskDataProperty]).map((s, index) => {
+          const section = s.section;
+          const items = s.items || {};
           const parentIndex = index;
           return (
             <ExpansionPanel
@@ -750,7 +759,7 @@ function TaskList(props) {
 
               <ExpansionPanelDetails className={`${taskClassName}-body`}>
                 <List>
-                  {items.map((taskItem, index) => (
+                  {Object.values(items).map((taskItem, index) => (
                     <TaskItem
                       key={taskItem._id}
                       parentIndex={parentIndex}

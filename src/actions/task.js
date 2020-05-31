@@ -6,7 +6,8 @@ import {
   getScheduleText,
   getTime,
 } from '../utils/time';
-import Task from '../apis/task';
+import TaskAPI from '../apis/task';
+import SectionAPI from '../apis/section';
 
 function filterTaskByToday(cloneTasks, currentDate) {
   const tasksToday = [];
@@ -76,11 +77,62 @@ function filterTaskByUpcoming(cloneTasks, currentDate) {
   return finalTask;
 }
 
+function filterTaskBySection(cloneTasks, cloneSections) {
+  const nullSectionKey = 0;
+  const result = {
+    [nullSectionKey]: {
+      des: null,
+      index: 0,
+      items: {},
+    },
+  };
+
+  cloneSections.forEach((s) => (result[s._id] = s));
+
+  function mix(taskItem) {
+    for (let i = 0; i < cloneSections.length; i++) {
+      if (taskItem.section === null) {
+        result[nullSectionKey].items[taskItem._id] = taskItem;
+        break;
+      }
+
+      const s = cloneSections[i];
+      if (taskItem.section === s._id) {
+        if (s.items) result[s._id].items[taskItem._id] = taskItem;
+        else result[s._id].items = { [taskItem._id]: taskItem };
+        break;
+      }
+    }
+  }
+  // mix sections and taskItem into one
+  cloneTasks.forEach(mix);
+  // clear section null empty
+  if (Object.values(result[nullSectionKey].items).length === 0)
+    delete result[nullSectionKey];
+  // re order
+  const resultArr = Object.values(result);
+  resultArr.sort((a, b) => a.order - b.order);
+  resultArr.forEach((section) => {
+    if (section.items)
+      Object.values(section.items).sort(
+        (a, b) => a.index.bySection - b.index.bySection
+      );
+    else section.items = {};
+  });
+
+  return result;
+}
+
 export const getTask = (schedule) => async (dispatch) => {
   try {
-    const taskAPI = new Task();
+    const taskAPI = new TaskAPI();
     await taskAPI.getAllTask(schedule);
     const tasks = taskAPI.tasks;
+
+    // test getAllSection
+    const sectionAPI = new SectionAPI();
+    await sectionAPI.getAllSection();
+    const sections = sectionAPI.sections;
 
     // get soon as possible
     const curDate = getInfoDate({ inputDate: 'today' });
@@ -91,27 +143,43 @@ export const getTask = (schedule) => async (dispatch) => {
       item.isOpen = false;
       item.scheduleText = getScheduleText(item.schedule);
     });
+
+    // clone Section
+    /*
+      deep change: clone section will change
+    */
+    const cloneSection = JSON.parse(JSON.stringify(sections));
     // clone Task
     const cloneTask01 = JSON.parse(JSON.stringify(tasks));
     const cloneTask02 = JSON.parse(JSON.stringify(tasks));
     const cloneTask03 = JSON.parse(JSON.stringify(tasks));
 
     // filter by section group (inbox)
-    const key = 'section';
-    const tasksInbox = splitObjectByKey(key, cloneTask01);
-    const sectionTasks = tasksInbox.map((tasks) => tasks[key]);
+    const tasksInbox = filterTaskBySection(cloneTask01, cloneSection);
+    console.log('tasksInbox: ', tasksInbox);
+    const sectionTasks = Object.values(tasksInbox).map(
+      (tasks) => tasks.section
+    );
+    console.log('sectionTasks: ', sectionTasks);
     // filter by today group (today)
-    const tasksToday = filterTaskByToday(cloneTask02, curDate);
-    // filter by next upcoming (upcoming) - 3 months
-    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);
+    // const tasksToday = filterTaskByToday(cloneTask02, curDate);
+    /*// filter by next upcoming (upcoming) - 3 months
+    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);*/
+
     dispatch({
       type: GET_TASK,
       payload: {
-        tasks: {
+        /*tasks: {
           tasksInbox,
           tasksToday,
           tasksUpcoming,
           sectionTasks,
+        },*/
+        tasks: {
+          tasksInbox,
+          tasksToday: [],
+          tasksUpcoming: [],
+          sectionTasks: [],
         },
       },
     });

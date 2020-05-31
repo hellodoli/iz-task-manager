@@ -400,6 +400,7 @@ export function getSuggestScheduleDate(obDate, options) {
     let month_03 = month;
     let year_03 = year;
     if (date_03 > lastDate) {
+      date_03 -= lastDate;
       if (month_03 === 12) {
         month_03 = 1;
         year_03 += 1;
@@ -432,5 +433,6 @@ export function getSuggestScheduleDate(obDate, options) {
       year: year_04,
     });
   }
+
   return result;
 }

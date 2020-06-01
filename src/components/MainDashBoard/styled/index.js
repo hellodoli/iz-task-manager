@@ -91,6 +91,12 @@ export const muiTaskItem = makeStyles((theme) => {
         },
       },
     },
+    wrapperItemEmpty: {
+      position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     wrapperItemActive: {
       boxShadow: theme.shadows[2],
       '& > $wrapperItemAction': {

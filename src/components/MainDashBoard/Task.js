@@ -97,24 +97,46 @@ function checkCurrentPathname(pathname) {
   let taskClassName = '';
   let taskIdName = '';
   let taskDataProperty = '';
+  let taskOrder = '';
   if (pathname === TASK_ALL) {
     taskClassName = 'task-by-section';
     taskIdName = 'taskBySection';
     taskDataProperty = 'tasksInbox';
+    taskOrder = 'bySection';
   } else if (pathname === TASK_TODAY) {
     taskClassName = 'task-by-schedule-today';
     taskIdName = 'taskByScheduleToday';
     taskDataProperty = 'tasksToday';
+    taskOrder = 'byToday';
   } else if (pathname === TASK_UPCOMING) {
     taskClassName = 'task-by-upcoming';
     taskIdName = 'tasksByUpcoming';
     taskDataProperty = 'tasksUpcoming';
+    taskOrder = 'byUpcoming';
   }
   return {
     taskClassName,
     taskIdName,
     taskDataProperty,
+    taskOrder,
   };
+}
+
+function reOrderList(taskList) {
+  const resultArr = Object.values(taskList);
+  resultArr.sort((a, b) => a.order - b.order);
+
+  /*resultArr.forEach((section) => {
+    if (section.items) {
+      Object.values(section.items).sort(
+        (a, b) => a.index.bySection - b.index.bySection
+      );
+    } else {
+      section.items = {};
+    }
+  });*/
+
+  return resultArr;
 }
 
 // update UI. (for save edit - update)
@@ -156,6 +178,7 @@ function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
 function TaskItem({
   parentIndex,
   childIndex,
+  sectionId,
   taskItem: { _id, des, schedule, completed, isOpen, scheduleText },
 
   isShowSchedule,
@@ -182,9 +205,9 @@ function TaskItem({
   const closeScheduleMenu = () => setAnchorEl(null);
 
   // Handle Edit
-  const cancelEdit = () => startCloseEditStart(obIndex);
+  const cancelEdit = () => startCloseEditStart(_id, sectionId);
 
-  const openEdit = () => startOpenEditTask(obIndex);
+  const openEdit = () => startOpenEditTask(_id, sectionId);
 
   const editting = (e) => setFakeEditValue(e.target.value);
 
@@ -592,8 +615,11 @@ function TaskList(props) {
     taskClassName,
     taskIdName,
     taskDataProperty,
+    taskOrder,
   } = props;
-  const gClasses = muiTaskGeneral(); // mui class (general class)
+
+  const classes = muiTaskGeneral(); // mui class (general class)
+  const itemClasses = muiTaskItem();
 
   useEffect(() => {
     // check every time user switch other tab
@@ -619,24 +645,21 @@ function TaskList(props) {
     prevPathNameTask = pathname;
   }, [pathname, setTask, tasks]);
 
-  const startOpenEditTask = (obIndex) => {
-    const cloneTask = tasks[taskDataProperty].slice();
+  const startOpenEditTask = (taskId, sectionId) => {
+    const cloneTask = { ...tasks[taskDataProperty] };
     if (prevEditTask !== null) {
-      const {
-        obIndex: { parentIndex: prevParentIndex, childIndex: prevChildIndex },
-      } = prevEditTask;
+      const { taskId: prevTaskId, sectionId: prevSectionId } = prevEditTask;
       // get prev Task
-      const prevTask = cloneTask[prevParentIndex].items[prevChildIndex];
+      const prevTask = cloneTask[prevSectionId].items[prevTaskId];
       prevTask.isOpen = false;
     }
 
     // get current Task
-    const { parentIndex, childIndex } = obIndex;
-    const curTask = cloneTask[parentIndex].items[childIndex];
+    const curTask = cloneTask[sectionId].items[taskId];
     curTask.isOpen = true;
 
     setTask({ ...tasks, [taskDataProperty]: cloneTask });
-    prevEditTask = { obIndex };
+    prevEditTask = { taskId, sectionId };
   };
 
   const updateDesTask = async (obIndex, taskOb) => {
@@ -668,11 +691,10 @@ function TaskList(props) {
     }
   };
 
-  const startCloseEditStart = (obIndex) => {
+  const startCloseEditStart = (taskId, sectionId) => {
     prevEditTask = null;
-    const { parentIndex, childIndex } = obIndex;
-    const cloneTask = tasks[taskDataProperty].slice();
-    const curTask = cloneTask[parentIndex].items[childIndex];
+    const cloneTask = { ...tasks[taskDataProperty] };
+    const curTask = cloneTask[sectionId].items[taskId];
     // set current isOpen status
     curTask.isOpen = false;
     setTask({ ...tasks, [taskDataProperty]: cloneTask });
@@ -736,21 +758,26 @@ function TaskList(props) {
   return (
     <Box>
       {/* Task Main List */}
-      <div className={gClasses.wrapperAllSection}>
-        {Object.values(tasks[taskDataProperty]).map((s, index) => {
+      <div className={classes.wrapperAllSection}>
+        {reOrderList(tasks[taskDataProperty]).map((s, index) => {
           const section = s.section;
-          const items = s.items || {};
+          const sectionId = s._id;
+          const items = s.items
+            ? Object.values(s.items).sort(
+                (a, b) => a.index[taskOrder] - b.index[taskOrder]
+              )
+            : [];
           const parentIndex = index;
           return (
             <ExpansionPanel
               // TransitionProps={{ unmountOnExit: true }}
               key={`${taskIdName}${parentIndex}`}
-              className={clsx(taskClassName, gClasses.section)}
+              className={clsx(taskClassName, classes.section)}
             >
               <ExpansionPanelSummary
                 className={clsx(
                   `${taskClassName}-header`,
-                  gClasses.sectionHeader
+                  classes.sectionHeader
                 )}
                 expandIcon={<ExpandMore />}
               >
@@ -758,29 +785,39 @@ function TaskList(props) {
               </ExpansionPanelSummary>
 
               <ExpansionPanelDetails className={`${taskClassName}-body`}>
-                <List>
-                  {Object.values(items).map((taskItem, index) => (
-                    <TaskItem
-                      key={taskItem._id}
-                      parentIndex={parentIndex}
-                      childIndex={index}
-                      taskItem={taskItem}
-                      isShowSchedule={true} // temp
-                      startOpenEditTask={startOpenEditTask}
-                      startCloseEditStart={startCloseEditStart}
-                      updateDesTask={updateDesTask}
-                      updateCompletedTask={updateCompletedTask}
-                      deleteTask={deleteTask}
-                    />
-                  ))}
-                </List>
+                {/* render data */}
+                {items.length === 0 ? (
+                  <div className={itemClasses.wrapperItemEmpty}>
+                    <Fab size="small" color="secondary">
+                      <AddIcon />
+                    </Fab>
+                  </div>
+                ) : (
+                  <List>
+                    {items.map((taskItem, index) => (
+                      <TaskItem
+                        key={taskItem._id}
+                        parentIndex={parentIndex}
+                        childIndex={index}
+                        taskItem={taskItem}
+                        sectionId={sectionId}
+                        isShowSchedule={true} // temp
+                        startOpenEditTask={startOpenEditTask}
+                        startCloseEditStart={startCloseEditStart}
+                        updateDesTask={updateDesTask}
+                        updateCompletedTask={updateCompletedTask}
+                        deleteTask={deleteTask}
+                      />
+                    ))}
+                  </List>
+                )}
               </ExpansionPanelDetails>
             </ExpansionPanel>
           );
         })}
       </div>
       {/* Quick Add Button */}
-      {/*<div className={gClasses.wrapperQuickAddTask}>
+      {/*<div className={classes.wrapperQuickAddTask}>
         <Fab variant="round" size="small" color="secondary" aria-label="add">
           <AddIcon />
         </Fab>

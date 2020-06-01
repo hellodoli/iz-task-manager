@@ -10,33 +10,81 @@ import TaskAPI from '../apis/task';
 import SectionAPI from '../apis/section';
 
 function filterTaskByToday(cloneTasks, currentDate) {
-  const tasksToday = [];
-  const tasksOverDue = [];
-  const finalTask = [];
+  const tasksToday = {};
+  const tasksOverDue = {};
+  const tasksOverDueYesterday = {};
+  const finalTask = {
+    overdue: {
+      _id: 'overdue',
+      section: 'Overdue',
+      order: 0,
+      items: {},
+    },
+    today: {
+      _id: 'today',
+      section: SCHEDULE_DATE.today,
+      order: 1,
+      items: {},
+    },
+  };
+
+  function getTasksOverDueYesterdayOrder(tasksOverDueYesterday, tasksOverDue) {
+    const tasksOverDueOb = Object.values(tasksOverDue);
+    const tasksOverDueYesterdayOb = Object.values(tasksOverDueYesterday);
+    const min = tasksOverDueOb.length;
+    const max = min + tasksOverDueYesterdayOb.length;
+
+    const updated = tasksOverDueYesterdayOb.every(
+      (task) => task.index.byToday >= min && task.index.byToday < max
+    );
+
+    console.log('updated: ', updated);
+    if (updated) {
+      return tasksOverDueYesterday;
+    } else {
+      // update to database
+      return tasksOverDueYesterday;
+    }
+  }
 
   const { date, month, year } = currentDate;
   for (let index = 0; index < cloneTasks.length; index++) {
-    const schedule = cloneTasks[index].schedule;
+    const task = cloneTasks[index];
+    const schedule = task.schedule;
     if (schedule !== null) {
       const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
       const scheduleTime = getTime({ inputDate: new Date(schedule) });
-
       if (scheduleTime === toDayTime) {
-        console.log(cloneTasks[index].schedule);
-        tasksToday.push(cloneTasks[index]);
+        tasksToday[task._id] = task;
       } else if (scheduleTime < toDayTime) {
-        tasksOverDue.push(cloneTasks[index]);
+        if (task.scheduleText === SCHEDULE_DATE.yesterday) {
+          tasksOverDueYesterday[task._id] = task;
+        } else {
+          tasksOverDue[task._id] = task;
+        }
       }
     }
   }
 
-  if (tasksOverDue.length !== 0)
-    finalTask.push({ section: 'Overdue', items: tasksOverDue });
-  if (tasksToday.length !== 0)
-    finalTask.push({
-      section: SCHEDULE_DATE.today,
-      items: tasksToday,
-    });
+  // mix task overdue
+  const tasksOverDueOb = Object.values(tasksOverDue);
+  const tasksOverDueYesterdayOb = Object.values(tasksOverDueYesterday);
+  if (tasksOverDueYesterdayOb.length !== 0) {
+    finalTask.overdue.items = {
+      ...tasksOverDue,
+      ...getTasksOverDueYesterdayOrder(tasksOverDueYesterday, tasksOverDue),
+    };
+  } else {
+    if (tasksOverDueOb.length !== 0) {
+      finalTask.overdue.items = tasksOverDue;
+    } else {
+      delete finalTask.overdue;
+      finalTask.today.order = 0;
+    }
+  }
+
+  // mix task today
+  finalTask.today.items = tasksToday;
 
   return finalTask;
 }
@@ -81,8 +129,9 @@ function filterTaskBySection(cloneTasks, cloneSections) {
   const nullSectionKey = 0;
   const result = {
     [nullSectionKey]: {
-      des: null,
-      index: 0,
+      _id: nullSectionKey,
+      section: null,
+      order: 0,
       items: {},
     },
   };
@@ -109,16 +158,6 @@ function filterTaskBySection(cloneTasks, cloneSections) {
   // clear section null empty
   if (Object.values(result[nullSectionKey].items).length === 0)
     delete result[nullSectionKey];
-  // re order
-  const resultArr = Object.values(result);
-  resultArr.sort((a, b) => a.order - b.order);
-  resultArr.forEach((section) => {
-    if (section.items)
-      Object.values(section.items).sort(
-        (a, b) => a.index.bySection - b.index.bySection
-      );
-    else section.items = {};
-  });
 
   return result;
 }
@@ -162,7 +201,9 @@ export const getTask = (schedule) => async (dispatch) => {
     );
     console.log('sectionTasks: ', sectionTasks);
     // filter by today group (today)
-    // const tasksToday = filterTaskByToday(cloneTask02, curDate);
+    const tasksToday = filterTaskByToday(cloneTask02, curDate);
+    console.log('tasksToday: ', tasksToday);
+
     /*// filter by next upcoming (upcoming) - 3 months
     const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);*/
 
@@ -177,7 +218,7 @@ export const getTask = (schedule) => async (dispatch) => {
         },*/
         tasks: {
           tasksInbox,
-          tasksToday: [],
+          tasksToday,
           tasksUpcoming: [],
           sectionTasks: [],
         },

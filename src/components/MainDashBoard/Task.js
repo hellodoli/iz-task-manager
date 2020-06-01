@@ -140,7 +140,13 @@ function reOrderList(taskList) {
 }
 
 // update UI. (for save edit - update)
-function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
+function updateCloneTaskItemUI(
+  tasks,
+  currentFilter,
+  currentTask,
+  { taskId, sectionId },
+  status
+) {
   function condition(key) {
     if (key === currentFilter || key === 'sectionTasks' || key === 'fetchDone')
       return false;
@@ -153,23 +159,21 @@ function updateCloneTaskItemUI(tasks, currentFilter, currentTask, status) {
     const key = otherFilter[i];
     result[key] = { ...tasks[key] }; // clone
 
-    // logic here
-  }
-
-  otherFilter.forEach((key) => {
-    result[key] = tasks[key].slice();
-    tasks[key].forEach((section, indexSection) => {
-      section.items.forEach((task, indexTask) => {
-        if (task._id === currentTask._id) {
+    const k = Object.values(result[key]);
+    // loop section
+    for (let y = 0; y < k.length; y++) {
+      if (k[y].items && Object.values(k[y].items).length > 0) {
+        if (k[y].items[taskId]._id === taskId) {
           if (status === 'delete') {
-            result[key][indexSection].items.splice(indexTask, 1);
+            delete k[y].items[taskId];
           } else {
-            result[key][indexSection].items.splice(indexTask, 1, currentTask);
+            k[y].items[taskId] = currentTask;
           }
+          break;
         }
-      });
-    });
-  });
+      }
+    }
+  }
 
   return result;
 }
@@ -212,12 +216,15 @@ function TaskItem({
   const editting = (e) => setFakeEditValue(e.target.value);
 
   const saveEdit = () =>
-    updateDesTask(obIndex, { id: _id, des: fakeEditValue });
+    updateDesTask(_id, sectionId, { id: _id, des: fakeEditValue });
 
   const check = (e) =>
-    updateCompletedTask(obIndex, { id: _id, completed: e.target.checked });
+    updateCompletedTask(_id, sectionId, {
+      id: _id,
+      completed: e.target.checked,
+    });
 
-  const removeTask = () => deleteTask(obIndex, _id);
+  const removeTask = () => deleteTask(_id, sectionId);
 
   useEffect(() => {
     if (!isOpen && fakeEditValue !== des) setFakeEditValue(des);
@@ -662,15 +669,14 @@ function TaskList(props) {
     prevEditTask = { taskId, sectionId };
   };
 
-  const updateDesTask = async (obIndex, taskOb) => {
+  const updateDesTask = async (taskId, sectionId, taskOb) => {
     prevEditTask = null;
     const taskAPI = new TaskAPI();
     await taskAPI.updateTask(taskOb);
     if (taskAPI.isUpdateSuccess) {
       // change UI after success
-      const { parentIndex, childIndex } = obIndex;
-      const cloneTask = tasks[taskDataProperty].slice();
-      const curTask = cloneTask[parentIndex].items[childIndex];
+      const cloneTask = { ...tasks[taskDataProperty] };
+      const curTask = cloneTask[sectionId].items[taskId];
       // set current isOpen status
       curTask.isOpen = false;
       curTask.des = taskOb.des;
@@ -678,7 +684,8 @@ function TaskList(props) {
       const otherCloneTask = updateCloneTaskItemUI(
         tasks,
         taskDataProperty,
-        curTask
+        curTask,
+        { taskId, sectionId }
       );
       setTask({
         ...tasks,
@@ -700,21 +707,21 @@ function TaskList(props) {
     setTask({ ...tasks, [taskDataProperty]: cloneTask });
   };
 
-  const updateCompletedTask = async (obIndex, taskOb) => {
+  const updateCompletedTask = async (taskId, sectionId, taskOb) => {
     const taskAPI = new TaskAPI();
     await taskAPI.updateTask(taskOb);
     if (taskAPI.isUpdateSuccess) {
       // change UI after success
-      const { parentIndex, childIndex } = obIndex;
-      const cloneTask = tasks[taskDataProperty].slice();
-      const curTask = cloneTask[parentIndex].items[childIndex];
+      const cloneTask = { ...tasks[taskDataProperty] };
+      const curTask = cloneTask[sectionId].items[taskId];
       // set current complete status
       curTask.completed = taskOb.completed;
       // find other clone Task and update
       const otherCloneTask = updateCloneTaskItemUI(
         tasks,
         taskDataProperty,
-        curTask
+        curTask,
+        { taskId, sectionId }
       );
       setTask({
         ...tasks,
@@ -727,21 +734,20 @@ function TaskList(props) {
     }
   };
 
-  const deleteTask = async (obIndex, taskId) => {
+  const deleteTask = async (taskId, sectionId) => {
     const taskAPI = new TaskAPI();
     await taskAPI.deleteTask(taskId);
     if (taskAPI.isDeleteSuccess) {
-      // change UI after success
-      const { parentIndex, childIndex } = obIndex;
-      const cloneTask = tasks[taskDataProperty].slice();
-      const curTask = cloneTask[parentIndex].items[childIndex];
       // delete current task
-      cloneTask[parentIndex].items.splice(childIndex, 1);
+      const cloneTask = { ...tasks[taskDataProperty] };
+      delete cloneTask[sectionId].items[taskId];
+      // change UI after success
       // find other clone Task and delete
       const otherCloneTask = updateCloneTaskItemUI(
         tasks,
         taskDataProperty,
-        curTask,
+        null,
+        { taskId, sectionId },
         'delete'
       );
       setTask({
@@ -760,6 +766,7 @@ function TaskList(props) {
       {/* Task Main List */}
       <div className={classes.wrapperAllSection}>
         {reOrderList(tasks[taskDataProperty]).map((s, index) => {
+          const parentIndex = index;
           const section = s.section;
           const sectionId = s._id;
           const items = s.items
@@ -767,7 +774,6 @@ function TaskList(props) {
                 (a, b) => a.index[taskOrder] - b.index[taskOrder]
               )
             : [];
-          const parentIndex = index;
           return (
             <ExpansionPanel
               // TransitionProps={{ unmountOnExit: true }}
@@ -816,12 +822,6 @@ function TaskList(props) {
           );
         })}
       </div>
-      {/* Quick Add Button */}
-      {/*<div className={classes.wrapperQuickAddTask}>
-        <Fab variant="round" size="small" color="secondary" aria-label="add">
-          <AddIcon />
-        </Fab>
-      </div>*/}
     </Box>
   );
 }

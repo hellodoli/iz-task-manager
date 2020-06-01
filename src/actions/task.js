@@ -219,8 +219,8 @@ export const getTask = (schedule) => async (dispatch) => {
         tasks: {
           tasksInbox,
           tasksToday,
-          tasksUpcoming: [],
-          sectionTasks: [],
+          tasksUpcoming: {},
+          sectionTasks,
         },
       },
     });

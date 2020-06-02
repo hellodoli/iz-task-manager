@@ -1,8 +1,11 @@
-import React, { useEffect, useState, Fragment } from 'react';
+import React, { Fragment, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
 import { Switch, Route } from 'react-router-dom';
+
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 // Task API Class
 import TaskAPI from '../../apis/task';
@@ -52,6 +55,7 @@ import {
   ExpandMore,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  DragIndicator as DragIndicatorIcon,
 } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
@@ -122,21 +126,12 @@ function checkCurrentPathname(pathname) {
   };
 }
 
-function reOrderList(taskList) {
-  const resultArr = Object.values(taskList);
-  resultArr.sort((a, b) => a.order - b.order);
+function reOrderList(taskSection) {
+  return Object.values(taskSection).sort((a, b) => a.order - b.order);
+}
 
-  /*resultArr.forEach((section) => {
-    if (section.items) {
-      Object.values(section.items).sort(
-        (a, b) => a.index.bySection - b.index.bySection
-      );
-    } else {
-      section.items = {};
-    }
-  });*/
-
-  return resultArr;
+function reOrderItem(taskItem, key) {
+  return Object.values(taskItem).sort((a, b) => a.index[key] - b.index[key]);
 }
 
 // update UI. (for save edit - update)
@@ -180,25 +175,25 @@ function updateCloneTaskItemUI(
 
 // Task Components
 function TaskItem({
-  parentIndex,
-  childIndex,
+  id,
   sectionId,
   taskItem: { _id, des, schedule, completed, isOpen, scheduleText },
 
-  isShowSchedule,
+  childIndex,
   startOpenEditTask,
   startCloseEditStart,
   updateDesTask,
   updateCompletedTask,
   deleteTask,
+  moveTask,
 }) {
   const [anchorEl, setAnchorEl] = useState(null); // schedule menu
   const [isOpenModalDelete, setIsOpenModalDelete] = useState(false); // modal confirm delete
   const [fakeEditValue, setFakeEditValue] = useState(des); // fake des
+  const ref = useRef(null); // drag handle
   const classes = muiTaskItem({
     color: setScheduleStatusColor(scheduleText, schedule),
   });
-  const obIndex = { parentIndex, childIndex };
 
   // Handle Modal Delete
   const openModalDelete = () => setIsOpenModalDelete(true);
@@ -226,114 +221,194 @@ function TaskItem({
 
   const removeTask = () => deleteTask(_id, sectionId);
 
+  // Drag Handle
+  const [, drop] = useDrop({
+    accept: 'item',
+    hover(item, monitor) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = childIndex;
+      console.log('dragIndex: ', dragIndex);
+      console.log('hoverIndex: ', hoverIndex);
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      // Determine rectangle on screen
+      const hoverBoundingRect = ref.current?.getBoundingClientRect();
+      // Get vertical middle
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset();
+      // Get pixels to the top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return;
+      }
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return;
+      }
+      // Time to actually perform the action
+      moveTask(dragIndex, hoverIndex);
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex;
+    },
+  });
+
+  const [{ isDragging }, drag, preview] = useDrag({
+    item: { type: 'item', id, index: childIndex },
+    collect: (monitor) => {
+      return {
+        isDragging: monitor.isDragging(),
+      };
+    },
+  });
+
+  // start Drag
+  drag(drop(ref));
+
   useEffect(() => {
     if (!isOpen && fakeEditValue !== des) setFakeEditValue(des);
   }, [isOpen, fakeEditValue, des]);
 
   return (
-    <ListItem
-      elevation={0}
-      className={clsx(
-        'task-item',
-        classes.wrapperItem,
-        Boolean(anchorEl) && classes.wrapperItemActive
-      )}
-    >
-      {/* Task Edit */}
-      {isOpen && (
-        <div className={clsx('task-item-edit', classes.wrapperItemEdit)}>
-          <TextField
-            variant="outlined"
-            value={fakeEditValue}
-            size="small"
-            color="primary"
-            fullWidth={true}
-            autoFocus={true}
-            onChange={editting}
-          />
-          <div className={classes.buttonEditGroup}>
-            <Button variant="contained" color="primary" onClick={saveEdit}>
-              Save
-            </Button>
-            {'  '}
-            <Button variant="text" onClick={cancelEdit}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-      {/* Task Action */}
-      {!isOpen && (
-        <div className={clsx('task-item-actions', classes.wrapperItemAction)}>
-          <IconButton size="small" onClick={openEdit}>
-            <Edit />
-          </IconButton>
-
-          <IconButton size="small" onClick={openScheduleMenu}>
-            <Schedule />
-          </IconButton>
-          {/* Schedule Menu */}
-          <Menu
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'center',
-            }}
-            getContentAnchorEl={null}
-            anchorEl={anchorEl}
-            keepMounted
-            open={Boolean(anchorEl)}
-            onClose={closeScheduleMenu}
-          >
-            <MenuItem>Item 1</MenuItem>
-            <MenuItem>Item 2</MenuItem>
-            <MenuItem>Item 3</MenuItem>
-          </Menu>
-
-          <IconButton
-            style={{ color: red[500] }}
-            size="small"
-            color="default"
-            onClick={openModalDelete}
-          >
-            <DeleteIcon />
-          </IconButton>
-          {/* Modal Delete */}
-          {isOpenModalDelete && (
-            <ModalConFirm
-              removeTask={removeTask}
-              isOpen={isOpenModalDelete}
-              handleClose={closeModalDelete}
+    <div ref={preview}>
+      <ListItem
+        elevation={0}
+        className={clsx(
+          'task-item',
+          classes.wrapperItem,
+          Boolean(anchorEl) && classes.wrapperItemActive
+        )}
+      >
+        {/* Task Edit */}
+        {isOpen && (
+          <div className={clsx('task-item-edit', classes.wrapperItemEdit)}>
+            <TextField
+              variant="outlined"
+              value={fakeEditValue}
+              size="small"
+              color="primary"
+              fullWidth={true}
+              autoFocus={true}
+              onChange={editting}
             />
-          )}
-        </div>
-      )}
-      {/* Task Detail */}
-      {!isOpen && (
-        <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
-          <div className="task-item-detail-checkbox">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={completed}
-                  onChange={check}
-                  color="primary"
-                />
-              }
-            />
-          </div>
-          <div className={classes.wrapperItemContent}>
-            <div className={classes.itemDes}>
-              {isOpen ? fakeEditValue : des}
+            <div className={classes.buttonEditGroup}>
+              <Button variant="contained" color="primary" onClick={saveEdit}>
+                Save
+              </Button>
+              {'  '}
+              <Button variant="text" onClick={cancelEdit}>
+                Cancel
+              </Button>
             </div>
-            <div className={classes.wrapperItemContentBottom}>
-              {isShowSchedule === true && schedule !== null && (
-                <div className={classes.itemDueDay}>{scheduleText}</div>
+          </div>
+        )}
+        {/* Task Action */}
+        {!isOpen && (
+          <div
+            className={clsx(
+              'task-item-actions',
+              classes.wrapperItemAction,
+              classes.wrapperHidden
+            )}
+          >
+            <IconButton size="small" onClick={openEdit}>
+              <Edit />
+            </IconButton>
+
+            <IconButton size="small" onClick={openScheduleMenu}>
+              <Schedule />
+            </IconButton>
+            {/* Schedule Menu */}
+            <Menu
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'center',
+              }}
+              getContentAnchorEl={null}
+              anchorEl={anchorEl}
+              keepMounted
+              open={Boolean(anchorEl)}
+              onClose={closeScheduleMenu}
+            >
+              <MenuItem>Item 1</MenuItem>
+              <MenuItem>Item 2</MenuItem>
+              <MenuItem>Item 3</MenuItem>
+            </Menu>
+
+            <IconButton
+              style={{ color: red[500] }}
+              size="small"
+              color="default"
+              onClick={openModalDelete}
+            >
+              <DeleteIcon />
+            </IconButton>
+            {/* Modal Delete */}
+            {isOpenModalDelete && (
+              <ModalConFirm
+                removeTask={removeTask}
+                isOpen={isOpenModalDelete}
+                handleClose={closeModalDelete}
+              />
+            )}
+          </div>
+        )}
+        {/* Item Drag Handle */}
+        {!isOpen && (
+          <div
+            ref={ref}
+            className={clsx(
+              'task-item-drag-handle',
+              classes.dragHandle,
+              classes.wrapperHidden
+            )}
+          >
+            <DragIndicatorIcon />
+          </div>
+        )}
+        {/* Task Detail */}
+        {!isOpen && (
+          <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
+            {/* Item checkbox completed*/}
+            <div className="task-item-detail-checkbox">
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={completed}
+                    onChange={check}
+                    color="primary"
+                  />
+                }
+              />
+            </div>
+            {/* Item detail des */}
+            <div className="task-item-detail-des">
+              <div className={classes.itemDes}>
+                {isOpen ? fakeEditValue : des}
+              </div>
+              {schedule !== null && (
+                <div className={classes.wrapperItemContentBottom}>
+                  <div className={classes.itemDueDay}>{scheduleText}</div>
+                </div>
               )}
             </div>
           </div>
-        </div>
-      )}
-    </ListItem>
+        )}
+      </ListItem>
+    </div>
   );
 }
 
@@ -633,13 +708,10 @@ function TaskList(props) {
     if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
       console.log('switch TASK pathname');
       if (prevEditTask !== null) {
-        const {
-          obIndex: { parentIndex, childIndex },
-        } = prevEditTask;
+        const { taskId, sectionId } = prevEditTask;
         const { taskDataProperty } = checkCurrentPathname(prevPathNameTask);
-
-        const cloneTask = tasks[taskDataProperty].slice();
-        const prevTask = cloneTask[parentIndex].items[childIndex];
+        const cloneTask = { ...tasks[taskDataProperty] };
+        const prevTask = cloneTask[sectionId].items[taskId];
         prevTask.isOpen = false;
 
         setTask({
@@ -650,7 +722,7 @@ function TaskList(props) {
       }
     }
     prevPathNameTask = pathname;
-  }, [pathname, setTask, tasks]);
+  }, [pathname, setTask, taskDataProperty, tasks]);
 
   const startOpenEditTask = (taskId, sectionId) => {
     const cloneTask = { ...tasks[taskDataProperty] };
@@ -761,6 +833,13 @@ function TaskList(props) {
     }
   };
 
+  // move Drag
+  const moveTask = (x, y) => {
+    console.log('????');
+    console.log('dragIndex: ', x);
+    console.log('dropIndex: ', y);
+  };
+
   return (
     <Box>
       {/* Task Main List */}
@@ -769,11 +848,7 @@ function TaskList(props) {
           const parentIndex = index;
           const section = s.section;
           const sectionId = s._id;
-          const items = s.items
-            ? Object.values(s.items).sort(
-                (a, b) => a.index[taskOrder] - b.index[taskOrder]
-              )
-            : [];
+          const items = s.items ? reOrderItem(s.items, taskOrder) : [];
           return (
             <ExpansionPanel
               // TransitionProps={{ unmountOnExit: true }}
@@ -799,23 +874,25 @@ function TaskList(props) {
                     </Fab>
                   </div>
                 ) : (
-                  <List>
-                    {items.map((taskItem, index) => (
-                      <TaskItem
-                        key={taskItem._id}
-                        parentIndex={parentIndex}
-                        childIndex={index}
-                        taskItem={taskItem}
-                        sectionId={sectionId}
-                        isShowSchedule={true} // temp
-                        startOpenEditTask={startOpenEditTask}
-                        startCloseEditStart={startCloseEditStart}
-                        updateDesTask={updateDesTask}
-                        updateCompletedTask={updateCompletedTask}
-                        deleteTask={deleteTask}
-                      />
-                    ))}
-                  </List>
+                  <DndProvider backend={HTML5Backend}>
+                    <List>
+                      {items.map((taskItem, index) => (
+                        <TaskItem
+                          id={taskItem._id}
+                          key={taskItem._id}
+                          taskItem={taskItem}
+                          childIndex={index}
+                          sectionId={sectionId}
+                          startOpenEditTask={startOpenEditTask}
+                          startCloseEditStart={startCloseEditStart}
+                          updateDesTask={updateDesTask}
+                          updateCompletedTask={updateCompletedTask}
+                          deleteTask={deleteTask}
+                          moveTask={moveTask}
+                        />
+                      ))}
+                    </List>
+                  </DndProvider>
                 )}
               </ExpansionPanelDetails>
             </ExpansionPanel>

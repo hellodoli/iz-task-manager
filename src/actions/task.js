@@ -9,19 +9,24 @@ import {
 import TaskAPI from '../apis/task';
 import SectionAPI from '../apis/section';
 
+const nullSectionKey = 0;
+const overdueKey = 'overdue';
+const todayKey = 'today';
+const upcomingKey = 'upcoming';
+
 function filterTaskByToday(cloneTasks, currentDate) {
   const tasksToday = {};
   const tasksOverDue = {};
   const tasksOverDueYesterday = {};
   const finalTask = {
-    overdue: {
-      _id: 'overdue',
+    [overdueKey]: {
+      _id: overdueKey,
       section: 'Overdue',
       order: 0,
       items: {},
     },
-    today: {
-      _id: 'today',
+    [todayKey]: {
+      _id: todayKey,
       section: SCHEDULE_DATE.today,
       order: 1,
       items: {},
@@ -90,43 +95,54 @@ function filterTaskByToday(cloneTasks, currentDate) {
 }
 
 function filterTaskByUpcoming(cloneTasks, currentDate) {
-  const tasksOverDue = [];
+  const tasksOverDue = {};
   const tasksUpcoming = [];
-  const finalTask = [];
+  const finalTask = {};
 
   const { date, month, year } = currentDate;
   for (let index = 0; index < cloneTasks.length; index++) {
-    const schedule = cloneTasks[index].schedule;
+    const task = cloneTasks[index];
+    const schedule = task.schedule;
     if (schedule !== null) {
       const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
       const scheduleTime = getTime({ inputDate: new Date(schedule) });
-
       if (scheduleTime < toDayTime) {
-        // overdue
-        tasksOverDue.push(cloneTasks[index]);
+        tasksOverDue[task._id] = task;
       } else if (scheduleTime > toDayTime) {
-        tasksUpcoming.push(cloneTasks[index]); // upcoming
+        tasksUpcoming.push(task);
       }
     }
   }
 
-  if (tasksOverDue.length !== 0)
-    finalTask.push({ section: 'Overdue', items: tasksOverDue });
+  const tasksOverDueArr = Object.values(tasksOverDue);
+  if (tasksOverDueArr.length !== 0) {
+    finalTask[overdueKey] = {
+      _id: overdueKey,
+      section: 'Overdue',
+      order: 0,
+      items: tasksOverDue,
+    };
+  }
+
   if (tasksUpcoming.length !== 0) {
     const transTasksUpComing = splitObjectByKey('scheduleText', tasksUpcoming);
-    transTasksUpComing.forEach((section) =>
-      finalTask.push({
+    transTasksUpComing.forEach((section, index) => {
+      const count = index + 1;
+      const key = `${upcomingKey}${count}`;
+      finalTask[key] = {
+        _id: key,
         section: section.scheduleText,
-        items: section.items,
-      })
-    );
+        order: count,
+        items: {},
+      };
+      section.forEach((task) => (finalTask[key].items[task._id] = task));
+    });
   }
 
   return finalTask;
 }
 
 function filterTaskBySection(cloneTasks, cloneSections) {
-  const nullSectionKey = 0;
   const result = {
     [nullSectionKey]: {
       _id: nullSectionKey,
@@ -156,8 +172,8 @@ function filterTaskBySection(cloneTasks, cloneSections) {
   // mix sections and taskItem into one
   cloneTasks.forEach(mix);
   // clear section null empty
-  if (Object.values(result[nullSectionKey].items).length === 0)
-    delete result[nullSectionKey];
+  const nullSectionArr = Object.values(result[nullSectionKey].items);
+  if (nullSectionArr.length === 0) delete result[nullSectionKey];
 
   return result;
 }
@@ -200,26 +216,21 @@ export const getTask = (schedule) => async (dispatch) => {
       (tasks) => tasks.section
     );
     console.log('sectionTasks: ', sectionTasks);
+
     // filter by today group (today)
     const tasksToday = filterTaskByToday(cloneTask02, curDate);
     console.log('tasksToday: ', tasksToday);
 
-    /*// filter by next upcoming (upcoming) - 3 months
-    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);*/
-
+    // filter by next upcoming (upcoming) - 3 months
+    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);
+    console.log('tasksUpcoming: ', tasksUpcoming);
     dispatch({
       type: GET_TASK,
       payload: {
-        /*tasks: {
-          tasksInbox,
-          tasksToday,
-          tasksUpcoming,
-          sectionTasks,
-        },*/
         tasks: {
           tasksInbox,
           tasksToday,
-          tasksUpcoming: {},
+          tasksUpcoming,
           sectionTasks,
         },
       },

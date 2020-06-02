@@ -76,6 +76,7 @@ export const muiTaskItem = makeStyles((theme) => {
       position: 'relative',
       // fontSize: pxToRem(14),
       padding: `${pxToRem(12)} ${pxToRem(16)}`,
+      paddingLeft: pxToRem(45),
       border: `1px solid ${grey[400]}`,
       borderRadius: pxToRem(4),
       pageBreakInside: 'avoid',
@@ -85,7 +86,7 @@ export const muiTaskItem = makeStyles((theme) => {
       },
       '&:hover': {
         boxShadow: theme.shadows[2],
-        '& > $wrapperItemAction': {
+        '& > $wrapperHidden': {
           opacity: 1,
           visibility: 'visible',
         },
@@ -96,6 +97,11 @@ export const muiTaskItem = makeStyles((theme) => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    wrapperHidden: {
+      opacity: 0,
+      visibility: 'hidden',
+      transition: 'opacity 195ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
     },
     wrapperItemActive: {
       boxShadow: theme.shadows[2],
@@ -121,9 +127,6 @@ export const muiTaskItem = makeStyles((theme) => {
       position: 'absolute',
       top: pxToRem(12),
       right: pxToRem(16),
-      opacity: 0,
-      visibility: 'hidden',
-      transition: 'opacity 195ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
       '& .MuiIconButton-root': {
         color: theme.palette.text.primary,
       },
@@ -142,9 +145,18 @@ export const muiTaskItem = makeStyles((theme) => {
       flexWrap: 'wrap',
       marginTop: pxToRem(4),
     },
+    itemDes: {},
     itemDueDay: {
       fontSize: pxToRem(14),
       color: (props) => props.color,
+    },
+    dragHandle: {
+      position: 'absolute',
+      left: '5px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      padding: '5px',
+      cursor: 'move',
     },
   };
 });

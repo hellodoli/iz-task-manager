@@ -1,9 +1,9 @@
 import { GET_TASK, SET_TASK } from '../constants/task';
 
 const INTIAL_STATE = {
-  tasksInbox: [],
-  tasksToday: [],
-  tasksUpcoming: [],
+  tasksInbox: {},
+  tasksToday: {},
+  tasksUpcoming: {},
   sectionTasks: [],
   fetchDone: false,
 };

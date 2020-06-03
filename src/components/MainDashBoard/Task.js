@@ -1,11 +1,8 @@
-import React, { Fragment, useEffect, useState, useRef } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
 import { Switch, Route } from 'react-router-dom';
-
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 // Task API Class
 import TaskAPI from '../../apis/task';
@@ -21,6 +18,8 @@ import {
 } from '../../utils/time';
 
 import { getTask, setTask } from '../../actions/task';
+
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Components
 import { ModalAddTask, ModalConFirm } from './Dialog';
@@ -158,7 +157,7 @@ function updateCloneTaskItemUI(
     // loop section
     for (let y = 0; y < k.length; y++) {
       if (k[y].items && Object.values(k[y].items).length > 0) {
-        if (k[y].items[taskId]._id === taskId) {
+        if (k[y].items[taskId]) {
           if (status === 'delete') {
             delete k[y].items[taskId];
           } else {
@@ -169,13 +168,11 @@ function updateCloneTaskItemUI(
       }
     }
   }
-
   return result;
 }
 
 // Task Components
 function TaskItem({
-  id,
   sectionId,
   taskItem: { _id, des, schedule, completed, isOpen, scheduleText },
 
@@ -185,12 +182,10 @@ function TaskItem({
   updateDesTask,
   updateCompletedTask,
   deleteTask,
-  moveTask,
 }) {
   const [anchorEl, setAnchorEl] = useState(null); // schedule menu
   const [isOpenModalDelete, setIsOpenModalDelete] = useState(false); // modal confirm delete
   const [fakeEditValue, setFakeEditValue] = useState(des); // fake des
-  const ref = useRef(null); // drag handle
   const classes = muiTaskItem({
     color: setScheduleStatusColor(scheduleText, schedule),
   });
@@ -221,194 +216,149 @@ function TaskItem({
 
   const removeTask = () => deleteTask(_id, sectionId);
 
-  // Drag Handle
-  const [, drop] = useDrop({
-    accept: 'item',
-    hover(item, monitor) {
-      if (!ref.current) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = childIndex;
-      console.log('dragIndex: ', dragIndex);
-      console.log('hoverIndex: ', hoverIndex);
-      // Don't replace items with themselves
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      // Determine rectangle on screen
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      // Get vertical middle
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      // Determine mouse position
-      const clientOffset = monitor.getClientOffset();
-      // Get pixels to the top
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-      // Only perform the move when the mouse has crossed half of the items height
-      // When dragging downwards, only move when the cursor is below 50%
-      // When dragging upwards, only move when the cursor is above 50%
-      // Dragging downwards
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      // Dragging upwards
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
-      // Time to actually perform the action
-      moveTask(dragIndex, hoverIndex);
-      // Note: we're mutating the monitor item here!
-      // Generally it's better to avoid mutations,
-      // but it's good here for the sake of performance
-      // to avoid expensive index searches.
-      item.index = hoverIndex;
-    },
-  });
-
-  const [{ isDragging }, drag, preview] = useDrag({
-    item: { type: 'item', id, index: childIndex },
-    collect: (monitor) => {
-      return {
-        isDragging: monitor.isDragging(),
-      };
-    },
-  });
-
-  // start Drag
-  drag(drop(ref));
-
   useEffect(() => {
     if (!isOpen && fakeEditValue !== des) setFakeEditValue(des);
   }, [isOpen, fakeEditValue, des]);
 
   return (
-    <div ref={preview}>
-      <ListItem
-        elevation={0}
-        className={clsx(
-          'task-item',
-          classes.wrapperItem,
-          Boolean(anchorEl) && classes.wrapperItemActive
-        )}
-      >
-        {/* Task Edit */}
-        {isOpen && (
-          <div className={clsx('task-item-edit', classes.wrapperItemEdit)}>
-            <TextField
-              variant="outlined"
-              value={fakeEditValue}
-              size="small"
-              color="primary"
-              fullWidth={true}
-              autoFocus={true}
-              onChange={editting}
-            />
-            <div className={classes.buttonEditGroup}>
-              <Button variant="contained" color="primary" onClick={saveEdit}>
-                Save
-              </Button>
-              {'  '}
-              <Button variant="text" onClick={cancelEdit}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-        {/* Task Action */}
-        {!isOpen && (
-          <div
+    <Draggable draggableId={_id} index={childIndex}>
+      {(provided) => {
+        return (
+          <ListItem
+            elevation={0}
             className={clsx(
-              'task-item-actions',
-              classes.wrapperItemAction,
-              classes.wrapperHidden
+              'task-item',
+              classes.wrapperItem,
+              Boolean(anchorEl) && classes.wrapperItemActive
             )}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
           >
-            <IconButton size="small" onClick={openEdit}>
-              <Edit />
-            </IconButton>
-
-            <IconButton size="small" onClick={openScheduleMenu}>
-              <Schedule />
-            </IconButton>
-            {/* Schedule Menu */}
-            <Menu
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'center',
-              }}
-              getContentAnchorEl={null}
-              anchorEl={anchorEl}
-              keepMounted
-              open={Boolean(anchorEl)}
-              onClose={closeScheduleMenu}
-            >
-              <MenuItem>Item 1</MenuItem>
-              <MenuItem>Item 2</MenuItem>
-              <MenuItem>Item 3</MenuItem>
-            </Menu>
-
-            <IconButton
-              style={{ color: red[500] }}
-              size="small"
-              color="default"
-              onClick={openModalDelete}
-            >
-              <DeleteIcon />
-            </IconButton>
-            {/* Modal Delete */}
-            {isOpenModalDelete && (
-              <ModalConFirm
-                removeTask={removeTask}
-                isOpen={isOpenModalDelete}
-                handleClose={closeModalDelete}
-              />
-            )}
-          </div>
-        )}
-        {/* Item Drag Handle */}
-        {!isOpen && (
-          <div
-            ref={ref}
-            className={clsx(
-              'task-item-drag-handle',
-              classes.dragHandle,
-              classes.wrapperHidden
-            )}
-          >
-            <DragIndicatorIcon />
-          </div>
-        )}
-        {/* Task Detail */}
-        {!isOpen && (
-          <div className={clsx('task-item-detail', classes.wrapperItemDetail)}>
-            {/* Item checkbox completed*/}
-            <div className="task-item-detail-checkbox">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={completed}
-                    onChange={check}
+            {/* Task Edit */}
+            {isOpen && (
+              <div className={clsx('task-item-edit', classes.wrapperItemEdit)}>
+                <TextField
+                  variant="outlined"
+                  value={fakeEditValue}
+                  size="small"
+                  color="primary"
+                  fullWidth={true}
+                  autoFocus={true}
+                  onChange={editting}
+                />
+                <div className={classes.buttonEditGroup}>
+                  <Button
+                    variant="contained"
                     color="primary"
-                  />
-                }
-              />
-            </div>
-            {/* Item detail des */}
-            <div className="task-item-detail-des">
-              <div className={classes.itemDes}>
-                {isOpen ? fakeEditValue : des}
-              </div>
-              {schedule !== null && (
-                <div className={classes.wrapperItemContentBottom}>
-                  <div className={classes.itemDueDay}>{scheduleText}</div>
+                    onClick={saveEdit}
+                  >
+                    Save
+                  </Button>
+                  {'  '}
+                  <Button variant="text" onClick={cancelEdit}>
+                    Cancel
+                  </Button>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-      </ListItem>
-    </div>
+              </div>
+            )}
+            {/* Task Action */}
+            {!isOpen && (
+              <div
+                className={clsx(
+                  'task-item-actions',
+                  classes.wrapperItemAction,
+                  classes.wrapperHidden
+                )}
+              >
+                <IconButton size="small" onClick={openEdit}>
+                  <Edit />
+                </IconButton>
+
+                <IconButton size="small" onClick={openScheduleMenu}>
+                  <Schedule />
+                </IconButton>
+                {/* Schedule Menu */}
+                <Menu
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                  }}
+                  getContentAnchorEl={null}
+                  anchorEl={anchorEl}
+                  keepMounted
+                  open={Boolean(anchorEl)}
+                  onClose={closeScheduleMenu}
+                >
+                  <MenuItem>Item 1</MenuItem>
+                  <MenuItem>Item 2</MenuItem>
+                  <MenuItem>Item 3</MenuItem>
+                </Menu>
+
+                <IconButton
+                  style={{ color: red[500] }}
+                  size="small"
+                  color="default"
+                  onClick={openModalDelete}
+                >
+                  <DeleteIcon />
+                </IconButton>
+                {/* Modal Delete */}
+                {isOpenModalDelete && (
+                  <ModalConFirm
+                    removeTask={removeTask}
+                    isOpen={isOpenModalDelete}
+                    handleClose={closeModalDelete}
+                  />
+                )}
+              </div>
+            )}
+            {/* Item Drag Handle */}
+            {!isOpen && (
+              <div
+                className={clsx(
+                  'task-item-drag-handle',
+                  classes.dragHandle,
+                  classes.wrapperHidden
+                )}
+              >
+                <DragIndicatorIcon />
+              </div>
+            )}
+            {/* Task Detail */}
+            {!isOpen && (
+              <div
+                className={clsx('task-item-detail', classes.wrapperItemDetail)}
+              >
+                {/* Item checkbox completed*/}
+                <div className="task-item-detail-checkbox">
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={completed}
+                        onChange={check}
+                        color="primary"
+                      />
+                    }
+                  />
+                </div>
+                {/* Item detail des */}
+                <div className="task-item-detail-des">
+                  <div className={classes.itemDes}>
+                    {isOpen ? fakeEditValue : des}
+                  </div>
+                  {schedule !== null && (
+                    <div className={classes.wrapperItemContentBottom}>
+                      <div className={classes.itemDueDay}>{scheduleText}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </ListItem>
+        );
+      }}
+    </Draggable>
   );
 }
 
@@ -834,72 +784,128 @@ function TaskList(props) {
   };
 
   // move Drag
-  const moveTask = (x, y) => {
-    console.log('????');
-    console.log('dragIndex: ', x);
-    console.log('dropIndex: ', y);
+  /*
+   * source: droppableId, index
+   * destination: droppableId, index
+   */
+  const moveTask = async (result) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
+    const start = tasks[taskDataProperty][source.droppableId]._id;
+    const end = tasks[taskDataProperty][destination.droppableId]._id;
+    if (start === end) {
+      // same section
+      const cloneTask = { ...tasks[taskDataProperty] };
+      const sectionTask = cloneTask[source.droppableId];
+      if (sectionTask.items) {
+        const items = reOrderItem(sectionTask.items, taskOrder);
+        const itemSource = items[source.index];
+        const itemDestination = items[destination.index];
+        // swap
+        itemSource.index[taskOrder] = destination.index;
+        itemDestination.index[taskOrder] = source.index;
+
+        // update order in databse firt, if success change UI with setTask
+        const arrDragTask = [
+          {
+            _id: itemSource._id,
+            index: itemSource.index,
+          },
+          {
+            _id: itemDestination._id,
+            index: itemDestination.index,
+          },
+        ];
+        const taskAPI = new TaskAPI();
+        await taskAPI.updateManyTask(arrDragTask);
+        if (taskAPI.isDragSuccess) {
+          // setState here
+          sectionTask.items = items;
+          setTask({
+            ...tasks,
+            [taskDataProperty]: cloneTask,
+          });
+        } else {
+          alert('Drag fail, nothing change T_T');
+        }
+      }
+    }
   };
 
   return (
-    <Box>
-      {/* Task Main List */}
-      <div className={classes.wrapperAllSection}>
-        {reOrderList(tasks[taskDataProperty]).map((s, index) => {
-          const parentIndex = index;
-          const section = s.section;
-          const sectionId = s._id;
-          const items = s.items ? reOrderItem(s.items, taskOrder) : [];
-          return (
-            <ExpansionPanel
-              // TransitionProps={{ unmountOnExit: true }}
-              key={`${taskIdName}${parentIndex}`}
-              className={clsx(taskClassName, classes.section)}
-            >
-              <ExpansionPanelSummary
-                className={clsx(
-                  `${taskClassName}-header`,
-                  classes.sectionHeader
-                )}
-                expandIcon={<ExpandMore />}
+    <DragDropContext onDragEnd={moveTask}>
+      <Box>
+        <div className={classes.wrapperAllSection}>
+          {reOrderList(tasks[taskDataProperty]).map((s, index) => {
+            const parentIndex = index;
+            const section = s.section;
+            const sectionId = s._id;
+            const items = s.items ? reOrderItem(s.items, taskOrder) : [];
+            return (
+              <ExpansionPanel
+                // TransitionProps={{ unmountOnExit: true }}
+                key={`${taskIdName}${parentIndex}`}
+                className={clsx(taskClassName, classes.section)}
               >
-                {section === null ? <em>(No section)</em> : section}
-              </ExpansionPanelSummary>
+                <ExpansionPanelSummary
+                  className={clsx(
+                    `${taskClassName}-header`,
+                    classes.sectionHeader
+                  )}
+                  expandIcon={<ExpandMore />}
+                >
+                  {section === null ? <em>(No section)</em> : section}
+                </ExpansionPanelSummary>
 
-              <ExpansionPanelDetails className={`${taskClassName}-body`}>
-                {/* render data */}
-                {items.length === 0 ? (
-                  <div className={itemClasses.wrapperItemEmpty}>
-                    <Fab size="small" color="secondary">
-                      <AddIcon />
-                    </Fab>
-                  </div>
-                ) : (
-                  <DndProvider backend={HTML5Backend}>
-                    <List>
-                      {items.map((taskItem, index) => (
-                        <TaskItem
-                          id={taskItem._id}
-                          key={taskItem._id}
-                          taskItem={taskItem}
-                          childIndex={index}
-                          sectionId={sectionId}
-                          startOpenEditTask={startOpenEditTask}
-                          startCloseEditStart={startCloseEditStart}
-                          updateDesTask={updateDesTask}
-                          updateCompletedTask={updateCompletedTask}
-                          deleteTask={deleteTask}
-                          moveTask={moveTask}
-                        />
-                      ))}
-                    </List>
-                  </DndProvider>
-                )}
-              </ExpansionPanelDetails>
-            </ExpansionPanel>
-          );
-        })}
-      </div>
-    </Box>
+                <ExpansionPanelDetails className={`${taskClassName}-body`}>
+                  {/* render data */}
+                  {items.length === 0 ? (
+                    <div className={itemClasses.wrapperItemEmpty}>
+                      <Fab size="small" color="secondary">
+                        <AddIcon />
+                      </Fab>
+                    </div>
+                  ) : (
+                    <Droppable droppableId={sectionId}>
+                      {(provied) => {
+                        return (
+                          <List
+                            ref={provied.innerRef}
+                            {...provied.droppableProps}
+                          >
+                            {items.map((taskItem, index) => (
+                              <TaskItem
+                                key={taskItem._id}
+                                taskItem={taskItem}
+                                childIndex={index}
+                                sectionId={sectionId}
+                                startOpenEditTask={startOpenEditTask}
+                                startCloseEditStart={startCloseEditStart}
+                                updateDesTask={updateDesTask}
+                                updateCompletedTask={updateCompletedTask}
+                                deleteTask={deleteTask}
+                              />
+                            ))}
+                            {provied.placeholder}
+                          </List>
+                        );
+                      }}
+                    </Droppable>
+                  )}
+                </ExpansionPanelDetails>
+              </ExpansionPanel>
+            );
+          })}
+        </div>
+      </Box>
+    </DragDropContext>
   );
 }
 

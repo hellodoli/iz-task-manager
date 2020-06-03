@@ -126,6 +126,7 @@ function filterTaskByUpcoming(cloneTasks, currentDate) {
 
   if (tasksUpcoming.length !== 0) {
     const transTasksUpComing = splitObjectByKey('scheduleText', tasksUpcoming);
+    console.log('transTasksUpComing: ', transTasksUpComing);
     transTasksUpComing.forEach((section, index) => {
       const count = index + 1;
       const key = `${upcomingKey}${count}`;
@@ -135,7 +136,7 @@ function filterTaskByUpcoming(cloneTasks, currentDate) {
         order: count,
         items: {},
       };
-      section.forEach((task) => (finalTask[key].items[task._id] = task));
+      section.items.forEach((task) => (finalTask[key].items[task._id] = task));
     });
   }
 
@@ -212,9 +213,15 @@ export const getTask = (schedule) => async (dispatch) => {
     // filter by section group (inbox)
     const tasksInbox = filterTaskBySection(cloneTask01, cloneSection);
     console.log('tasksInbox: ', tasksInbox);
-    const sectionTasks = Object.values(tasksInbox).map(
-      (tasks) => tasks.section
-    );
+
+    // get all section
+    const sectionTasksIdArr = [];
+    const sectionTasksNameArr = [];
+    Object.values(tasksInbox).forEach(({ section, _id }) => {
+      sectionTasksIdArr.push(_id);
+      sectionTasksNameArr.push(section);
+    });
+    const sectionTasks = [sectionTasksNameArr, sectionTasksIdArr];
     console.log('sectionTasks: ', sectionTasks);
 
     // filter by today group (today)

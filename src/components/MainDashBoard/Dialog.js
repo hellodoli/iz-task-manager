@@ -195,7 +195,7 @@ export function ModalAddTask(props) {
     return 'nodate';
   }
 
-  const [allSectionTasks, setAllSectionTasks] = useState(tasks.sectionTasks);
+  const [allSectionTasks, setAllSectionTasks] = useState(tasks.sectionTasks[0]);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
   const [valueTaskSchedule, setValueTaskSchedule] = useState(
     chooseDefaultValueTasksSchedule()
@@ -305,7 +305,7 @@ export function ModalAddTask(props) {
   /* --- END: Handle Create Section Action --- */
 
   const renderSavedOptionSection = () => {
-    const sectionTasks = tasks.sectionTasks;
+    const sectionTasks = tasks.sectionTasks[0];
     if (sectionTasks.length > 0) {
       if (sectionTasks.length === 1 && sectionTasks[0] === null) return null;
       return (

@@ -6,6 +6,7 @@ class Task {
     this.tasks = [];
     this.isUpdateSuccess = null;
     this.isDeleteSuccess = null;
+    this.isDragSuccess = null;
     this.newTask = null;
   }
 
@@ -98,6 +99,29 @@ class Task {
       }
     } catch (error) {
       this.isDeleteSuccess = false;
+      console.log(error);
+      console.log('error.name: ', error.name);
+      console.log('error.message: ', error.message);
+    }
+  }
+
+  /*
+   * arrTask: array source Task and destination Task
+   */
+  async updateManyTask(arrTask) {
+    try {
+      this.isDragSuccess = null;
+      const headers = {
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + getCookie('emailToken'),
+      };
+
+      const response = await api.patch('/many', { arrTask }, { headers });
+      console.log(response);
+      if (response.status === 200) this.isDragSuccess = true;
+      else this.isDragSuccess = false;
+    } catch (error) {
+      this.isDragSuccess = false;
       console.log(error);
       console.log('error.name: ', error.name);
       console.log('error.message: ', error.message);

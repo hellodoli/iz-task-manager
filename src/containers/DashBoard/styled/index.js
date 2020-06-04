@@ -13,7 +13,6 @@ export const muiDashBoard = makeStyles((theme) => ({
     position: 'fixed',
     width: 'var(--widthMenu)',
     height: 'calc(100% - var(--heightTopbar))',
-    marginTop: 'var(--heightTopbar)',
     paddingTop: theme.typography.pxToRem(30),
     paddingLeft: theme.typography.pxToRem(35),
     background: theme.palette.background.default,

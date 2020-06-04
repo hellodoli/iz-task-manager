@@ -9,7 +9,7 @@ import {
 import TaskAPI from '../apis/task';
 import SectionAPI from '../apis/section';
 
-const nullSectionKey = 0;
+const nullSectionKey = '0';
 const overdueKey = 'overdue';
 const todayKey = 'today';
 const upcomingKey = 'upcoming';
@@ -153,7 +153,10 @@ function filterTaskBySection(cloneTasks, cloneSections) {
     },
   };
 
-  cloneSections.forEach((s) => (result[s._id] = s));
+  cloneSections.forEach((s) => {
+    result[s._id] = s;
+    result[s._id].items = {};
+  });
 
   function mix(taskItem) {
     for (let i = 0; i < cloneSections.length; i++) {

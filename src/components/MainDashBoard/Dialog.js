@@ -7,11 +7,12 @@ import { SCHEDULE_DATE } from '../../constants/schedule';
 import {
   getSuggestScheduleDate,
   getScheduleText,
-  dayNames,
   monthNames,
 } from '../../utils/time';
+
 // Task API Class
 import TaskAPI from '../../apis/task';
+import SectionAPI from '../../apis/section';
 
 // Styling
 import { red } from '@material-ui/core/colors';
@@ -20,6 +21,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogActions,
   TextField,
   Button,
   FormControl,
@@ -35,6 +37,7 @@ import {
   WbSunnyOutlined as WbSunnyOutlinedIcon,
   ArrowRightAlt as ArrowRightAltIcon,
   NotInterested as NotInterestedIcon,
+  InfoOutlined as InfoIcon,
 } from '@material-ui/icons';
 import {
   muiModal,
@@ -44,80 +47,57 @@ import {
 } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
-let numberSectionTasks = null; // use for render select section
-
-function updateUITaskAfterAdd(tasks, newTask) {
-  let result = {
-    tasksInbox: tasks.tasksInbox.slice(),
-    tasksToday: tasks.tasksToday.slice(),
-    tasksUpcoming: tasks.tasksUpcoming.slice(),
-    sectionTasks: tasks.sectionTasks.slice(),
-  };
-  const { schedule, section } = newTask;
+function updateUITaskAfterAdd(
+  tasks,
+  { newTask, scheduleText, tasksUpcomingMatchIndex }
+) {
+  let result = { ...tasks };
+  const { schedule, section, _id } = newTask;
   newTask.isOpen = false;
-  newTask.scheduleText = getScheduleText(schedule);
+  newTask.scheduleText = scheduleText;
 
-  if (section !== null) {
-    result.sectionTasks.push(section);
+  // create section null
+  if (section === null) {
+    if (!result.tasksInbox['0']) {
+      result.tasksInbox['0'] = {
+        _id: '0',
+        section: null,
+        order: 0,
+        items: {},
+      };
+    }
+    result.tasksInbox['0'].items[_id] = newTask;
   }
 
   // Today Task
-  if (schedule !== null && newTask.scheduleText === SCHEDULE_DATE.today) {
-    let isAddTaskToday = false;
-    const cloneTask = tasks.tasksToday.slice();
-    // map and add to section 'Today'
-    for (let i = 0; i < cloneTask.length; i++) {
-      if (cloneTask[i].section === SCHEDULE_DATE.today) {
-        isAddTaskToday = true;
-        result.tasksToday[i].items.push(newTask);
-        break;
-      }
-    }
-
-    // create new section 'Today'
-    if (!isAddTaskToday) {
-      result.tasksToday.push({
-        section: SCHEDULE_DATE.today,
-        items: [{ ...newTask }],
-      });
-    }
+  if (schedule !== null && scheduleText === SCHEDULE_DATE.today) {
+    const todaySection = result.tasksToday.today;
+    if (!todaySection.items) todaySection.items = {};
+    todaySection.items[_id] = newTask;
   }
 
   // Inbox Task
-  let isAddTaskInbox = false;
-  const cloneTasksInbox = tasks.tasksInbox.slice();
-  for (let i = 0; i < cloneTasksInbox.length; i++) {
-    if (cloneTasksInbox[i].section === section) {
-      isAddTaskInbox = true;
-      result.tasksInbox[i].items.push(newTask);
-      break;
-    }
-  }
-  // create new section
-  if (!isAddTaskInbox) {
-    result.tasksInbox.push({
-      section,
-      items: [{ ...newTask }],
-    });
+  if (section !== null) {
+    const parentTaskSection = result.tasksInbox[section];
+    if (!parentTaskSection.items) parentTaskSection.items = {};
+    parentTaskSection.items[_id] = newTask;
   }
 
   // Upcoming Task
-  if (newTask.scheduleText !== '') {
-    let isAddTaskUpComing = false;
-    const cloneTasksUpComing = tasks.tasksUpcoming.slice();
-    for (let i = 0; i < cloneTasksUpComing.length; i++) {
-      if (cloneTasksUpComing[i].section === newTask.scheduleText) {
-        isAddTaskUpComing = true;
-        result.tasksUpcoming[i].items.push(newTask);
-        break;
-      }
-    }
-    // create new section
-    if (!isAddTaskUpComing) {
-      result.tasksUpcoming.push({
-        section: newTask.scheduleText,
-        items: [{ ...newTask }],
-      });
+
+  const tasksUpcoming = Object.values(result.tasksUpcoming);
+  if (scheduleText !== '') {
+    if (tasksUpcomingMatchIndex !== -1) {
+      tasksUpcoming[tasksUpcomingMatchIndex].items[_id] = newTask;
+    } else {
+      const order = tasksUpcoming.length + 1;
+      const key = `upcoming${order}`;
+      result.tasksUpcoming[key] = {
+        _id: key,
+        section: scheduleText,
+        order,
+        items: { [_id]: newTask },
+      };
     }
   }
 
@@ -195,7 +175,6 @@ export function ModalAddTask(props) {
     return 'nodate';
   }
 
-  const [allSectionTasks, setAllSectionTasks] = useState(tasks.sectionTasks[0]);
   const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
   const [valueTaskSchedule, setValueTaskSchedule] = useState(
     chooseDefaultValueTasksSchedule()
@@ -214,8 +193,6 @@ export function ModalAddTask(props) {
   const [isOpenCalendar] = useState(false);
   const suggestDate = getSuggestScheduleDate({ inputDate: curDate });
   const [openCreateSection, setOpenCreateSection] = useState(false);
-
-  if (numberSectionTasks === null) numberSectionTasks = allSectionTasks.length;
 
   const handleChangeSelectSection = (e) => {
     const value = e.target.value;
@@ -246,7 +223,46 @@ export function ModalAddTask(props) {
     }
 
     if (isValid) {
+      let section = null;
       let schedule = null;
+      let index = {
+        bySection: -1,
+        byToday: -1,
+        byUpcoming: -1,
+      };
+
+      const getIndexOrder = (key, taskType) => {
+        const items = Object.values(tasks[taskType][key].items);
+        return items.length;
+      };
+
+      let cloneTasks = { ...tasks };
+      let arrItemArrange = [];
+      const handleArrangeItemOrder = (
+        { key, taskType, byOrder },
+        indexOrder
+      ) => {
+        const items = Object.values(tasks[taskType][key].items);
+        items.sort((a, b) => a.index[byOrder] - b.index[byOrder]);
+        const lastItem = items[items.length - 1];
+
+        if (lastItem && lastItem.index[byOrder] >= indexOrder) {
+          for (let index = 0; index < items.length; index++) {
+            const task = items[index]; // item
+            if (task.index[byOrder] !== index) {
+              cloneTasks[taskType][key].items[task._id].index[byOrder] = index;
+              arrItemArrange.push({
+                _id: task._id,
+                index: {
+                  ...task.index,
+                  [byOrder]: index,
+                },
+              });
+            }
+          }
+        }
+      };
+
       if (switchScheduleType) {
         // set schedule
         schedule = selectedDate.toJSON();
@@ -262,60 +278,151 @@ export function ModalAddTask(props) {
         }
       }
 
-      const newTask = {
-        des: valueTaskName,
-        section: valueTaskSection === '' ? null : valueTaskSection,
-        schedule,
+      if (valueTaskSection === '') {
+        section = null;
+        // by section
+        if (!tasks.tasksInbox['0']) {
+          index.bySection = 0;
+        } else {
+          const indexOrder = getIndexOrder('0', 'tasksInbox');
+          index.bySection = indexOrder;
+          handleArrangeItemOrder(
+            {
+              key: '0',
+              taskType: 'tasksInbox',
+              byOrder: 'bySection',
+            },
+            indexOrder
+          );
+        }
+      } else {
+        section = valueTaskSection;
+        // by section
+        const indexOrder = getIndexOrder(section, 'tasksInbox');
+        index.bySection = indexOrder;
+        handleArrangeItemOrder(
+          {
+            key: section,
+            taskType: 'tasksInbox',
+            byOrder: 'bySection',
+          },
+          indexOrder
+        );
+      }
+
+      const scheduleText = getScheduleText(schedule);
+      let tasksUpcomingMatchIndex = -1;
+      if (scheduleText !== '') {
+        if (scheduleText === SCHEDULE_DATE.today) {
+          // byToday
+          const indexOrder = getIndexOrder('today', 'tasksToday');
+          index.byToday = indexOrder;
+          handleArrangeItemOrder(
+            {
+              key: 'today',
+              taskType: 'tasksToday',
+              byOrder: 'byToday',
+            },
+            indexOrder
+          );
+        }
+        // byUpcoming
+        const tasksUpcoming = Object.values({ ...tasks.tasksUpcoming });
+        for (let i = 0; i < tasksUpcoming.length; i++) {
+          const s = tasksUpcoming[i];
+          if (s.section === scheduleText) {
+            tasksUpcomingMatchIndex = i;
+            const indexOrder = getIndexOrder(s._id, 'tasksUpcoming');
+            index.byUpcoming = indexOrder;
+            handleArrangeItemOrder(
+              {
+                key: s._id,
+                taskType: 'tasksUpcoming',
+                byOrder: 'byUpcoming',
+              },
+              indexOrder
+            );
+            break;
+          }
+        }
+        if (tasksUpcomingMatchIndex === -1) index.byUpcoming = 0;
+      }
+
+      const addTask = async () => {
+        const newTask = {
+          des: valueTaskName,
+          section,
+          schedule,
+          index,
+        };
+
+        const taskAPI = new TaskAPI();
+        await taskAPI.addTask(newTask);
+        if (taskAPI.newTask) {
+          // update UI
+          setTask({
+            ...updateUITaskAfterAdd(cloneTasks, {
+              newTask: taskAPI.newTask,
+              scheduleText,
+              tasksUpcomingMatchIndex,
+            }),
+          });
+        } else {
+          alert('add Task fail');
+        }
       };
 
-      const taskAPI = new TaskAPI();
-      await taskAPI.addTask(newTask);
-      if (taskAPI.newTask) {
-        // update UI
-        const result = updateUITaskAfterAdd(tasks, taskAPI.newTask);
-        setTask({
-          ...tasks,
-          ...result,
-        });
+      // arrange dirty index first
+      if (arrItemArrange.length > 0) {
+        console.log('arrItemArrange: ', arrItemArrange);
+        const taskAPI = new TaskAPI();
+        await taskAPI.updateManyTask(arrItemArrange);
+        if (taskAPI.isUpdateManySuccess) addTask();
+        else alert('pre - add Task fail');
       } else {
-        alert('add Task fail');
+        addTask();
       }
-      numberSectionTasks = null;
+
       handleClose(); // close Modal
     }
-  };
-
-  const handleCloseModalAddTask = () => {
-    numberSectionTasks = null;
-    handleClose();
   };
 
   /* --- START: Handle Create Section Action --- */
   const handleCloseCreateSection = () => setOpenCreateSection(false);
 
-  const cbSaveCreateSection = (sectionName) => {
+  const cbSaveCreateSection = async (sectionName) => {
     // close ModalCreateSection
     handleCloseCreateSection();
 
-    const cloneAllSectionTasks = allSectionTasks.slice();
-    cloneAllSectionTasks.push(sectionName);
-    setAllSectionTasks(cloneAllSectionTasks);
-    setValueTaskSection(sectionName);
+    const sectionAPI = new SectionAPI();
+    const order = tasks.sectionTasks[0].length + 1;
+    await sectionAPI.addSection({
+      section: sectionName,
+      order,
+    });
+    if (sectionAPI.isAddSuccess && sectionAPI.dataAfterAdd) {
+      // update UI
+      const newSection = sectionAPI.dataAfterAdd;
+      const sectionTasks = tasks.sectionTasks.slice();
+      sectionTasks[0].push(newSection.section);
+      sectionTasks[1].push(newSection._id);
+
+      const tasksInbox = { ...tasks.tasksInbox };
+      tasksInbox[newSection._id] = newSection;
+      tasksInbox[newSection._id].order = order;
+      tasksInbox[newSection._id].items = {};
+
+      setTask({
+        ...tasks,
+        tasksInbox,
+        sectionTasks,
+      });
+      setValueTaskSection(newSection._id);
+    } else {
+      alert('add Section fail');
+    }
   };
   /* --- END: Handle Create Section Action --- */
-
-  const renderSavedOptionSection = () => {
-    const sectionTasks = tasks.sectionTasks[0];
-    if (sectionTasks.length > 0) {
-      if (sectionTasks.length === 1 && sectionTasks[0] === null) return null;
-      return (
-        <MenuItem disabled>
-          <em>Your saved section</em>
-        </MenuItem>
-      );
-    }
-    return null;
-  };
 
   const renderSelectSchedule = () => {
     if (pathname === TASK_UPCOMING) {
@@ -383,12 +490,14 @@ export function ModalAddTask(props) {
         />
       )}
       <Dialog
+        scroll="paper"
         fullWidth={true}
         open={isOpen}
-        onClose={handleCloseModalAddTask}
+        onClose={handleClose}
         disableBackdropClick={true}
+        className={classes.modalRoot}
       >
-        <DialogTitle>Add new task</DialogTitle>
+        <DialogTitle>Add Task</DialogTitle>
 
         {/* Switch */}
         <DialogContent className={classes.gutterTopBottom}>
@@ -426,22 +535,12 @@ export function ModalAddTask(props) {
                 </span>
               </MenuItem>
 
-              {renderSavedOptionSection()}
-
               {/* Option Items */}
-              {allSectionTasks.map((section, index) => {
+              {tasks.sectionTasks[0].map((section, index) => {
+                const key = tasks.sectionTasks[1][index];
                 if (section === null) return null;
-                const key = `${section}-${index}`;
-                if (index === numberSectionTasks) {
-                  return [
-                    <MenuItem disabled>
-                      <em>Your unsaved section</em>
-                    </MenuItem>,
-                    <MenuItem value={section}>{section}</MenuItem>,
-                  ];
-                }
                 return (
-                  <MenuItem key={key} value={section}>
+                  <MenuItem key={key} value={key}>
                     {section}
                   </MenuItem>
                 );
@@ -507,17 +606,29 @@ export function ModalAddTask(props) {
 }
 
 export function ModalConFirm(props) {
-  const { isOpen, handleClose, removeTask } = props;
+  const { isOpen, handleClose, removeTask, des } = props;
   const classes = muiModal();
+
   return (
     <Dialog fullWidth={true} open={isOpen} onClose={handleClose}>
       <DialogTitle
         className={classes.borderDialogTitle}
         style={{ color: red[500] }}
       >
-        Are you sure delete task ?
+        <InfoIcon />
+        <span className={classes.textOptionWithIcon}>
+          Are you sure you want to delete{' '}
+          <span
+            className={clsx(
+              classes.textOptionWithIconI,
+              classes.textOptionWithIconItalic
+            )}
+          >
+            {des}
+          </span>
+        </span>
       </DialogTitle>
-      <DialogContent>
+      <DialogActions>
         <Button
           variant="contained"
           className={classes.deleteButton}
@@ -529,7 +640,7 @@ export function ModalConFirm(props) {
         <Button variant="text" onClick={handleClose}>
           Cancel
         </Button>
-      </DialogContent>
+      </DialogActions>
       {/* Empty DialogContent make free spacing */}
       <DialogContent></DialogContent>
     </Dialog>

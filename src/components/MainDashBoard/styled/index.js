@@ -45,7 +45,7 @@ export const muiTaskGeneral = makeStyles((theme) => {
         marginTop: typo.pxToRem(15),
       },
     },
-    todayButton: {
+    buttonGap: {
       marginLeft: typo.pxToRem(10),
     },
     wrapperWeekRow: {
@@ -176,6 +176,9 @@ export const muiModal = makeStyles((theme) => {
     textOptionWithIconI: {
       fontWeight: typo.fontWeightBold,
     },
+    textOptionWithIconItalic: {
+      fontStyle: 'italic',
+    },
     borderDialogTitle: {
       borderBottom: `1px solid ${palette.divider}`,
     },
@@ -187,11 +190,15 @@ export const muiModal = makeStyles((theme) => {
         color: palette.common.white,
       },
     },
+    modalRoot: {
+      '& .MuiDialogContent-root': {
+        overflowY: 'initial',
+      },
+    },
   };
 });
 
 // Overriding styles with classes
-
 export const muiMenuItemModal = makeStyles((theme) => ({
   root: {
     display: 'flex',
@@ -220,21 +227,52 @@ export const muiSelectSchedule = makeStyles((theme) => {
 });
 
 // Overriding styles with createMuiTheme
+const defaultTheme = createMuiTheme();
 export const muiDateTimePicker = createMuiTheme({
   overrides: {
-    /*MuiTypography: {
-      h4: {
-        fontSize: '1.5rem'
+    MuiPickersToolbarText: {
+      toolbarTxt: {
+        '&.MuiTypography-h3': {
+          fontSize: '1.5rem',
+        },
+        '&.MuiTypography-h4': {
+          fontSize: '1.5rem',
+        },
       },
-      subtitle1: {
-        fontSize: '0.75rem'
-      }
+    },
+    MuiGrid: {
+      container: {
+        '& > .MuiGrid-item': {
+          flexDirection: 'row',
+          alignItems: 'center',
+          '& > div + div': {
+            marginLeft: '10px',
+          },
+          '&.MuiGrid-grid-xs-6, &.MuiGrid-grid-xs-1': {
+            maxWidth: '25%',
+            flexBasis: '25%',
+          },
+          '&.MuiGrid-grid-xs-6': {
+            justifyContent: 'flex-end',
+          },
+          '&.MuiGrid-grid-xs-1': {
+            justifyContent: 'flex-start',
+            marginLeft: '10px',
+            '& > button + button': {
+              marginLeft: '4px',
+            },
+          },
+        },
+      },
     },
     MuiPickersToolbar: {
-      toolbar: {
-        height: '80px'
-      }
-    },*/
+      toolbar: { height: '64px' },
+      /*toolbar: {
+        [defaultTheme.breakpoints.up('sm')]: {
+          height: '64px',
+        },
+      },*/
+    },
     MuiPickersBasePicker: {
       pickerView: {
         width: '100%',
@@ -248,10 +286,5 @@ export const muiDateTimePicker = createMuiTheme({
         height: '40px'
       }*/
     },
-    /*MuiPickersToolbarText: {
-      toolbarTxt: {
-        fontSize: '1.5rem'
-      }
-    }*/
   },
 });

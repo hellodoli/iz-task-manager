@@ -309,6 +309,7 @@ function TaskItem({
                     removeTask={removeTask}
                     isOpen={isOpenModalDelete}
                     handleClose={closeModalDelete}
+                    des={des}
                   />
                 )}
               </div>
@@ -394,8 +395,18 @@ function TaskHeader(props) {
           <Fab
             variant="extended"
             size="small"
+            color="default"
+            aria-label="add section"
+          >
+            <AddIcon />
+            Add section
+          </Fab>
+          <Fab
+            variant="extended"
+            size="medium"
             color="primary"
             aria-label="add task"
+            className={gClasses.buttonGap}
             onClick={handleClickOpen}
           >
             <AddIcon />
@@ -606,7 +617,7 @@ function TaskHeaderUpcoming(props) {
             <Button
               variant="outlined"
               size="small"
-              className={gClasses.todayButton}
+              className={gClasses.buttonGap}
               onClick={goToCurrentWeek}
             >
               Today
@@ -801,8 +812,10 @@ function TaskList(props) {
     const start = tasks[taskDataProperty][source.droppableId]._id;
     const end = tasks[taskDataProperty][destination.droppableId]._id;
     if (start === end) {
+      console.log('sourceindex: ', source.index);
+      console.log('destinationindex: ', destination.index);
       // same section
-      const cloneTask = { ...tasks[taskDataProperty] };
+      /*const cloneTask = { ...tasks[taskDataProperty] };
       const sectionTask = cloneTask[source.droppableId];
       if (sectionTask.items) {
         const items = reOrderItem(sectionTask.items, taskOrder);
@@ -835,12 +848,12 @@ function TaskList(props) {
         } else {
           alert('Drag fail, nothing change T_T');
         }
-      }
+      }*/
     }
   };
 
   return (
-    <DragDropContext onDragEnd={moveTask}>
+    <DragDropContext onDragEnd={() => {}}>
       <Box>
         <div className={classes.wrapperAllSection}>
           {reOrderList(tasks[taskDataProperty]).map((s, index) => {

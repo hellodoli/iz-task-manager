@@ -5,6 +5,7 @@ import { muiDashBoard } from './styled';
 // Components
 import MenuLeft from '../../components/MenuLeftDashBoard';
 import MainTask from '../../components/MainDashBoard/Task';
+import Header from '../../components/Appbar';
 
 function DashBoard() {
   const classes = muiDashBoard();
@@ -12,6 +13,7 @@ function DashBoard() {
   return (
     <div className={classes.root}>
       <div className={classes.wrapperMainApp}>
+        <Header />
         <div className={classes.wrapperLeftMenu}>
           <MenuLeft />
         </div>

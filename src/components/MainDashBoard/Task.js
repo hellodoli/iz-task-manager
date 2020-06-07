@@ -7,6 +7,7 @@ import { Switch, Route } from 'react-router-dom';
 // Task API Class
 import TaskAPI from '../../apis/task';
 
+import { keys } from '../../constants/task';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 import { TASK_ALL, TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
 
@@ -22,7 +23,7 @@ import { getTask, setTask } from '../../actions/task';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Components
-import { ModalAddTask, ModalConFirm } from './Dialog';
+import { ModalAddTask, ModalCreateSection, ModalConFirm } from './Dialog';
 
 // Styling
 import {
@@ -51,7 +52,8 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Schedule,
-  ExpandMore,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   DragIndicator as DragIndicatorIcon,
@@ -134,40 +136,38 @@ function reOrderItem(taskItem, key) {
 }
 
 // update UI. (for save edit - update)
-function updateCloneTaskItemUI(
-  tasks,
-  currentFilter,
-  currentTask,
-  { taskId, sectionId },
-  status
-) {
-  function condition(key) {
-    if (key === currentFilter || key === 'sectionTasks' || key === 'fetchDone')
-      return false;
-    return true;
-  }
-  const otherFilter = Object.keys(tasks).filter(condition);
-  const result = {};
+function updateCloneTaskItemUI(tasks, currentTask, { taskId, sectionId }) {
+  const { overdueKey, upcomingKey } = keys;
+  const otherFilter = ['tasksInbox', 'tasksToday', 'tasksUpcoming'];
+  const result = { ...tasks };
 
-  for (let i = 0; i < otherFilter.length; i++) {
-    const key = otherFilter[i];
-    result[key] = { ...tasks[key] }; // clone
-
-    const k = Object.values(result[key]);
+  otherFilter.forEach((taskDataProperty) => {
+    const sections = Object.values(result[taskDataProperty]);
     // loop section
-    for (let y = 0; y < k.length; y++) {
-      if (k[y].items && Object.values(k[y].items).length > 0) {
-        if (k[y].items[taskId]) {
-          if (status === 'delete') {
-            delete k[y].items[taskId];
+    for (let y = 0; y < sections.length; y++) {
+      const items = sections[y].items;
+      if (items && Object.values(items).length > 0) {
+        if (items[taskId]) {
+          if (currentTask === null) {
+            delete items[taskId];
+            if (Object.values(items).length === 0) {
+              if (
+                sectionId === overdueKey ||
+                sectionId.search(upcomingKey) > -1
+              ) {
+                delete result[taskDataProperty][sectionId];
+              }
+            }
           } else {
-            k[y].items[taskId] = currentTask;
+            console.log('yes');
+            items[taskId] = currentTask;
           }
           break;
         }
       }
     }
-  }
+  });
+
   return result;
 }
 
@@ -225,15 +225,15 @@ function TaskItem({
       {(provided) => {
         return (
           <ListItem
-            elevation={0}
             className={clsx(
               'task-item',
               classes.wrapperItem,
               Boolean(anchorEl) && classes.wrapperItemActive
             )}
+            elevation={0}
+            disableGutters={true}
             ref={provided.innerRef}
             {...provided.draggableProps}
-            {...provided.dragHandleProps}
           >
             {/* Task Edit */}
             {isOpen && (
@@ -315,17 +315,18 @@ function TaskItem({
               </div>
             )}
             {/* Item Drag Handle */}
-            {!isOpen && (
-              <div
-                className={clsx(
-                  'task-item-drag-handle',
-                  classes.dragHandle,
-                  classes.wrapperHidden
-                )}
-              >
-                <DragIndicatorIcon />
-              </div>
-            )}
+
+            <div
+              className={clsx(
+                'task-item-drag-handle',
+                classes.dragHandle,
+                classes.wrapperHidden
+              )}
+              {...provided.dragHandleProps}
+            >
+              <DragIndicatorIcon />
+            </div>
+
             {/* Task Detail */}
             {!isOpen && (
               <div
@@ -364,50 +365,81 @@ function TaskItem({
 }
 
 function TaskHeader(props) {
+  const {
+    location: { pathname },
+  } = props;
   const gClasses = muiTaskGeneral();
 
   /* --- START: Handle Add Task Action --- */
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenAddTask, setIsOpenAddTask] = useState(false);
 
-  const handleClickOpen = () => setIsOpen(true);
+  const handleClickOpenAddTask = () => setIsOpenAddTask(true);
 
-  const handleClose = () => setIsOpen(false);
+  const handleCloseAddTask = () => setIsOpenAddTask(false);
   /* --- END: Handle Add Task Action --- */
 
+  /* --- START: Handle Add Section Action --- */
+  const [isOpenAddSection, setIsOpenAddSection] = useState(false);
+
+  const handleClickOpenAddSection = () => setIsOpenAddSection(true);
+
+  const handleCloseAddSection = () => setIsOpenAddSection(false);
+  /* --- END: Handle Add Section Action --- */
+
   const renderTitleHeaderText = () => {
-    const {
-      location: { pathname },
-    } = props;
     if (pathname === TASK_ALL) return 'Inbox';
     else if (pathname === TASK_TODAY) return 'Today';
+  };
+
+  const rederAddSectionFab = () => {
+    if (pathname === TASK_ALL)
+      return (
+        <Fab
+          variant="extended"
+          size="small"
+          color="default"
+          aria-label="add section"
+          onClick={handleClickOpenAddSection}
+        >
+          <AddIcon />
+          Add section
+        </Fab>
+      );
+    return null;
   };
 
   return (
     <Fragment>
       {/* (Modal) Add Task */}
-      {isOpen && (
-        <ModalAddTask {...props} isOpen={isOpen} handleClose={handleClose} />
+      {isOpenAddTask && (
+        <ModalAddTask
+          {...props}
+          isOpen={isOpenAddTask}
+          handleClose={handleCloseAddTask}
+        />
+      )}
+      {/* (Modal) Add Section */}
+      {isOpenAddSection && (
+        <ModalCreateSection
+          isOpen={isOpenAddSection}
+          handleClose={handleCloseAddSection}
+          cbSave={() => {
+            console.log('hmmm');
+          }}
+        />
       )}
       {/* Task Main Header */}
       <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
         <h1 className={gClasses.headerTitle}>{renderTitleHeaderText()}</h1>
         <div>
-          <Fab
-            variant="extended"
-            size="small"
-            color="default"
-            aria-label="add section"
-          >
-            <AddIcon />
-            Add section
-          </Fab>
+          {rederAddSectionFab()}
           <Fab
             variant="extended"
             size="medium"
             color="primary"
             aria-label="add task"
-            className={gClasses.buttonGap}
-            onClick={handleClickOpen}
+            className={gClasses.gapLeft}
+            onClick={handleClickOpenAddTask}
           >
             <AddIcon />
             Add task
@@ -617,7 +649,7 @@ function TaskHeaderUpcoming(props) {
             <Button
               variant="outlined"
               size="small"
-              className={gClasses.buttonGap}
+              className={gClasses.gapLeft}
               onClick={goToCurrentWeek}
             >
               Today
@@ -656,13 +688,9 @@ function TaskList(props) {
     setTask,
 
     taskClassName,
-    taskIdName,
     taskDataProperty,
     taskOrder,
   } = props;
-
-  const classes = muiTaskGeneral(); // mui class (general class)
-  const itemClasses = muiTaskItem();
 
   useEffect(() => {
     // check every time user switch other tab
@@ -714,17 +742,7 @@ function TaskList(props) {
       curTask.isOpen = false;
       curTask.des = taskOb.des;
       // find other clone Task and update
-      const otherCloneTask = updateCloneTaskItemUI(
-        tasks,
-        taskDataProperty,
-        curTask,
-        { taskId, sectionId }
-      );
-      setTask({
-        ...tasks,
-        [taskDataProperty]: cloneTask,
-        ...otherCloneTask,
-      });
+      setTask(updateCloneTaskItemUI(tasks, curTask, { taskId, sectionId }));
     } else {
       // fail
       alert('update des fail');
@@ -750,17 +768,7 @@ function TaskList(props) {
       // set current complete status
       curTask.completed = taskOb.completed;
       // find other clone Task and update
-      const otherCloneTask = updateCloneTaskItemUI(
-        tasks,
-        taskDataProperty,
-        curTask,
-        { taskId, sectionId }
-      );
-      setTask({
-        ...tasks,
-        [taskDataProperty]: cloneTask,
-        ...otherCloneTask,
-      });
+      setTask(updateCloneTaskItemUI(tasks, curTask, { taskId, sectionId }));
     } else {
       // fail
       alert('update completed fail');
@@ -771,36 +779,20 @@ function TaskList(props) {
     const taskAPI = new TaskAPI();
     await taskAPI.deleteTask(taskId);
     if (taskAPI.isDeleteSuccess) {
-      // delete current task
-      const cloneTask = { ...tasks[taskDataProperty] };
-      delete cloneTask[sectionId].items[taskId];
-      // change UI after success
-      // find other clone Task and delete
-      const otherCloneTask = updateCloneTaskItemUI(
-        tasks,
-        taskDataProperty,
-        null,
-        { taskId, sectionId },
-        'delete'
-      );
-      setTask({
-        ...tasks,
-        [taskDataProperty]: cloneTask,
-        ...otherCloneTask,
-      });
+      setTask(updateCloneTaskItemUI(tasks, null, { taskId, sectionId }));
     } else {
       // fail
       alert('delete fail');
     }
   };
 
-  // move Drag
+  // handle Dragging
   /*
    * source: droppableId, index
    * destination: droppableId, index
    */
-  const moveTask = async (result) => {
-    const { source, destination, draggableId } = result;
+  const handleDragEnd = async (result) => {
+    const { source, destination } = result;
     if (!destination) return;
     if (
       source.droppableId === destination.droppableId &&
@@ -809,116 +801,180 @@ function TaskList(props) {
       return;
     }
 
-    const start = tasks[taskDataProperty][source.droppableId]._id;
-    const end = tasks[taskDataProperty][destination.droppableId]._id;
-    if (start === end) {
-      console.log('sourceindex: ', source.index);
-      console.log('destinationindex: ', destination.index);
-      // same section
-      /*const cloneTask = { ...tasks[taskDataProperty] };
-      const sectionTask = cloneTask[source.droppableId];
-      if (sectionTask.items) {
-        const items = reOrderItem(sectionTask.items, taskOrder);
-        const itemSource = items[source.index];
-        const itemDestination = items[destination.index];
-        // swap
-        itemSource.index[taskOrder] = destination.index;
-        itemDestination.index[taskOrder] = source.index;
+    const start = source.droppableId;
+    const end = destination.droppableId;
+    let arrDragTask = []; // array store task item need update order index
 
-        // update order in databse firt, if success change UI with setTask
-        const arrDragTask = [
-          {
-            _id: itemSource._id,
-            index: itemSource.index,
-          },
-          {
-            _id: itemDestination._id,
-            index: itemDestination.index,
-          },
-        ];
+    if (start === end) {
+      console.log('source.index: ', source.index);
+      console.log('destination.index: ', destination.index);
+      const cloneTasks = { ...tasks };
+      const sectionTasks = cloneTasks[taskDataProperty][source.droppableId];
+
+      function addDragTask(task, newIndex) {
+        const index =
+          source.droppableId === 'overdue'
+            ? { ...task.index, byToday: newIndex, byUpcoming: newIndex }
+            : { ...task.index, [taskOrder]: newIndex };
+
+        arrDragTask.push({
+          _id: task._id,
+          index,
+        });
+
+        if (source.droppableId === 'overdue') {
+          ['tasksToday', 'tasksUpcoming'].forEach(
+            (taskDataProperty) =>
+              (cloneTasks[taskDataProperty][source.droppableId].items[
+                task._id
+              ].index = index)
+          );
+        } else {
+          sectionTasks.items[task._id].index = index;
+        }
+      }
+
+      function handleIndexOrder(index, task) {
+        if (source.index === index) {
+          addDragTask(task, destination.index);
+        } else if (destination.index === index) {
+          addDragTask(task, source.index);
+        } else {
+          if (index !== task.index[taskOrder]) {
+            addDragTask(task, index);
+          }
+        }
+      }
+
+      if (sectionTasks.items) {
+        const arrSectionTasks = reOrderItem(sectionTasks.items, taskOrder);
+        for (let i = 0; i < arrSectionTasks.length; i++) {
+          handleIndexOrder(i, arrSectionTasks[i]);
+        }
+      }
+      console.log('arrDragTask: ', arrDragTask);
+      if (arrDragTask.length > 0) {
+        // update order database
         const taskAPI = new TaskAPI();
         await taskAPI.updateManyTask(arrDragTask);
-        if (taskAPI.isDragSuccess) {
-          // setState here
-          sectionTask.items = items;
-          setTask({
-            ...tasks,
-            [taskDataProperty]: cloneTask,
-          });
+        if (taskAPI.isUpdateManySuccess) {
+          // update UI
+          setTask(cloneTasks);
         } else {
-          alert('Drag fail, nothing change T_T');
+          alert('Drag fail');
         }
-      }*/
+      }
     }
   };
 
   return (
-    <DragDropContext onDragEnd={() => {}}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       <Box>
-        <div className={classes.wrapperAllSection}>
-          {reOrderList(tasks[taskDataProperty]).map((s, index) => {
-            const parentIndex = index;
-            const section = s.section;
-            const sectionId = s._id;
-            const items = s.items ? reOrderItem(s.items, taskOrder) : [];
+        <div>
+          {reOrderList(tasks[taskDataProperty]).map((section) => {
+            const items = section.items
+              ? reOrderItem(section.items, taskOrder)
+              : [];
             return (
-              <ExpansionPanel
-                // TransitionProps={{ unmountOnExit: true }}
-                key={`${taskIdName}${parentIndex}`}
-                className={clsx(taskClassName, classes.section)}
-              >
-                <ExpansionPanelSummary
-                  className={clsx(
-                    `${taskClassName}-header`,
-                    classes.sectionHeader
-                  )}
-                  expandIcon={<ExpandMore />}
-                >
-                  {section === null ? <em>(No section)</em> : section}
-                </ExpansionPanelSummary>
-
-                <ExpansionPanelDetails className={`${taskClassName}-body`}>
-                  {/* render data */}
-                  {items.length === 0 ? (
-                    <div className={itemClasses.wrapperItemEmpty}>
-                      <Fab size="small" color="secondary">
-                        <AddIcon />
-                      </Fab>
-                    </div>
-                  ) : (
-                    <Droppable droppableId={sectionId}>
-                      {(provied) => {
-                        return (
-                          <List
-                            ref={provied.innerRef}
-                            {...provied.droppableProps}
-                          >
-                            {items.map((taskItem, index) => (
-                              <TaskItem
-                                key={taskItem._id}
-                                taskItem={taskItem}
-                                childIndex={index}
-                                sectionId={sectionId}
-                                startOpenEditTask={startOpenEditTask}
-                                startCloseEditStart={startCloseEditStart}
-                                updateDesTask={updateDesTask}
-                                updateCompletedTask={updateCompletedTask}
-                                deleteTask={deleteTask}
-                              />
-                            ))}
-                            {provied.placeholder}
-                          </List>
-                        );
-                      }}
-                    </Droppable>
-                  )}
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
+              <TaskListWrapper
+                key={section._id}
+                section={section}
+                items={items}
+                taskClassName={taskClassName}
+                startOpenEditTask={startOpenEditTask}
+                startCloseEditStart={startCloseEditStart}
+                updateDesTask={updateDesTask}
+                updateCompletedTask={updateCompletedTask}
+                deleteTask={deleteTask}
+              />
             );
           })}
         </div>
       </Box>
     </DragDropContext>
+  );
+}
+
+function TaskListWrapper(props) {
+  const {
+    taskClassName,
+    section: { _id: sectionId, section },
+    items,
+    ...rest
+  } = props;
+
+  const [isExpand, setIsExpand] = useState(false);
+  const classes = muiTaskGeneral({
+    isExpand,
+    section,
+    isEmpty: items.length === 0,
+  });
+  const itemClasses = muiTaskItem();
+
+  const renderSectionHeader = () => {
+    if (section === null) return null;
+    return (
+      <div className={clsx(`${taskClassName}-header`, classes.sectionHeader)}>
+        <span
+          className={classes.wrapperIconExpand}
+          onClick={() => setIsExpand(!isExpand)}
+        >
+          {isExpand ? (
+            <ExpandLessIcon fontSize="small" />
+          ) : (
+            <ExpandMoreIcon fontSize="small" />
+          )}
+        </span>
+        <span className={classes.gapLeft}>{section}</span>
+      </div>
+    );
+  };
+
+  const renderSectionEmptyBody = () => {
+    if (items.length === 0 && section !== null) {
+      return (
+        <div className={itemClasses.wrapperItemEmpty}>
+          <Fab size="small" color="secondary">
+            <AddIcon />
+          </Fab>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className={clsx(taskClassName, classes.section)}>
+      {/* Section Header */}
+      {renderSectionHeader()}
+
+      {/* Section Body */}
+      <div className={clsx(`${taskClassName}-body`, classes.sectionBody)}>
+        {/* Empty Data */}
+        {renderSectionEmptyBody()}
+
+        {items.length > 0 && (
+          <Droppable droppableId={sectionId}>
+            {(provied) => {
+              return (
+                <List ref={provied.innerRef} {...provied.droppableProps}>
+                  {items.map((taskItem, index) => (
+                    <TaskItem
+                      key={taskItem._id}
+                      taskItem={taskItem}
+                      childIndex={index}
+                      sectionId={sectionId}
+                      {...rest}
+                    />
+                  ))}
+                  {provied.placeholder}
+                </List>
+              );
+            }}
+          </Droppable>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -960,7 +1016,6 @@ function TaskMain(props) {
 
   useEffect(() => {
     getTask(); // get All Tasks by User
-    console.log('running fetch Task done');
   }, [getTask]);
 
   if (!tasks.fetchDone) return <div>Loading...</div>;

@@ -88,7 +88,8 @@ function FormSignIn(props) {
         setPasswordError(error);
       }
     } else {
-      if (data.user && data.token) {
+      const { user, token } = data;
+      if (user && token) {
         // clear Error Text
         setEmailError('');
         setPasswordError('');
@@ -96,14 +97,15 @@ function FormSignIn(props) {
         const extimes = values.checked ? 30 : 'auto';
         setCookie('emailToken', data.token, extimes);
         // set login user info
-        props.signIn();
+        props.signIn(user);
         // logged
         history.push('/app');
       }
     }
   }
 
-  function handleCheckValidInput() {
+  const submitSignIn = (event) => {
+    event.preventDefault();
     let isValidEmail = null;
     let isValidPassword = null;
 
@@ -126,15 +128,8 @@ function FormSignIn(props) {
       setPasswordError('');
     }
 
-    if (isValidPassword && isValidEmail) {
-      callAPISignIn({ email, password });
-    }
-  }
-
-  function submitSignIn(event) {
-    event.preventDefault();
-    handleCheckValidInput();
-  }
+    if (isValidPassword && isValidEmail) callAPISignIn({ email, password });
+  };
 
   return (
     <div>

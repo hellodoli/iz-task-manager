@@ -1,6 +1,7 @@
 import React, { Fragment, useState } from 'react';
 import clsx from 'clsx';
 
+import { keys } from '../../constants/task';
 import { TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 
@@ -44,34 +45,50 @@ import {
   muiMenuItemModal,
   muiSelectSchedule,
   muiDateTimePicker,
+  muiTaskGeneral,
 } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
-function updateUITaskAfterAdd(
+function getCloneTaskAfterAddSection(tasks, newSection) {
+  const sectionTasks = tasks.sectionTasks.slice();
+  sectionTasks[0].push(newSection.section);
+  sectionTasks[1].push(newSection._id);
+  const tasksInbox = { ...tasks.tasksInbox };
+  tasksInbox[newSection._id] = newSection;
+  tasksInbox[newSection._id].items = {};
+  return {
+    ...tasks,
+    tasksInbox,
+    sectionTasks,
+  };
+}
+
+function getCloneTaskAfterAfterAddTask(
   tasks,
   { newTask, scheduleText, tasksUpcomingMatchIndex }
 ) {
   let result = { ...tasks };
+  const { nullSectionKey, todayKey, upcomingKey } = keys;
   const { schedule, section, _id } = newTask;
   newTask.isOpen = false;
   newTask.scheduleText = scheduleText;
 
   // create section null
   if (section === null) {
-    if (!result.tasksInbox['0']) {
-      result.tasksInbox['0'] = {
+    if (!result.tasksInbox[nullSectionKey]) {
+      result.tasksInbox[nullSectionKey] = {
         _id: '0',
         section: null,
         order: 0,
         items: {},
       };
     }
-    result.tasksInbox['0'].items[_id] = newTask;
+    result.tasksInbox[nullSectionKey].items[_id] = newTask;
   }
 
   // Today Task
   if (schedule !== null && scheduleText === SCHEDULE_DATE.today) {
-    const todaySection = result.tasksToday.today;
+    const todaySection = result.tasksToday[todayKey];
     if (!todaySection.items) todaySection.items = {};
     todaySection.items[_id] = newTask;
   }
@@ -84,14 +101,13 @@ function updateUITaskAfterAdd(
   }
 
   // Upcoming Task
-
   const tasksUpcoming = Object.values(result.tasksUpcoming);
   if (scheduleText !== '') {
     if (tasksUpcomingMatchIndex !== -1) {
       tasksUpcoming[tasksUpcomingMatchIndex].items[_id] = newTask;
     } else {
       const order = tasksUpcoming.length + 1;
-      const key = `upcoming${order}`;
+      const key = `${upcomingKey}${order}`;
       result.tasksUpcoming[key] = {
         _id: key,
         section: scheduleText,
@@ -100,7 +116,7 @@ function updateUITaskAfterAdd(
       };
     }
   }
-
+  console.log('result: ', result);
   return result;
 }
 
@@ -165,6 +181,7 @@ export function ModalAddTask(props) {
     setTask,
     activeDate,
   } = props;
+  const gClasses = muiTaskGeneral();
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
@@ -238,10 +255,7 @@ export function ModalAddTask(props) {
 
       let cloneTasks = { ...tasks };
       let arrItemArrange = [];
-      const handleArrangeItemOrder = (
-        { key, taskType, byOrder },
-        indexOrder
-      ) => {
+      function handleArrangeItemOrder({ key, taskType, byOrder }, indexOrder) {
         const items = Object.values(tasks[taskType][key].items);
         items.sort((a, b) => a.index[byOrder] - b.index[byOrder]);
         const lastItem = items[items.length - 1];
@@ -261,7 +275,7 @@ export function ModalAddTask(props) {
             }
           }
         }
-      };
+      }
 
       if (switchScheduleType) {
         // set schedule
@@ -278,6 +292,7 @@ export function ModalAddTask(props) {
         }
       }
 
+      // section name
       if (valueTaskSection === '') {
         section = null;
         // by section
@@ -348,32 +363,30 @@ export function ModalAddTask(props) {
         if (tasksUpcomingMatchIndex === -1) index.byUpcoming = 0;
       }
 
-      const addTask = async () => {
+      async function addTask() {
         const newTask = {
           des: valueTaskName,
           section,
           schedule,
           index,
         };
-
         const taskAPI = new TaskAPI();
         await taskAPI.addTask(newTask);
         if (taskAPI.newTask) {
           // update UI
-          setTask({
-            ...updateUITaskAfterAdd(cloneTasks, {
-              newTask: taskAPI.newTask,
-              scheduleText,
-              tasksUpcomingMatchIndex,
-            }),
+          const result = getCloneTaskAfterAfterAddTask(cloneTasks, {
+            newTask: taskAPI.newTask,
+            scheduleText,
+            tasksUpcomingMatchIndex,
           });
+          setTask(result);
         } else {
           alert('add Task fail');
         }
-      };
+      }
 
-      // arrange dirty index first
       if (arrItemArrange.length > 0) {
+        // arrange dirty index first
         console.log('arrItemArrange: ', arrItemArrange);
         const taskAPI = new TaskAPI();
         await taskAPI.updateManyTask(arrItemArrange);
@@ -395,7 +408,7 @@ export function ModalAddTask(props) {
     handleCloseCreateSection();
 
     const sectionAPI = new SectionAPI();
-    const order = tasks.sectionTasks[0].length + 1;
+    const order = tasks.sectionTasks[0].length;
     await sectionAPI.addSection({
       section: sectionName,
       order,
@@ -403,20 +416,7 @@ export function ModalAddTask(props) {
     if (sectionAPI.isAddSuccess && sectionAPI.dataAfterAdd) {
       // update UI
       const newSection = sectionAPI.dataAfterAdd;
-      const sectionTasks = tasks.sectionTasks.slice();
-      sectionTasks[0].push(newSection.section);
-      sectionTasks[1].push(newSection._id);
-
-      const tasksInbox = { ...tasks.tasksInbox };
-      tasksInbox[newSection._id] = newSection;
-      tasksInbox[newSection._id].order = order;
-      tasksInbox[newSection._id].items = {};
-
-      setTask({
-        ...tasks,
-        tasksInbox,
-        sectionTasks,
-      });
+      setTask(getCloneTaskAfterAddSection(tasks, newSection));
       setValueTaskSection(newSection._id);
     } else {
       alert('add Section fail');
@@ -473,7 +473,7 @@ export function ModalAddTask(props) {
         <MenuItem value={'nodate'}>
           <div>
             <NotInterestedIcon fontSize="small" />
-            <span className={classes.textOptionWithIcon}>No date</span>
+            <span className={gClasses.gapLeft}>No date</span>
           </div>
         </MenuItem>
       </Select>
@@ -525,12 +525,7 @@ export function ModalAddTask(props) {
               {/* Option creat section */}
               <MenuItem value={'create'}>
                 <AddCircleIcon />
-                <span
-                  className={clsx(
-                    classes.textOptionWithIcon,
-                    classes.textOptionWithIconI
-                  )}
-                >
+                <span className={clsx(gClasses.gapLeft, gClasses.fontBold)}>
                   Create new section
                 </span>
               </MenuItem>
@@ -607,6 +602,7 @@ export function ModalAddTask(props) {
 
 export function ModalConFirm(props) {
   const { isOpen, handleClose, removeTask, des } = props;
+  const gClasses = muiTaskGeneral();
   const classes = muiModal();
 
   return (
@@ -616,14 +612,9 @@ export function ModalConFirm(props) {
         style={{ color: red[500] }}
       >
         <InfoIcon />
-        <span className={classes.textOptionWithIcon}>
+        <span className={gClasses.gapLeft}>
           Are you sure you want to delete{' '}
-          <span
-            className={clsx(
-              classes.textOptionWithIconI,
-              classes.textOptionWithIconItalic
-            )}
-          >
+          <span className={clsx(gClasses.fontBold, gClasses.fontItalic)}>
             {des}
           </span>
         </span>

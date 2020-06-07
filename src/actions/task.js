@@ -1,67 +1,33 @@
-import { GET_TASK, SET_TASK } from '../constants/task';
+import { GET_TASK, SET_TASK, keys } from '../constants/task';
 import { SCHEDULE_DATE } from '../constants/schedule';
-import {
-  splitObjectByKey,
-  getInfoDate,
-  getScheduleText,
-  getTime,
-} from '../utils/time';
+import { splitObjectByKey, getScheduleText, getTime } from '../utils/time';
+import history from '../history';
 import TaskAPI from '../apis/task';
 import SectionAPI from '../apis/section';
+import UserAPI from '../apis/user';
 
-const nullSectionKey = '0';
-const overdueKey = 'overdue';
-const todayKey = 'today';
-const upcomingKey = 'upcoming';
+async function filterScheduleTask(cloneTasks, currentDate, updated) {
+  try {
+    const { overdueKey, todayKey, upcomingKey } = keys;
+    const tasksToday = {};
+    const tasksUpcoming = [];
+    const tasksOverDue = {};
+    const tasksOverDueYesterday = {};
 
-function filterTaskByToday(cloneTasks, currentDate) {
-  const tasksToday = {};
-  const tasksOverDue = {};
-  const tasksOverDueYesterday = {};
-  const finalTask = {
-    [overdueKey]: {
-      _id: overdueKey,
-      section: 'Overdue',
-      order: 0,
-      items: {},
-    },
-    [todayKey]: {
-      _id: todayKey,
-      section: SCHEDULE_DATE.today,
-      order: 1,
-      items: {},
-    },
-  };
+    const finalTasksToday = {
+      [todayKey]: {
+        _id: todayKey,
+        section: SCHEDULE_DATE.today,
+        order: 1,
+        items: {},
+      },
+    };
+    const finalTasksUpcoming = {};
 
-  function getTasksOverDueYesterdayOrder(tasksOverDueYesterday, tasksOverDue) {
-    const tasksOverDueOb = Object.values(tasksOverDue);
-    const tasksOverDueYesterdayOb = Object.values(tasksOverDueYesterday);
-    const min = tasksOverDueOb.length;
-    const max = min + tasksOverDueYesterdayOb.length;
-
-    const updated = tasksOverDueYesterdayOb.every(
-      (task) => task.index.byToday >= min && task.index.byToday < max
-    );
-
-    console.log('updated: ', updated);
-    if (updated) {
-      return tasksOverDueYesterday;
-    } else {
-      // update to database
-      return tasksOverDueYesterday;
-    }
-  }
-
-  const { date, month, year } = currentDate;
-  for (let index = 0; index < cloneTasks.length; index++) {
-    const task = cloneTasks[index];
-    const schedule = task.schedule;
-    if (schedule !== null) {
-      const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
-      const scheduleTime = getTime({ inputDate: new Date(schedule) });
-      if (scheduleTime === toDayTime) {
-        tasksToday[task._id] = task;
-      } else if (scheduleTime < toDayTime) {
+    function collectTaskOverDue(task) {
+      if (updated) {
+        tasksOverDue[task._id] = task;
+      } else {
         if (task.scheduleText === SCHEDULE_DATE.yesterday) {
           tasksOverDueYesterday[task._id] = task;
         } else {
@@ -69,81 +35,148 @@ function filterTaskByToday(cloneTasks, currentDate) {
         }
       }
     }
-  }
 
-  // mix task overdue
-  const tasksOverDueOb = Object.values(tasksOverDue);
-  const tasksOverDueYesterdayOb = Object.values(tasksOverDueYesterday);
-  if (tasksOverDueYesterdayOb.length !== 0) {
-    finalTask.overdue.items = {
-      ...tasksOverDue,
-      ...getTasksOverDueYesterdayOrder(tasksOverDueYesterday, tasksOverDue),
-    };
-  } else {
-    if (tasksOverDueOb.length !== 0) {
-      finalTask.overdue.items = tasksOverDue;
-    } else {
-      delete finalTask.overdue;
-      finalTask.today.order = 0;
-    }
-  }
-
-  // mix task today
-  finalTask.today.items = tasksToday;
-
-  return finalTask;
-}
-
-function filterTaskByUpcoming(cloneTasks, currentDate) {
-  const tasksOverDue = {};
-  const tasksUpcoming = [];
-  const finalTask = {};
-
-  const { date, month, year } = currentDate;
-  for (let index = 0; index < cloneTasks.length; index++) {
-    const task = cloneTasks[index];
-    const schedule = task.schedule;
-    if (schedule !== null) {
-      const toDayTime = getTime({ inputDate: `${year}-${month}-${date}` });
-      const scheduleTime = getTime({ inputDate: new Date(schedule) });
-      if (scheduleTime < toDayTime) {
-        tasksOverDue[task._id] = task;
-      } else if (scheduleTime > toDayTime) {
-        tasksUpcoming.push(task);
+    function success(arrTasksOverDue, arrTasksOverDueYesterday) {
+      if (arrTasksOverDue.length > 0 || arrTasksOverDueYesterday.length > 0) {
+        finalTasksToday[overdueKey] = {
+          _id: overdueKey,
+          section: 'Overdue',
+          order: 0,
+          items: {
+            ...tasksOverDue,
+            ...tasksOverDueYesterday,
+          },
+        };
+        finalTasksUpcoming[overdueKey] = {
+          _id: overdueKey,
+          section: 'Overdue',
+          order: 0,
+          items: {
+            ...tasksOverDue,
+            ...tasksOverDueYesterday,
+          },
+        };
       }
     }
-  }
 
-  const tasksOverDueArr = Object.values(tasksOverDue);
-  if (tasksOverDueArr.length !== 0) {
-    finalTask[overdueKey] = {
-      _id: overdueKey,
-      section: 'Overdue',
-      order: 0,
-      items: tasksOverDue,
-    };
-  }
+    // collect to array
+    for (let i = 0; i < cloneTasks.length; i++) {
+      const task = cloneTasks[i];
+      const schedule = task.schedule;
+      if (schedule !== null) {
+        const todayTime = getTime({ inputDate: currentDate });
+        const scheduleTime = getTime({ inputDate: new Date(schedule) });
+        if (scheduleTime === todayTime) {
+          // today
+          tasksToday[task._id] = task;
+          tasksUpcoming.push(task);
+        } else if (scheduleTime < todayTime) {
+          // overdue
+          collectTaskOverDue(task);
+        } else if (scheduleTime > todayTime) {
+          // upcoming
+          tasksUpcoming.push(task);
+        }
+      }
+    }
 
-  if (tasksUpcoming.length !== 0) {
+    // processing
+    // 1. Overdue
+    let arrNeedUpdateTask = [];
+    const arrTasksOverDueYesterday = Object.values(tasksOverDueYesterday);
+    const length = arrTasksOverDueYesterday.length;
+
+    const arrTasksOverDue = Object.values(tasksOverDue);
+    arrTasksOverDue.sort((a, b) => a.index.byToday - b.index.byToday);
+
+    if (length === 0) {
+      // updated or not updated but dont have new overdue task
+      // do nothing
+    } else {
+      // not updated
+      // update task overdue old
+      for (let i = 0; i < arrTasksOverDue.length; i++) {
+        const task = arrTasksOverDue[i];
+        if (task.index.byToday !== i) {
+          const index = {
+            bySection: -1,
+            byToday: i,
+            byUpcoming: i,
+          };
+          task.index = index;
+          arrNeedUpdateTask.push({
+            _id: task._id,
+            index,
+          });
+        }
+      }
+      // update new task overdue
+      let min = arrTasksOverDue.length;
+      for (let i = 0; i < length; i++) {
+        const task = arrTasksOverDueYesterday[i];
+        if (task.index.byToday !== min) {
+          const index = {
+            bySection: -1,
+            byToday: min,
+            byUpcoming: min,
+          };
+          task.index = index;
+          arrNeedUpdateTask.push({
+            _id: task._id,
+            index,
+          });
+        }
+        min++;
+      }
+    }
+
+    if (arrNeedUpdateTask.length > 0) {
+      const taskAPI = new TaskAPI();
+      await taskAPI.updateManyTask(arrNeedUpdateTask);
+      if (taskAPI.isUpdateManySuccess) {
+        success(arrTasksOverDue, arrTasksOverDueYesterday);
+      } else {
+        throw new Error(
+          'Error from update arrange task. Please login again T_T'
+        );
+      }
+    } else {
+      success(arrTasksOverDue, arrTasksOverDueYesterday);
+    }
+
+    // 2. Upcoming
     const transTasksUpComing = splitObjectByKey('scheduleText', tasksUpcoming);
     console.log('transTasksUpComing: ', transTasksUpComing);
     transTasksUpComing.forEach((section, index) => {
       const count = index + 1;
       const key = `${upcomingKey}${count}`;
-      finalTask[key] = {
+      finalTasksUpcoming[key] = {
         _id: key,
         section: section.scheduleText,
         order: count,
         items: {},
       };
-      section.items.forEach((task) => (finalTask[key].items[task._id] = task));
+      section.items.forEach(
+        (task) => (finalTasksUpcoming[key].items[task._id] = task)
+      );
     });
-  }
 
-  return finalTask;
+    // 3. Today
+    finalTasksToday[todayKey].items = { ...tasksToday };
+
+    return {
+      tasksToday: finalTasksToday,
+      tasksUpcoming: finalTasksUpcoming,
+    };
+  } catch (error) {
+    console.error(error.message);
+    alert(error.message);
+    history.push('/show');
+  }
 }
 
 function filterTaskBySection(cloneTasks, cloneSections) {
+  const { nullSectionKey } = keys;
   const result = {
     [nullSectionKey]: {
       _id: nullSectionKey,
@@ -159,31 +192,44 @@ function filterTaskBySection(cloneTasks, cloneSections) {
   });
 
   function mix(taskItem) {
-    for (let i = 0; i < cloneSections.length; i++) {
-      if (taskItem.section === null) {
-        result[nullSectionKey].items[taskItem._id] = taskItem;
-        break;
-      }
-
-      const s = cloneSections[i];
-      if (taskItem.section === s._id) {
-        if (s.items) result[s._id].items[taskItem._id] = taskItem;
-        else result[s._id].items = { [taskItem._id]: taskItem };
-        break;
+    if (taskItem.section === null) {
+      result[nullSectionKey].items[taskItem._id] = taskItem;
+    } else {
+      const keys = Object.keys(result);
+      if (keys.includes(taskItem.section)) {
+        result[taskItem.section].items[taskItem._id] = taskItem;
       }
     }
   }
   // mix sections and taskItem into one
   cloneTasks.forEach(mix);
-  // clear section null empty
-  const nullSectionArr = Object.values(result[nullSectionKey].items);
-  if (nullSectionArr.length === 0) delete result[nullSectionKey];
-
   return result;
 }
 
-export const getTask = (schedule) => async (dispatch) => {
+export const getTask = (schedule) => async (dispatch, getState) => {
   try {
+    // get soon as possible
+    const curDate = new Date();
+    console.log('curDate: ', curDate);
+    const todayTime = getTime({ inputDate: curDate });
+
+    const user = getState().oauthReducer.user;
+    const userOverDate = user.overdate;
+    console.log('userOverDate: ', userOverDate);
+    const userOverDateTime = getTime({ inputDate: new Date(userOverDate) });
+
+    const updated = todayTime === userOverDateTime;
+    if (!updated) {
+      console.log('>>>update user_overdate<<<');
+      const userAPI = new UserAPI();
+      await userAPI.editUser({ overdate: curDate.toJSON() });
+      if (!userAPI.isUpdateUserSuccess) {
+        throw new Error(
+          'Error from update user_overdate. Please login again T_T'
+        );
+      }
+    }
+
     const taskAPI = new TaskAPI();
     await taskAPI.getAllTask(schedule);
     const tasks = taskAPI.tasks;
@@ -192,10 +238,6 @@ export const getTask = (schedule) => async (dispatch) => {
     const sectionAPI = new SectionAPI();
     await sectionAPI.getAllSection();
     const sections = sectionAPI.sections;
-
-    // get soon as possible
-    const curDate = getInfoDate({ inputDate: 'today' });
-    console.log('curDate: ', curDate);
 
     // filter tasks before dispatch
     tasks.forEach((item) => {
@@ -211,7 +253,6 @@ export const getTask = (schedule) => async (dispatch) => {
     // clone Task
     const cloneTask01 = JSON.parse(JSON.stringify(tasks));
     const cloneTask02 = JSON.parse(JSON.stringify(tasks));
-    const cloneTask03 = JSON.parse(JSON.stringify(tasks));
 
     // filter by section group (inbox)
     const tasksInbox = filterTaskBySection(cloneTask01, cloneSection);
@@ -228,12 +269,15 @@ export const getTask = (schedule) => async (dispatch) => {
     console.log('sectionTasks: ', sectionTasks);
 
     // filter by today group (today)
-    const tasksToday = filterTaskByToday(cloneTask02, curDate);
+    // filter by next upcoming (upcoming)
+    const { tasksToday, tasksUpcoming } = await filterScheduleTask(
+      cloneTask02,
+      curDate,
+      updated
+    );
     console.log('tasksToday: ', tasksToday);
-
-    // filter by next upcoming (upcoming) - 3 months
-    const tasksUpcoming = filterTaskByUpcoming(cloneTask03, curDate);
     console.log('tasksUpcoming: ', tasksUpcoming);
+
     dispatch({
       type: GET_TASK,
       payload: {
@@ -246,7 +290,9 @@ export const getTask = (schedule) => async (dispatch) => {
       },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error.message);
+    alert(error.message);
+    history.push('/show');
   }
 };
 

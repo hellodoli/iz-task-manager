@@ -5,6 +5,10 @@ import { grey, red } from '@material-ui/core/colors';
 export const muiTaskGeneral = makeStyles((theme) => {
   const typo = theme.typography;
   const palette = theme.palette;
+  const checkDisplay = (isExpand, section) => {
+    if (section === null) return 'block';
+    return isExpand ? 'block' : 'none';
+  };
   return {
     header: {
       display: 'flex',
@@ -35,19 +39,22 @@ export const muiTaskGeneral = makeStyles((theme) => {
       },
     },
     sectionHeader: {
+      display: 'flex',
+      alignItems: 'center',
       fontSize: typo.pxToRem(14),
       fontWeight: typo.fontWeightBold,
       textTransform: 'capitalize',
-    },
-    wrapperAllSection: {},
-    wrapperQuickAddTask: {
-      '$wrapperAllSection + &': {
-        marginTop: typo.pxToRem(15),
+      paddingBottom: '.5em',
+      borderBottom: `1px solid ${palette.divider}`,
+      '& + $sectionBody': {
+        marginTop: '1rem',
       },
     },
-    buttonGap: {
-      marginLeft: typo.pxToRem(10),
+    sectionBody: {
+      display: ({ isExpand, section }) => checkDisplay(isExpand, section),
+      paddingLeft: (props) => !props.isEmpty && '.5rem',
     },
+    wrapperAllSection: {},
     wrapperWeekRow: {
       display: 'flex',
       alignItems: 'center',
@@ -66,20 +73,36 @@ export const muiTaskGeneral = makeStyles((theme) => {
         marginRight: typo.pxToRem(10),
       },
     },
+    wrapperIconExpand: {
+      cursor: 'pointer',
+    },
+    gapLeft: {
+      marginLeft: typo.pxToRem(10),
+    },
+    gapRight: {
+      marginRight: typo.pxToRem(10),
+    },
+    fontBold: {
+      fontWeight: typo.fontWeightBold,
+    },
+    fontItalic: {
+      fontStyle: 'italic',
+    },
   };
 });
 
 export const muiTaskItem = makeStyles((theme) => {
   const pxToRem = theme.typography.pxToRem;
+  const palette = theme.palette;
   return {
     wrapperItem: {
       position: 'relative',
       // fontSize: pxToRem(14),
       padding: `${pxToRem(12)} ${pxToRem(16)}`,
       paddingLeft: pxToRem(45),
-      border: `1px solid ${grey[400]}`,
+      border: `1px solid ${palette.divider}`,
       borderRadius: pxToRem(4),
-      pageBreakInside: 'avoid',
+      overflow: 'hidden',
       cursor: 'pointer',
       '&:not(:last-child)': {
         marginBottom: pxToRem(20),
@@ -162,7 +185,6 @@ export const muiTaskItem = makeStyles((theme) => {
 });
 
 export const muiModal = makeStyles((theme) => {
-  const typo = theme.typography;
   const palette = theme.palette;
   return {
     gutterTopBottom: {
@@ -170,15 +192,6 @@ export const muiModal = makeStyles((theme) => {
       paddingBottom: 0,
     },
     dialogDeleteTitle: {},
-    textOptionWithIcon: {
-      marginLeft: typo.pxToRem(10),
-    },
-    textOptionWithIconI: {
-      fontWeight: typo.fontWeightBold,
-    },
-    textOptionWithIconItalic: {
-      fontStyle: 'italic',
-    },
     borderDialogTitle: {
       borderBottom: `1px solid ${palette.divider}`,
     },
@@ -227,7 +240,6 @@ export const muiSelectSchedule = makeStyles((theme) => {
 });
 
 // Overriding styles with createMuiTheme
-const defaultTheme = createMuiTheme();
 export const muiDateTimePicker = createMuiTheme({
   overrides: {
     MuiPickersToolbarText: {

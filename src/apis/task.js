@@ -25,6 +25,7 @@ class Task {
       const response = await api.get('/tasks', { params, headers });
       if (response.status === 200) this.tasks = response.data;
     } catch (error) {
+      this.tasks = [];
       console.log(error);
       console.log('error.name: ', error.name);
       console.log('error.message: ', error.message);
@@ -116,8 +117,11 @@ class Task {
         Authorization: 'Bearer ' + getCookie('emailToken'),
       };
 
-      const response = await api.patch('/many', { arrTask }, { headers });
-      console.log(response);
+      const response = await api.patch(
+        '/tasksUpdateMany',
+        { arrTask },
+        { headers }
+      );
       if (response.status === 200) this.isUpdateManySuccess = true;
       else this.isUpdateManySuccess = false;
     } catch (error) {

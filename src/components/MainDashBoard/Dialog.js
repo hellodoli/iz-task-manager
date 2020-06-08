@@ -2,7 +2,7 @@ import React, { Fragment, useState } from 'react';
 import clsx from 'clsx';
 
 import { keys } from '../../constants/task';
-import { TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
+import { TASK_TODAY, TASK_UPCOMING, TASK_ALL } from '../../constants/location';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 
 import {
@@ -49,7 +49,7 @@ import {
 } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
-function getCloneTaskAfterAddSection(tasks, newSection) {
+export function getCloneTaskAfterAddSection(tasks, newSection) {
   const sectionTasks = tasks.sectionTasks.slice();
   sectionTasks[0].push(newSection.section);
   sectionTasks[1].push(newSection._id);
@@ -120,10 +120,29 @@ function getCloneTaskAfterAfterAddTask(
   return result;
 }
 
+export async function createNewSection(tasks, sectionName) {
+  const sectionAPI = new SectionAPI();
+  const order = tasks.sectionTasks[0].length;
+  await sectionAPI.addSection({
+    section: sectionName,
+    order,
+  });
+
+  return new Promise((resolve, reject) => {
+    if (sectionAPI.isAddSuccess && sectionAPI.dataAfterAdd) {
+      resolve(sectionAPI.dataAfterAdd);
+    } else {
+      reject();
+    }
+  });
+}
+
 export function ModalCreateSection(props) {
   const { isOpen, handleClose, cbSave } = props;
   const [value, setValue] = useState('');
   const [errorText, setErrorText] = useState('');
+
+  const classes = muiTaskGeneral();
 
   const handleChange = (e) => setValue(e.target.value);
 
@@ -157,7 +176,7 @@ export function ModalCreateSection(props) {
           helperText={errorText}
         />
       </DialogContent>
-      <DialogContent>
+      <DialogContent className={classes.textRight}>
         <Button variant="contained" color="primary" onClick={handleSave}>
           Save
         </Button>
@@ -179,6 +198,8 @@ export function ModalAddTask(props) {
     tasks,
     location: { pathname },
     setTask,
+
+    sectionId,
     activeDate,
   } = props;
   const gClasses = muiTaskGeneral();
@@ -186,13 +207,24 @@ export function ModalAddTask(props) {
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
 
+  function chooseDefaultValueTaskSection() {
+    let defaultTaskSection = '';
+    if (pathname === TASK_ALL) {
+      if (sectionId) defaultTaskSection = sectionId;
+    }
+    return defaultTaskSection;
+  }
+
   function chooseDefaultValueTasksSchedule() {
     if (pathname === TASK_TODAY) return 'today';
     if (pathname === TASK_UPCOMING) return 'choosedate';
     return 'nodate';
   }
 
-  const [valueTaskSection, setValueTaskSection] = useState(''); // task section value (select)
+  const [valueTaskSection, setValueTaskSection] = useState(
+    chooseDefaultValueTaskSection()
+  ); // task section value (select)
+
   const [valueTaskSchedule, setValueTaskSchedule] = useState(
     chooseDefaultValueTasksSchedule()
   ); // task schedule value (select)
@@ -406,21 +438,12 @@ export function ModalAddTask(props) {
   const cbSaveCreateSection = async (sectionName) => {
     // close ModalCreateSection
     handleCloseCreateSection();
-
-    const sectionAPI = new SectionAPI();
-    const order = tasks.sectionTasks[0].length;
-    await sectionAPI.addSection({
-      section: sectionName,
-      order,
-    });
-    if (sectionAPI.isAddSuccess && sectionAPI.dataAfterAdd) {
-      // update UI
-      const newSection = sectionAPI.dataAfterAdd;
-      setTask(getCloneTaskAfterAddSection(tasks, newSection));
-      setValueTaskSection(newSection._id);
-    } else {
-      alert('add Section fail');
-    }
+    createNewSection(tasks, sectionName)
+      .then((newSection) => {
+        setTask(getCloneTaskAfterAddSection(tasks, newSection));
+        setValueTaskSection(newSection._id);
+      })
+      .catch(() => alert('add Section fail'));
   };
   /* --- END: Handle Create Section Action --- */
 
@@ -583,7 +606,7 @@ export function ModalAddTask(props) {
         </DialogContent>
 
         {/* Button group */}
-        <DialogContent>
+        <DialogContent className={gClasses.textRight}>
           <Button variant="contained" color="primary" onClick={handleSave}>
             Save
           </Button>

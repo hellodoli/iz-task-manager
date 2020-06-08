@@ -1,6 +1,6 @@
 import { createMuiTheme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { grey, red } from '@material-ui/core/colors';
+import { red } from '@material-ui/core/colors';
 
 export const muiTaskGeneral = makeStyles((theme) => {
   const typo = theme.typography;
@@ -87,6 +87,9 @@ export const muiTaskGeneral = makeStyles((theme) => {
     },
     fontItalic: {
       fontStyle: 'italic',
+    },
+    textRight: {
+      textAlign: 'right',
     },
   };
 });

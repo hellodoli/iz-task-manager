@@ -23,7 +23,13 @@ import { getTask, setTask } from '../../actions/task';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Components
-import { ModalAddTask, ModalCreateSection, ModalConFirm } from './Dialog';
+import {
+  ModalAddTask,
+  ModalCreateSection,
+  ModalConFirm,
+  createNewSection,
+  getCloneTaskAfterAddSection,
+} from './Dialog';
 
 // Styling
 import {
@@ -366,10 +372,11 @@ function TaskItem({
 
 function TaskHeader(props) {
   const {
+    tasks,
+    setTask,
     location: { pathname },
   } = props;
   const gClasses = muiTaskGeneral();
-
   /* --- START: Handle Add Task Action --- */
   const [isOpenAddTask, setIsOpenAddTask] = useState(false);
 
@@ -384,6 +391,15 @@ function TaskHeader(props) {
   const handleClickOpenAddSection = () => setIsOpenAddSection(true);
 
   const handleCloseAddSection = () => setIsOpenAddSection(false);
+
+  const addSection = (sectionName) => {
+    handleCloseAddSection();
+    createNewSection(tasks, sectionName)
+      .then((newSection) => {
+        setTask(getCloneTaskAfterAddSection(tasks, newSection));
+      })
+      .catch(() => alert('add Section fail'));
+  };
   /* --- END: Handle Add Section Action --- */
 
   const renderTitleHeaderText = () => {
@@ -396,13 +412,13 @@ function TaskHeader(props) {
       return (
         <Fab
           variant="extended"
-          size="small"
+          size="medium"
           color="default"
           aria-label="add section"
           onClick={handleClickOpenAddSection}
         >
-          <AddIcon />
-          Add section
+          <AddIcon fontSize="small" />
+          <span className={gClasses.gapLeft}>Add section</span>
         </Fab>
       );
     return null;
@@ -423,9 +439,7 @@ function TaskHeader(props) {
         <ModalCreateSection
           isOpen={isOpenAddSection}
           handleClose={handleCloseAddSection}
-          cbSave={() => {
-            console.log('hmmm');
-          }}
+          cbSave={addSection}
         />
       )}
       {/* Task Main Header */}
@@ -441,8 +455,8 @@ function TaskHeader(props) {
             className={gClasses.gapLeft}
             onClick={handleClickOpenAddTask}
           >
-            <AddIcon />
-            Add task
+            <AddIcon fontSize="small" />
+            <span className={gClasses.gapLeft}>Add task</span>
           </Fab>
         </div>
       </div>
@@ -684,7 +698,7 @@ function TaskHeaderUpcoming(props) {
 function TaskList(props) {
   const {
     tasks,
-    location: { pathname },
+    location,
     setTask,
 
     taskClassName,
@@ -692,9 +706,11 @@ function TaskList(props) {
     taskOrder,
   } = props;
 
+  const propsAddTaskModal = { tasks, location, setTask };
+
   useEffect(() => {
     // check every time user switch other tab
-    if (prevPathNameTask !== null && prevPathNameTask !== pathname) {
+    if (prevPathNameTask !== null && prevPathNameTask !== location.pathname) {
       console.log('switch TASK pathname');
       if (prevEditTask !== null) {
         const { taskId, sectionId } = prevEditTask;
@@ -710,8 +726,8 @@ function TaskList(props) {
         prevEditTask = null;
       }
     }
-    prevPathNameTask = pathname;
-  }, [pathname, setTask, taskDataProperty, tasks]);
+    prevPathNameTask = location.pathname;
+  }, [location, setTask, taskDataProperty, tasks]);
 
   const startOpenEditTask = (taskId, sectionId) => {
     const cloneTask = { ...tasks[taskDataProperty] };
@@ -881,6 +897,7 @@ function TaskList(props) {
                 section={section}
                 items={items}
                 taskClassName={taskClassName}
+                propsAddTaskModal={propsAddTaskModal}
                 startOpenEditTask={startOpenEditTask}
                 startCloseEditStart={startCloseEditStart}
                 updateDesTask={updateDesTask}
@@ -898,18 +915,23 @@ function TaskList(props) {
 function TaskListWrapper(props) {
   const {
     taskClassName,
-    section: { _id: sectionId, section },
     items,
+    section: { _id: sectionId, section },
+    propsAddTaskModal,
     ...rest
   } = props;
 
   const [isExpand, setIsExpand] = useState(false);
+  const [isOpenAddTask, setIsOpenAddTask] = useState(false);
+  const itemClasses = muiTaskItem();
   const classes = muiTaskGeneral({
     isExpand,
     section,
     isEmpty: items.length === 0,
   });
-  const itemClasses = muiTaskItem();
+
+  const handleOpenAddTask = () => setIsOpenAddTask(true);
+  const handleCloseAddTask = () => setIsOpenAddTask(false);
 
   const renderSectionHeader = () => {
     if (section === null) return null;
@@ -933,11 +955,22 @@ function TaskListWrapper(props) {
   const renderSectionEmptyBody = () => {
     if (items.length === 0 && section !== null) {
       return (
-        <div className={itemClasses.wrapperItemEmpty}>
-          <Fab size="small" color="secondary">
-            <AddIcon />
-          </Fab>
-        </div>
+        <Fragment>
+          {/* Modal Add Task */}
+          {isOpenAddTask && (
+            <ModalAddTask
+              {...propsAddTaskModal}
+              isOpen={isOpenAddTask}
+              handleClose={handleCloseAddTask}
+              sectionId={sectionId}
+            />
+          )}
+          <div className={itemClasses.wrapperItemEmpty}>
+            <Fab size="small" color="primary" onClick={handleOpenAddTask}>
+              <AddIcon fontSize="small" />
+            </Fab>
+          </div>
+        </Fragment>
       );
     }
     return null;
@@ -1046,12 +1079,10 @@ function TaskMain(props) {
 }
 
 TaskMain.propTypes = {
-  auth: PropTypes.object.isRequired,
-  tasks: PropTypes.object,
+  tasks: PropTypes.object.isRequired,
 };
 
 const mapStateToProps = (state) => ({
-  auth: state.oauthReducer,
   tasks: state.taskReducer,
 });
 

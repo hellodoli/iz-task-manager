@@ -9,21 +9,6 @@ export const muiTabs = makeStyles((theme) => {
   };
 });
 
-export const muiTab = makeStyles((theme) => ({
-  root: {
-    padding: '1rem 2rem',
-    background: 'transparent',
-    color: theme.palette.common.white,
-  },
-  selected: {
-    background: theme.palette.common.white,
-    color: 'inherit',
-  },
-  /*textColorInherit: {
-    opacity: "1"
-  }*/
-}));
-
 export const muiForm = makeStyles((theme) => ({
   wrapperBorderRadius: {
     borderRadius: theme.shape.borderRadius,

@@ -6,10 +6,9 @@ const GlobalCSS = withStyles((theme) => {
       html: {
         'font-size': theme.typography.htmlFontSize,
       },
-      body: {
-        ...theme.typography.body1,
-        padding: 0,
-        margin: 0,
+      a: {
+        'text-decoration': 'none',
+        'background-color': 'transparent',
       },
     },
   };

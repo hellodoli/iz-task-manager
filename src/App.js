@@ -9,16 +9,17 @@ import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 
 // CSS
-import './reboot.css';
+//import './reboot.css';
 import GlobalCSS from './containers/GlobalCSS';
-
-// Components
-import Loading from './components/Loading';
-import FormLoginAndSignUp from './components/FormLoginAndSignUp';
+import { CssBaseline } from '@material-ui/core';
 
 // Containers
 import SetUp from './containers/SetUp';
 import Main from './containers/Main';
+
+// Components
+import Loading from './components/Loading';
+import FormLoginAndSignUp from './components/FormLoginAndSignUp';
 
 /*function useDarkTheme() {
   const [theme, setTheme] = useState(useTheme());
@@ -60,6 +61,7 @@ function App(props) {
     <MuiPickersUtilsProvider utils={DateFnsUtils}>
       <div className="App">
         {/* Global CSS */}
+        <CssBaseline />
         <GlobalCSS />
         {/* Set Up */}
         {renderFirstBootstrap()}

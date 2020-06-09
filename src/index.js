@@ -9,6 +9,9 @@ import rootReducer from './reducers';
 import { Router } from 'react-router-dom';
 import history from './history';
 
+import { ThemeProvider } from '@material-ui/core/styles';
+import theme from './theme';
+
 import App from './App';
 
 import * as serviceWorker from './serviceWorker';
@@ -23,7 +26,9 @@ console.log('store: ', store.getState());
 ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
-      <App />
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
     </Router>
   </Provider>,
   document.getElementById('root')

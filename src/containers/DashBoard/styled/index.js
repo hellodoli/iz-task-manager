@@ -12,7 +12,7 @@ export const muiDashBoard = makeStyles((theme) => ({
   wrapperLeftMenu: {
     position: 'fixed',
     width: 'var(--widthMenu)',
-    height: 'calc(100% - var(--heightTopbar))',
+    //height: 'calc(100% - var(--heightTopbar))',
     paddingTop: theme.typography.pxToRem(30),
     paddingLeft: theme.typography.pxToRem(35),
     background: theme.palette.background.default,

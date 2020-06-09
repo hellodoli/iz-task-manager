@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { Tabs, Tab } from '@material-ui/core';
-import { muiTab, muiForm } from './styled';
+import { muiForm } from './styled';
 
 function FormTabHeader(props) {
   const classes = muiForm(); // use style from makeStyles
@@ -22,8 +22,8 @@ function FormTabHeader(props) {
         aria-label="form-tabs-header"
         {...other}
       >
-        <Tab label="ALREADY MEMBER ?" classes={muiTab()} {...a11yProps(0)} />
-        <Tab label="NEW MEMBER ?" classes={muiTab()} {...a11yProps(1)} />
+        <Tab label="ALREADY MEMBER ?" {...a11yProps(0)} />
+        <Tab label="NEW MEMBER ?" {...a11yProps(1)} />
       </Tabs>
     </div>
   );

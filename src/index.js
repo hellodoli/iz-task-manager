@@ -9,8 +9,9 @@ import rootReducer from './reducers';
 import { Router } from 'react-router-dom';
 import history from './history';
 
-import { ThemeProvider } from '@material-ui/core/styles';
-import theme from './theme';
+import { ThemeProvider, CssBaseline } from '@material-ui/core';
+import theme from './theme/theme';
+import './theme/reboot.css';
 
 import App from './App';
 
@@ -27,7 +28,10 @@ ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
       <ThemeProvider theme={theme}>
-        <App />
+        <React.Fragment>
+          <CssBaseline />
+          <App />
+        </React.Fragment>
       </ThemeProvider>
     </Router>
   </Provider>,

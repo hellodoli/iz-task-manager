@@ -8,11 +8,6 @@ import { checkAuth } from './actions/oauth';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 
-// CSS
-//import './reboot.css';
-import GlobalCSS from './containers/GlobalCSS';
-import { CssBaseline } from '@material-ui/core';
-
 // Containers
 import SetUp from './containers/SetUp';
 import Main from './containers/Main';
@@ -49,22 +44,14 @@ function App(props) {
     checkAuth();
   }, [checkAuth]);
 
-  const renderFirstBootstrap = () => {
-    if (location.pathname === '/') {
-      if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
-      return <SetUp isSignedIn={auth.isSignedIn} />;
-    }
-    return null;
-  };
+  if (location.pathname === '/') {
+    if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
+    return <SetUp isSignedIn={auth.isSignedIn} />;
+  }
 
   return (
     <MuiPickersUtilsProvider utils={DateFnsUtils}>
       <div className="App">
-        {/* Global CSS */}
-        <CssBaseline />
-        <GlobalCSS />
-        {/* Set Up */}
-        {renderFirstBootstrap()}
         {/* Main Route */}
         <Switch>
           <Route path="/show" component={FormLoginAndSignUp} />

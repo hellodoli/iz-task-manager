@@ -3,14 +3,12 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
 import { Switch, Route } from 'react-router-dom';
-
 // Task API Class
 import TaskAPI from '../../apis/task';
 
 import { keys } from '../../constants/task';
 import { SCHEDULE_DATE } from '../../constants/schedule';
 import { TASK_ALL, TASK_TODAY, TASK_UPCOMING } from '../../constants/location';
-
 import {
   monthNames,
   dayNames,
@@ -19,18 +17,9 @@ import {
 } from '../../utils/time';
 
 import { getTask, setTask } from '../../actions/task';
+import { useMediaBreakingPoint } from '../../hooks/mediaBp';
 
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-
-// Components
-import {
-  ModalAddTask,
-  ModalCreateSection,
-  ModalConFirm,
-  createNewSection,
-  getCloneTaskAfterAddSection,
-} from './Dialog';
-
 // Styling
 import {
   FormControlLabel,
@@ -46,9 +35,6 @@ import {
   MenuItem,
   Tabs,
   Tab,
-  ExpansionPanel,
-  ExpansionPanelSummary,
-  ExpansionPanelDetails,
   List,
   ListItem,
   Typography,
@@ -66,13 +52,18 @@ import {
 } from '@material-ui/icons';
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
-
 // Components
+import {
+  ModalAddTask,
+  ModalCreateSection,
+  ModalConFirm,
+  createNewSection,
+  getCloneTaskAfterAddSection,
+} from './Dialog';
 import Loading from '../Loading';
 
 let prevPathNameTask = null;
 let prevEditTask = null;
-
 // helper function
 function setScheduleStatusColor(scheduleText, schedule) {
   let color = '';
@@ -376,7 +367,10 @@ function TaskHeader(props) {
     setTask,
     location: { pathname },
   } = props;
-  const gClasses = muiTaskGeneral();
+  const classes = muiTaskGeneral();
+  const uMB = useMediaBreakingPoint();
+  const isXSDown = uMB.isXS.down;
+
   /* --- START: Handle Add Task Action --- */
   const [isOpenAddTask, setIsOpenAddTask] = useState(false);
 
@@ -412,13 +406,13 @@ function TaskHeader(props) {
       return (
         <Fab
           variant="extended"
-          size="medium"
+          size={isXSDown ? 'small' : 'medium'}
           color="default"
           aria-label="add section"
           onClick={handleClickOpenAddSection}
         >
           <AddIcon fontSize="small" />
-          <span className={gClasses.gapLeft}>Add section</span>
+          <span className={classes.gapLeft}>Add section</span>
         </Fab>
       );
     return null;
@@ -443,20 +437,20 @@ function TaskHeader(props) {
         />
       )}
       {/* Task Main Header */}
-      <div className={clsx(gClasses.header, gClasses.headerMgBottom)}>
-        <h1 className={gClasses.headerTitle}>{renderTitleHeaderText()}</h1>
+      <div className={clsx(classes.header, classes.headerMgBottom)}>
+        <h1 className={classes.headerTitle}>{renderTitleHeaderText()}</h1>
         <div>
           {rederAddSectionFab()}
           <Fab
             variant="extended"
-            size="medium"
+            size={isXSDown ? 'small' : 'medium'}
             color="primary"
             aria-label="add task"
-            className={gClasses.gapLeft}
+            className={classes.gapLeft}
             onClick={handleClickOpenAddTask}
           >
             <AddIcon fontSize="small" />
-            <span className={gClasses.gapLeft}>Add task</span>
+            <span className={classes.gapLeft}>Add task</span>
           </Fab>
         </div>
       </div>
@@ -648,8 +642,8 @@ function TaskHeaderUpcoming(props) {
           {/* Header left */}
           {renderTitleHeader()}
           {/* Header right */}
-          <div className={gClasses.header}>
-            <ButtonGroup variant="outlined" color="secondary" size="small">
+          <div className={gClasses.subHeader}>
+            <ButtonGroup variant="contained" color="secondary" size="small">
               <Button
                 disabled={isDasbledPrevWeekRow()}
                 onClick={() => goToWeek('prev')}
@@ -661,7 +655,8 @@ function TaskHeaderUpcoming(props) {
               </Button>
             </ButtonGroup>
             <Button
-              variant="outlined"
+              variant="contained"
+              color="primary"
               size="small"
               className={gClasses.gapLeft}
               onClick={goToCurrentWeek}

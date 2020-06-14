@@ -15,9 +15,14 @@ export const muiTaskGeneral = makeStyles((theme) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       color: palette.text.primary,
-      '& .MuiFab-root': {
-        textTransform: 'initial',
+      [theme.breakpoints.down('xs')]: {
+        flexDirection: 'column',
       },
+    },
+    subHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     headerMgBottom: {
       marginBottom: typo.pxToRem(24),
@@ -28,14 +33,10 @@ export const muiTaskGeneral = makeStyles((theme) => {
     headerTitle: {
       fontSize: typo.pxToRem(20),
       fontWeight: typo.fontWeightBold,
-      marginBottom: 0,
     },
     section: {
       '& + $section': {
         marginTop: typo.pxToRem(20),
-      },
-      '& .MuiExpansionPanelDetails-root': {
-        display: 'block',
       },
     },
     sectionHeader: {
@@ -78,9 +79,15 @@ export const muiTaskGeneral = makeStyles((theme) => {
     },
     gapLeft: {
       marginLeft: typo.pxToRem(10),
+      [theme.breakpoints.down('xs')]: {
+        marginLeft: typo.pxToRem(5),
+      },
     },
     gapRight: {
       marginRight: typo.pxToRem(10),
+      [theme.breakpoints.down('xs')]: {
+        marginRight: typo.pxToRem(5),
+      },
     },
     fontBold: {
       fontWeight: typo.fontWeightBold,

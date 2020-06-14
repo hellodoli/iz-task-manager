@@ -1,6 +1,6 @@
 import { TOGGLE_MENU, OPEN_MENU, CLOSE_MENU } from '../constants/menu';
 
-const initial = { isOpen: true };
+const initial = { isOpen: false };
 const menuReducer = (state = initial, action) => {
   switch (action.type) {
     case TOGGLE_MENU:

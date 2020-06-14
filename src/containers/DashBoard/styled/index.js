@@ -2,24 +2,32 @@ import { makeStyles } from '@material-ui/core/styles';
 
 export const muiDashBoard = makeStyles((theme) => {
   const pxToRem = (n) => theme.typography.pxToRem(n);
+  const overlayBgColor =
+    theme.palette.type === 'dark' ? 'rgba(0,0,0,.65)' : 'rgba(0,0,0,.5)';
   return {
     root: {
       '--widthMenu': '305px',
-      '--heightTopbar': '44px',
+      '--heightTopbar': '56px',
+      [`${theme.breakpoints.up('xs')} and (orientation: landscape)`]: {
+        '--heightTopbar': '48px',
+      },
+      [theme.breakpoints.up('sm')]: {
+        '--heightTopbar': '64px',
+      },
     },
     wrapperMainApp: {
       width: '100%',
       minHeight: '100vh',
     },
-    menuLeftOverlay: {
+    menuOverlay: {
       display: 'none',
-      position: 'absolute',
-      top: 0,
+      position: 'fixed',
+      top: 'var(--heightTopbar)',
       left: 0,
-      width: '100vw',
-      height: '100vh',
+      right: 0,
+      bottom: 0,
       zIndex: theme.zIndex.drawer - 1,
-      backgroundColor: 'rgba(0,0,0,.5)',
+      backgroundColor: overlayBgColor,
       transition: 'opacity .25s cubic-bezier(.4,0,.2,1)',
       [theme.breakpoints.down('sm')]: {
         display: 'block',
@@ -27,19 +35,11 @@ export const muiDashBoard = makeStyles((theme) => {
         visibility: ({ isOpen }) => (isOpen ? 'visible' : 'hidden'),
       },
     },
-    wrapperLeftMenuOut: {
-      position: 'fixed',
-      left: 0,
-      width: 'var(--widthMenu)',
-      height: '100vh',
-      pointerEvents: 'none',
-    },
-    wrapperLeftMenuIn: {
+    wrapperMenuIn: {
       position: 'fixed',
       left: ({ isOpen }) => (isOpen ? 0 : 'calc(-1*var(--widthMenu))'),
       width: 'var(--widthMenu)',
-      //height: 'calc(100% - var(--heightTopbar))',
-      height: '100vh',
+      height: 'calc(100vh - var(--heightTopbar))',
       paddingTop: pxToRem(30),
       paddingLeft: pxToRem(35),
       background: theme.palette.background.default,
@@ -47,7 +47,7 @@ export const muiDashBoard = makeStyles((theme) => {
       transition: 'left .25s cubic-bezier(.4,0,.2,1)',
       zIndex: theme.zIndex.drawer,
     },
-    wrapperRightMenu: {
+    wrapperMain: {
       backgroundColor: theme.palette.background.paper,
       minHeight: '100vh',
       display: 'flex',
@@ -59,7 +59,7 @@ export const muiDashBoard = makeStyles((theme) => {
         marginLeft: ({ isOpen }) => (isOpen ? 'var(--widthMenu)' : 0),
       },
     },
-    innerRightMenu: {
+    innerMain: {
       padding: `${pxToRem(20)} ${pxToRem(55)}`,
       width: '100%',
     },

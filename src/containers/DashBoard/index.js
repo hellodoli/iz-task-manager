@@ -1,8 +1,9 @@
 import React from 'react';
-
 import { connect } from 'react-redux';
-
 import { Switch, Route } from 'react-router-dom';
+
+import { closeMenu } from '../../actions/menu';
+
 import { muiDashBoard } from './styled';
 // Components
 import MenuLeft from '../../components/MenuLeftDashBoard';
@@ -10,7 +11,7 @@ import MainTask from '../../components/MainDashBoard/Task';
 import Header from '../../components/Appbar';
 
 function DashBoard(props) {
-  const { isOpen } = props;
+  const { isOpen, closeMenu } = props;
   const classes = muiDashBoard({ isOpen });
 
   return (
@@ -19,19 +20,15 @@ function DashBoard(props) {
         {/* Header */}
         <Header />
         {/* Menu Left */}
-        {/* 
-        <div className={classes.wrapperLeftMenuOut}>
-          <div className={classes.menuLeftOverlay}></div>
-        </div>  */}
-
-        <div className={classes.wrapperLeftMenuIn}>
-          <div className={classes.menuLeftOverlay}></div>
-          <MenuLeft />
+        <div>
+          <div className={classes.menuOverlay} onClick={closeMenu}></div>
+          <div className={classes.wrapperMenuIn}>
+            <MenuLeft />
+          </div>
         </div>
-
         {/* Dashboard */}
-        <div className={classes.wrapperRightMenu}>
-          <div className={classes.innerRightMenu}>
+        <div className={classes.wrapperMain}>
+          <div className={classes.innerMain}>
             <Switch>
               <Route path="/app/tasks" component={MainTask} />
             </Switch>
@@ -46,4 +43,4 @@ const mapStateToProps = (state) => ({
   isOpen: state.menuReducer.isOpen,
 });
 
-export default connect(mapStateToProps)(DashBoard);
+export default connect(mapStateToProps, { closeMenu })(DashBoard);

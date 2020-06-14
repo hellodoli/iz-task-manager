@@ -279,17 +279,14 @@ function TaskItem({
                 <Menu
                   anchorOrigin={{
                     vertical: 'bottom',
-                    horizontal: 'center',
+                    horizontal: 'left',
                   }}
                   getContentAnchorEl={null}
                   anchorEl={anchorEl}
-                  keepMounted
                   open={Boolean(anchorEl)}
                   onClose={closeScheduleMenu}
                 >
-                  <MenuItem>Item 1</MenuItem>
-                  <MenuItem>Item 2</MenuItem>
-                  <MenuItem>Item 3</MenuItem>
+                  <MenuItem>Comming soon</MenuItem>
                 </Menu>
 
                 <IconButton
@@ -312,7 +309,6 @@ function TaskItem({
               </div>
             )}
             {/* Item Drag Handle */}
-
             <div
               className={clsx(
                 'task-item-drag-handle',
@@ -412,7 +408,7 @@ function TaskHeader(props) {
           onClick={handleClickOpenAddSection}
         >
           <AddIcon fontSize="small" />
-          <span className={classes.gapLeft}>Add section</span>
+          <span className={'ml'}>Add section</span>
         </Fab>
       );
     return null;
@@ -446,11 +442,11 @@ function TaskHeader(props) {
             size={isXSDown ? 'small' : 'medium'}
             color="primary"
             aria-label="add task"
-            className={classes.gapLeft}
+            className={'ml'}
             onClick={handleClickOpenAddTask}
           >
             <AddIcon fontSize="small" />
-            <span className={classes.gapLeft}>Add task</span>
+            <span className={'ml'}>Add task</span>
           </Fab>
         </div>
       </div>
@@ -658,7 +654,7 @@ function TaskHeaderUpcoming(props) {
               variant="contained"
               color="primary"
               size="small"
-              className={gClasses.gapLeft}
+              className={'ml'}
               onClick={goToCurrentWeek}
             >
               Today
@@ -942,7 +938,7 @@ function TaskListWrapper(props) {
             <ExpandMoreIcon fontSize="small" />
           )}
         </span>
-        <span className={classes.gapLeft}>{section}</span>
+        <span className={'ml'}>{section}</span>
       </div>
     );
   };

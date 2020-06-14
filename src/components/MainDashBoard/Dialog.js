@@ -1,5 +1,4 @@
 import React, { Fragment, useState } from 'react';
-import clsx from 'clsx';
 
 import { keys } from '../../constants/task';
 import { TASK_TODAY, TASK_UPCOMING, TASK_ALL } from '../../constants/location';
@@ -45,7 +44,6 @@ import {
   muiMenuItemModal,
   muiSelectSchedule,
   muiDateTimePicker,
-  muiTaskGeneral,
 } from './styled';
 import { DateTimePicker } from '@material-ui/pickers';
 
@@ -142,8 +140,6 @@ export function ModalCreateSection(props) {
   const [value, setValue] = useState('');
   const [errorText, setErrorText] = useState('');
 
-  const classes = muiTaskGeneral();
-
   const handleChange = (e) => setValue(e.target.value);
 
   const handleSave = () => {
@@ -176,7 +172,7 @@ export function ModalCreateSection(props) {
           helperText={errorText}
         />
       </DialogContent>
-      <DialogContent className={classes.textRight}>
+      <DialogContent className={'text-right'}>
         <Button variant="contained" color="primary" onClick={handleSave}>
           Save
         </Button>
@@ -202,7 +198,6 @@ export function ModalAddTask(props) {
     sectionId,
     activeDate,
   } = props;
-  const gClasses = muiTaskGeneral();
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
@@ -496,7 +491,7 @@ export function ModalAddTask(props) {
         <MenuItem value={'nodate'}>
           <div>
             <NotInterestedIcon fontSize="small" />
-            <span className={gClasses.gapLeft}>No date</span>
+            <span className={'ml'}>No date</span>
           </div>
         </MenuItem>
       </Select>
@@ -548,7 +543,7 @@ export function ModalAddTask(props) {
               {/* Option creat section */}
               <MenuItem value={'create'}>
                 <AddCircleIcon />
-                <span className={clsx(gClasses.gapLeft, gClasses.fontBold)}>
+                <span className={'ml font-weight-bold'}>
                   Create new section
                 </span>
               </MenuItem>
@@ -606,7 +601,7 @@ export function ModalAddTask(props) {
         </DialogContent>
 
         {/* Button group */}
-        <DialogContent className={gClasses.textRight}>
+        <DialogContent className={'text-right'}>
           <Button variant="contained" color="primary" onClick={handleSave}>
             Save
           </Button>
@@ -625,7 +620,6 @@ export function ModalAddTask(props) {
 
 export function ModalConFirm(props) {
   const { isOpen, handleClose, removeTask, des } = props;
-  const gClasses = muiTaskGeneral();
   const classes = muiModal();
 
   return (
@@ -635,11 +629,9 @@ export function ModalConFirm(props) {
         style={{ color: red[500] }}
       >
         <InfoIcon />
-        <span className={gClasses.gapLeft}>
+        <span className={'ml'}>
           Are you sure you want to delete{' '}
-          <span className={clsx(gClasses.fontBold, gClasses.fontItalic)}>
-            {des}
-          </span>
+          <span className={'font-weight-bold font-style-italic'}>{des}</span>
         </span>
       </DialogTitle>
       <DialogActions>

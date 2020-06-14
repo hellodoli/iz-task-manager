@@ -1,11 +1,18 @@
 import { makeStyles } from '@material-ui/core/styles';
 import { blue, green, purple } from '@material-ui/core/colors';
+import {
+  TASK_ALL,
+  TASK_TODAY,
+  TASK_UPCOMING,
+} from '../../../constants/location';
 
-function checkColorIcons(name) {
-  let typeIcon = purple[500];
-  if (name === 'today') {
+function checkColorIcons(name, theme) {
+  let typeIcon = theme.palette.common.white;
+  if (name === TASK_ALL) {
+    typeIcon = purple[500];
+  } else if (name === TASK_TODAY) {
     typeIcon = blue[500];
-  } else if (name === 'other') {
+  } else if (name === TASK_UPCOMING) {
     typeIcon = green[500];
   }
   return typeIcon;
@@ -42,6 +49,6 @@ export const muiFilterMenuIcon = makeStyles((theme) => ({
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: '1.5rem',
-    color: (props) => checkColorIcons(props.name),
+    color: (props) => checkColorIcons(props.name, theme),
   },
 }));

@@ -12,6 +12,7 @@ import history from './history';
 import { ThemeProvider, CssBaseline } from '@material-ui/core';
 import theme from './theme/theme';
 import './theme/reboot.css';
+import GlobalCSS from './theme/GlobalCSS';
 
 import App from './App';
 
@@ -30,6 +31,7 @@ ReactDOM.render(
       <ThemeProvider theme={theme}>
         <React.Fragment>
           <CssBaseline />
+          <GlobalCSS />
           <App />
         </React.Fragment>
       </ThemeProvider>

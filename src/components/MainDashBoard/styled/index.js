@@ -15,6 +15,9 @@ export const muiTaskGeneral = makeStyles((theme) => {
       justifyContent: 'space-between',
       alignItems: 'center',
       color: palette.text.primary,
+      '& .MuiFab-root': {
+        textTransform: 'capitalize',
+      },
       [theme.breakpoints.down('xs')]: {
         flexDirection: 'column',
       },
@@ -76,27 +79,6 @@ export const muiTaskGeneral = makeStyles((theme) => {
     },
     wrapperIconExpand: {
       cursor: 'pointer',
-    },
-    gapLeft: {
-      marginLeft: typo.pxToRem(10),
-      [theme.breakpoints.down('xs')]: {
-        marginLeft: typo.pxToRem(5),
-      },
-    },
-    gapRight: {
-      marginRight: typo.pxToRem(10),
-      [theme.breakpoints.down('xs')]: {
-        marginRight: typo.pxToRem(5),
-      },
-    },
-    fontBold: {
-      fontWeight: typo.fontWeightBold,
-    },
-    fontItalic: {
-      fontStyle: 'italic',
-    },
-    textRight: {
-      textAlign: 'right',
     },
   };
 });

@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Switch, Route, useLocation } from 'react-router-dom';
-// import { useTheme } from '@material-ui/core/styles';
 import { checkAuth } from './actions/oauth';
 
+import './theme/reboot.css';
+import { ThemeProvider, CssBaseline } from '@material-ui/core';
+import GlobalCSS from './theme/GlobalCSS';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 
@@ -16,33 +17,18 @@ import Main from './containers/Main';
 import Loading from './components/Loading';
 import FormLoginAndSignUp from './components/FormLoginAndSignUp';
 
-/*function useDarkTheme() {
-  const [theme, setTheme] = useState(useTheme());
-  const {
-    palette: { type }
-  } = theme;
-
-  const toggleDarkTheme = () => {
-    const updateTheme = {
-      ...theme,
-      palette: {
-        ...theme.palette,
-        type: type === 'light' ? 'dark' : 'light'
-      }
-    };
-    setTheme(updateTheme);
-  };
-  return [theme, toggleDarkTheme];
-}*/
-
-function App(props) {
-  const { auth, checkAuth } = props;
+function App() {
   const location = useLocation();
-  //console.log(useDarkTheme());
+  const dispatch = useDispatch();
+  const selector = useSelector((state) => ({
+    auth: state.oauthReducer,
+    theme: state.dlTheme,
+  }));
+  const { auth, theme } = selector;
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   if (location.pathname === '/') {
     if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
@@ -50,25 +36,22 @@ function App(props) {
   }
 
   return (
-    <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <div className="App">
-        {/* Main Route */}
-        <Switch>
-          <Route path="/show" component={FormLoginAndSignUp} />
-          <Route path="/app" component={Main} />
-        </Switch>
-      </div>
-    </MuiPickersUtilsProvider>
+    <ThemeProvider theme={theme}>
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <div className="App">
+          <Loading fullScreen={true} />
+          {/* CSS Global */}
+          <CssBaseline />
+          <GlobalCSS />
+          {/* Main Route */}
+          <Switch>
+            <Route path="/show" component={FormLoginAndSignUp} />
+            <Route path="/app" component={Main} />
+          </Switch>
+        </div>
+      </MuiPickersUtilsProvider>
+    </ThemeProvider>
   );
 }
 
-App.propTypes = {
-  auth: PropTypes.object.isRequired,
-  checkAuth: PropTypes.func.isRequired,
-};
-
-const mapStateToProps = (state) => ({
-  auth: state.oauthReducer,
-});
-
-export default connect(mapStateToProps, { checkAuth })(App);
+export default App;

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import validator from 'validator';
+import { useHistory } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { setCookie } from '../../utils/cookies';
-import User from '../../apis/user';
+import UserAPI from '../../apis/user';
+import { signIn } from '../../actions/oauth';
 
 import {
   FormControl,
@@ -15,7 +18,8 @@ import {
 import { Visibility, VisibilityOff } from '@material-ui/icons';
 
 function FormSignUp() {
-  const [user] = useState(new User());
+  const history = useHistory();
+  const dispatch = useDispatch();
   const [values, setValues] = useState({
     name: '',
     username: '',
@@ -46,14 +50,17 @@ function FormSignUp() {
 
   async function callAPISignUp(newUserInput) {
     console.log('>>> START SIGN UP <<<');
-    await user.signUp(newUserInput);
-    const newUser = user.newUserInfo.user;
+    const userAPI = new UserAPI();
+    await userAPI.signUp(newUserInput);
+    const newUser = userAPI.newUserInfo.user;
     if (newUser && newUser.email) {
       // save cookies
-      console.log('signup success');
+      console.log('signup success: ', newUser);
       // set cookies
-      const token = user.newUserInfo.token;
+      const token = userAPI.newUserInfo.token;
       setCookie('emailToken', token, 30);
+      dispatch(signIn(newUser));
+      history.push('/app/tasks');
     } else {
       console.log('signup fail');
     }

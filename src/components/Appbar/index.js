@@ -1,8 +1,9 @@
 import React, { Fragment, useState } from 'react';
 import clxs from 'clsx';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { toggleMenu as toggleMenuLeft } from '../../actions/menu';
+import { toggleDarktheme } from '../../actions/theme';
 
 import {
   AppBar,
@@ -14,7 +15,6 @@ import {
 } from '@material-ui/core';
 import {
   Menu as MenuIcon,
-  Home as HomeIcon,
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
   Brightness4 as Brightness4Icon,
@@ -41,13 +41,17 @@ function LevelOneMenu({
   handleClose,
   handleOpen,
 }) {
+  const theme = useSelector((state) => state.dlTheme);
+  const showTextDarkTheme = (text) => {
+    if (theme.palette.type === 'dark') return 'Dark theme : ON';
+    return 'Dark theme : OFF';
+  };
   const handleOpenBasedMenu = (anchorEl, ctrKey) => {
     if (ctrKey) {
       const cloneAnchorEl = anchorEl;
       handleOpen(cloneAnchorEl, ctrKey);
     }
   };
-
   return (
     <Menu
       id={menuId}
@@ -66,7 +70,9 @@ function LevelOneMenu({
           onClick={() => handleOpenBasedMenu(anchorEl, control)}
         >
           {icon && icon.start}
-          <span className={'ml mr'}>{text}</span>
+          <span className={'ml mr'}>
+            {control === 'darktheme' ? showTextDarkTheme(text) : text}
+          </span>
           {icon && icon.end}
         </MenuItem>
       ))}
@@ -82,6 +88,10 @@ function LevelOneMenu({
 
 function ContentDarkThemeMenu(props) {
   const { kei, anchorEl, based, title, handleClose, handleOpen } = props;
+  const dispatch = useDispatch();
+  const isChecked = useSelector(
+    (state) => state.dlTheme.palette.type === 'dark'
+  );
   const classes = muiMenu();
   const classesMenu = (kei) => muiMenu({ kei });
 
@@ -89,6 +99,8 @@ function ContentDarkThemeMenu(props) {
     handleClose(kei);
     handleOpen(anchorEl, based);
   };
+
+  const handleToggleDarkTheme = () => dispatch(toggleDarktheme());
 
   return (
     <div>
@@ -116,7 +128,11 @@ function ContentDarkThemeMenu(props) {
           <div className={classes.holderSpaceBetween}>
             <span className={'text-uppercase text-mute'}>DARK THEME</span>
             <span>
-              <Switch color="primary" checked={true} />
+              <Switch
+                color="primary"
+                checked={isChecked}
+                onChange={handleToggleDarkTheme}
+              />
             </span>
           </div>
         </div>
@@ -134,13 +150,13 @@ function LevelOneBasedMenu(props) {
       open={Boolean(anchorEl)}
       onClose={() => handleClose(kei)}
     >
-      {kei === 'darktheme' ? <ContentDarkThemeMenu {...props} /> : null}
+      <ContentDarkThemeMenu {...props} />
     </Menu>
   );
 }
 
-function Header(props) {
-  const { toggleMenuLeft } = props;
+function Header() {
+  const dispatch = useDispatch();
   const classes = muiAppBar();
 
   const [menu, setMenu] = useState({
@@ -210,11 +226,12 @@ function Header(props) {
     <Fragment>
       <AppBar position="fixed">
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={toggleMenuLeft}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={() => dispatch(toggleMenuLeft())}
+          >
             <MenuIcon />
-          </IconButton>
-          <IconButton edge="start" color="inherit">
-            <HomeIcon />
           </IconButton>
 
           <div className={classes.grow}></div>
@@ -235,25 +252,32 @@ function Header(props) {
             </IconButton>
           </div>
           {/* Level 1 Menu */}
-          <LevelMenu
-            {...menu.setting}
-            handleOpen={handleMenuOpen}
-            handleClose={handleMenuClose}
-            isShowVersionItem={true}
-          />
-          <LevelMenu
-            {...menu.profile}
-            handleOpen={handleMenuOpen}
-            handleClose={handleMenuClose}
-            isShowVersionItem={true}
-          />
+          {menu.setting.anchorEl && (
+            <LevelMenu
+              {...menu.setting}
+              handleOpen={handleMenuOpen}
+              handleClose={handleMenuClose}
+              isShowVersionItem={true}
+            />
+          )}
+
+          {menu.profile.anchorEl && (
+            <LevelMenu
+              {...menu.profile}
+              handleOpen={handleMenuOpen}
+              handleClose={handleMenuClose}
+              isShowVersionItem={true}
+            />
+          )}
 
           {/* Level 1 Menu Based*/}
-          <LevelMenu
-            {...menu.darktheme}
-            handleOpen={handleMenuOpen}
-            handleClose={handleMenuClose}
-          />
+          {menu.darktheme.anchorEl && (
+            <LevelMenu
+              {...menu.darktheme}
+              handleOpen={handleMenuOpen}
+              handleClose={handleMenuClose}
+            />
+          )}
         </Toolbar>
       </AppBar>
       <Toolbar></Toolbar>
@@ -261,4 +285,4 @@ function Header(props) {
   );
 }
 
-export default connect(null, { toggleMenuLeft })(Header);
+export default React.memo(Header);

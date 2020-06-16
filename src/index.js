@@ -9,11 +9,6 @@ import rootReducer from './reducers';
 import { Router } from 'react-router-dom';
 import history from './history';
 
-import { ThemeProvider, CssBaseline } from '@material-ui/core';
-import theme from './theme/theme';
-import './theme/reboot.css';
-import GlobalCSS from './theme/GlobalCSS';
-
 import App from './App';
 
 import * as serviceWorker from './serviceWorker';
@@ -24,17 +19,10 @@ const store = createStore(
   composeEnhancers(applyMiddleware(reduxThunk))
 );
 console.log('store: ', store.getState());
-
 ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
-      <ThemeProvider theme={theme}>
-        <React.Fragment>
-          <CssBaseline />
-          <GlobalCSS />
-          <App />
-        </React.Fragment>
-      </ThemeProvider>
+      <App />
     </Router>
   </Provider>,
   document.getElementById('root')

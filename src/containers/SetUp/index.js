@@ -5,7 +5,7 @@ import { withRouter } from 'react-router-dom';
 function SetUp(props) {
   const { isSignedIn, history } = props;
   useEffect(() => {
-    if (isSignedIn) history.push('/app');
+    if (isSignedIn) history.push('/app/tasks');
     else history.push('/show');
   }, [history, isSignedIn]);
   return null;

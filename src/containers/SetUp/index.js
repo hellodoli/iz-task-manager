@@ -1,18 +1,15 @@
-import { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { withRouter } from 'react-router-dom';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import Loading from '../../components/Loading';
 
 function SetUp(props) {
-  const { isSignedIn, history } = props;
-  useEffect(() => {
-    if (isSignedIn) history.push('/app/tasks');
-    else history.push('/show');
-  }, [history, isSignedIn]);
+  const { history } = props;
+  const auth = useSelector((state) => state.oauthReducer);
+
+  if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
+  if (auth.isSignedIn) history.push('/app/tasks');
+  else history.push('/show');
   return null;
 }
 
-SetUp.propTypes = {
-  isSignedIn: PropTypes.bool.isRequired,
-};
-
-export default withRouter(SetUp);
+export default SetUp;

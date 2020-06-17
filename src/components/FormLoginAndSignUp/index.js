@@ -9,7 +9,12 @@ import TabPanel from './TabPanel';
 import FormSignIn from './FormSignIn';
 import FormSignUp from './FormSignUp';
 
+import { showLoading } from '../../actions/loading';
+import { useDispatch } from 'react-redux';
+
 function FormLoginAndSignUp() {
+  console.log('tai sao lai re-render');
+  const dispatch = useDispatch();
   const classes = muiForm();
   const [value, setValue] = useState(0);
 
@@ -38,6 +43,8 @@ function FormLoginAndSignUp() {
               <FormSignUp />
             </TabPanel>
           </div>
+
+          <button onClick={() => dispatch(showLoading())}>Test render</button>
         </Paper>
       </Container>
     </div>

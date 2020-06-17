@@ -1,5 +1,6 @@
 import api from './index';
 import { getCookie } from '../utils/cookies';
+import { useLoading } from '../hooks/loading';
 
 class Section {
   constructor() {
@@ -26,6 +27,7 @@ class Section {
 
   async addSection(obSection) {
     try {
+      //setLoading(true);
       this.isAddSuccess = null;
       this.dataAfterAdd = {};
       const headers = {
@@ -41,6 +43,7 @@ class Section {
         this.isAddSuccess = true;
         this.dataAfterAdd = response.data;
       }
+      //setLoading(false);
     } catch (error) {
       this.isAddSuccess = false;
       this.dataAfterAdd = {};

@@ -13,7 +13,6 @@ import { showLoading } from '../../actions/loading';
 import { useDispatch } from 'react-redux';
 
 function FormLoginAndSignUp() {
-  console.log('tai sao lai re-render');
   const dispatch = useDispatch();
   const classes = muiForm();
   const [value, setValue] = useState(0);

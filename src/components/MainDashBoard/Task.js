@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
@@ -15,6 +15,8 @@ import {
   getWeekByDate,
   getSuggestScheduleDate,
 } from '../../utils/time';
+
+import { useLoading } from '../../hooks/loading';
 
 import { getTask, setTask } from '../../actions/task';
 import { useMediaBreakingPoint } from '../../hooks/mediaBp';
@@ -367,6 +369,8 @@ function TaskHeader(props) {
   const uMB = useMediaBreakingPoint();
   const isXSDown = uMB.isXS.down;
 
+  const [, setIsLoading] = useLoading();
+
   /* --- START: Handle Add Task Action --- */
   const [isOpenAddTask, setIsOpenAddTask] = useState(false);
 
@@ -384,11 +388,17 @@ function TaskHeader(props) {
 
   const addSection = (sectionName) => {
     handleCloseAddSection();
+
+    setIsLoading(true);
     createNewSection(tasks, sectionName)
       .then((newSection) => {
+        setIsLoading(false);
         setTask(getCloneTaskAfterAddSection(tasks, newSection));
       })
-      .catch(() => alert('add Section fail'));
+      .catch(() => {
+        setIsLoading(false);
+        alert('add Section fail');
+      });
   };
   /* --- END: Handle Add Section Action --- */
 
@@ -696,8 +706,8 @@ function TaskList(props) {
     taskDataProperty,
     taskOrder,
   } = props;
-
   const propsAddTaskModal = { tasks, location, setTask };
+  const [, setIsLoading] = useLoading();
 
   useEffect(() => {
     // check every time user switch other tab
@@ -739,6 +749,7 @@ function TaskList(props) {
 
   const updateDesTask = async (taskId, sectionId, taskOb) => {
     prevEditTask = null;
+    setIsLoading(true);
     const taskAPI = new TaskAPI();
     await taskAPI.updateTask(taskOb);
     if (taskAPI.isUpdateSuccess) {
@@ -750,9 +761,11 @@ function TaskList(props) {
       curTask.des = taskOb.des;
       // find other clone Task and update
       setTask(updateCloneTaskItemUI(tasks, curTask, { taskId, sectionId }));
+      setIsLoading(false);
     } else {
       // fail
       alert('update des fail');
+      setIsLoading(false);
     }
   };
 
@@ -766,6 +779,7 @@ function TaskList(props) {
   };
 
   const updateCompletedTask = async (taskId, sectionId, taskOb) => {
+    setIsLoading(true);
     const taskAPI = new TaskAPI();
     await taskAPI.updateTask(taskOb);
     if (taskAPI.isUpdateSuccess) {
@@ -776,20 +790,25 @@ function TaskList(props) {
       curTask.completed = taskOb.completed;
       // find other clone Task and update
       setTask(updateCloneTaskItemUI(tasks, curTask, { taskId, sectionId }));
+      setIsLoading(false);
     } else {
       // fail
       alert('update completed fail');
+      setIsLoading(false);
     }
   };
 
   const deleteTask = async (taskId, sectionId) => {
+    setIsLoading(true);
     const taskAPI = new TaskAPI();
     await taskAPI.deleteTask(taskId);
     if (taskAPI.isDeleteSuccess) {
       setTask(updateCloneTaskItemUI(tasks, null, { taskId, sectionId }));
+      setIsLoading(false);
     } else {
       // fail
       alert('delete fail');
+      setIsLoading(false);
     }
   };
 
@@ -861,14 +880,17 @@ function TaskList(props) {
       }
       console.log('arrDragTask: ', arrDragTask);
       if (arrDragTask.length > 0) {
+        setIsLoading(true);
         // update order database
         const taskAPI = new TaskAPI();
         await taskAPI.updateManyTask(arrDragTask);
         if (taskAPI.isUpdateManySuccess) {
           // update UI
           setTask(cloneTasks);
+          setIsLoading(false);
         } else {
           alert('Drag fail');
+          setIsLoading(false);
         }
       }
     }

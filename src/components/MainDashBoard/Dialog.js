@@ -10,6 +10,8 @@ import {
   monthNames,
 } from '../../utils/time';
 
+import { useLoading } from '../../hooks/loading';
+
 // Task API Class
 import TaskAPI from '../../apis/task';
 import SectionAPI from '../../apis/section';
@@ -39,13 +41,13 @@ import {
   NotInterested as NotInterestedIcon,
   InfoOutlined as InfoIcon,
 } from '@material-ui/icons';
+import { DateTimePicker } from '@material-ui/pickers';
 import {
   muiModal,
   muiMenuItemModal,
   muiSelectSchedule,
   muiDateTimePicker,
 } from './styled';
-import { DateTimePicker } from '@material-ui/pickers';
 
 export function getCloneTaskAfterAddSection(tasks, newSection) {
   const sectionTasks = tasks.sectionTasks.slice();
@@ -121,6 +123,7 @@ function getCloneTaskAfterAfterAddTask(
 export async function createNewSection(tasks, sectionName) {
   const sectionAPI = new SectionAPI();
   const order = tasks.sectionTasks[0].length;
+
   await sectionAPI.addSection({
     section: sectionName,
     order,
@@ -201,6 +204,8 @@ export function ModalAddTask(props) {
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
+
+  const [isLoading, setIsLoading] = useLoading();
 
   function chooseDefaultValueTaskSection() {
     let defaultTaskSection = '';
@@ -397,6 +402,8 @@ export function ModalAddTask(props) {
           schedule,
           index,
         };
+
+        if (!isLoading) setIsLoading(true);
         const taskAPI = new TaskAPI();
         await taskAPI.addTask(newTask);
         if (taskAPI.newTask) {
@@ -407,14 +414,17 @@ export function ModalAddTask(props) {
             tasksUpcomingMatchIndex,
           });
           setTask(result);
+          setIsLoading(false);
         } else {
           alert('add Task fail');
+          setIsLoading(false);
         }
       }
 
       if (arrItemArrange.length > 0) {
         // arrange dirty index first
         console.log('arrItemArrange: ', arrItemArrange);
+        setIsLoading(true);
         const taskAPI = new TaskAPI();
         await taskAPI.updateManyTask(arrItemArrange);
         if (taskAPI.isUpdateManySuccess) addTask();

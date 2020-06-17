@@ -3,6 +3,7 @@ import validator from 'validator';
 import { useHistory } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCookie } from '../../utils/cookies';
+import { useLoading } from '../../hooks/loading';
 import UserAPI from '../../apis/user';
 import { signIn } from '../../actions/oauth';
 
@@ -32,6 +33,8 @@ function FormSignUp() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  const [, setIsLoading] = useLoading();
+
   // handle change name, email, username, password
   const handleChange = (prop) => (event) => {
     setValues({
@@ -50,6 +53,7 @@ function FormSignUp() {
 
   async function callAPISignUp(newUserInput) {
     console.log('>>> START SIGN UP <<<');
+    setIsLoading(true);
     const userAPI = new UserAPI();
     await userAPI.signUp(newUserInput);
     const newUser = userAPI.newUserInfo.user;
@@ -60,9 +64,11 @@ function FormSignUp() {
       const token = userAPI.newUserInfo.token;
       setCookie('emailToken', token, 30);
       dispatch(signIn(newUser));
+      setIsLoading(false);
       history.push('/app/tasks');
     } else {
       console.log('signup fail');
+      setIsLoading(false);
     }
   }
 

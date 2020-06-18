@@ -1,7 +1,9 @@
 import React, { Fragment, useState } from 'react';
 import clxs from 'clsx';
+import { useHistory } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-
+import { deleteCookie } from '../../utils/cookies';
+import { signOut } from '../../actions/oauth';
 import { toggleMenu as toggleMenuLeft } from '../../actions/menu';
 import { toggleDarktheme } from '../../actions/theme';
 
@@ -41,26 +43,25 @@ function LevelOneMenu({
   handleClose,
   handleOpen,
 }) {
+  const history = useHistory();
+  const dispatch = useDispatch();
   const theme = useSelector((state) => state.dlTheme);
   const showTextDarkTheme = (text) => {
     if (theme.palette.type === 'dark') return 'Dark theme : ON';
     return 'Dark theme : OFF';
   };
 
-  const handleOpenBasedMenu = (anchorEl, ctrKey) => {
-    if (ctrKey) {
-      const cloneAnchorEl = anchorEl;
-      handleOpen(cloneAnchorEl, ctrKey);
-    }
-  };
-
   const preHandleOpen = (id, anchorEl, control) => {
     if (control) {
+      // go to other menu
       const cloneAnchorEl = anchorEl;
       handleOpen(cloneAnchorEl, control);
     } else {
       if (id === 'profile-00') {
-        console.log('sign out');
+        console.log('>>>SIGN OUT<<<');
+        deleteCookie('emailToken');
+        dispatch(signOut());
+        history.push('/show');
       }
     }
   };

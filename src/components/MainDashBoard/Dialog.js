@@ -31,7 +31,6 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  useTheme,
 } from '@material-ui/core';
 import {
   AddCircle as AddCircleIcon,

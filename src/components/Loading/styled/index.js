@@ -29,6 +29,6 @@ export const muiLoading = makeStyles((theme) => ({
   root: ({ fullScreen, showBg }) => ({
     ...container(fullScreen),
     ...background(showBg, theme),
-    zIndex: theme.zIndex.modal,
+    zIndex: theme.zIndex.modal + 1,
   }),
 }));

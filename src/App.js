@@ -4,7 +4,6 @@ import { checkAuth } from './actions/oauth';
 
 import './theme/reboot.css';
 import { ThemeProvider, CssBaseline } from '@material-ui/core';
-import GlobalCSS from './theme/GlobalCSS';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 // Containers
@@ -32,7 +31,6 @@ function App() {
         <div className="App">
           {/* CSS Global */}
           <CssBaseline />
-          <GlobalCSS />
           {/* Loading Root */}
           <LoadingRoot />
           {/* Main Route */}

@@ -1,4 +1,3 @@
-import { createMuiTheme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { red } from '@material-ui/core/colors';
 
@@ -229,66 +228,4 @@ export const muiSelectSchedule = makeStyles((theme) => {
       },
     },
   };
-});
-
-// Overriding styles with createMuiTheme
-export const muiDateTimePicker = createMuiTheme({
-  overrides: {
-    MuiPickersToolbarText: {
-      toolbarTxt: {
-        '&.MuiTypography-h3': {
-          fontSize: '1.5rem',
-        },
-        '&.MuiTypography-h4': {
-          fontSize: '1.5rem',
-        },
-      },
-    },
-    MuiGrid: {
-      container: {
-        '& > .MuiGrid-item': {
-          flexDirection: 'row',
-          alignItems: 'center',
-          '& > div + div': {
-            marginLeft: '10px',
-          },
-          '&.MuiGrid-grid-xs-6, &.MuiGrid-grid-xs-1': {
-            maxWidth: '25%',
-            flexBasis: '25%',
-          },
-          '&.MuiGrid-grid-xs-6': {
-            justifyContent: 'flex-end',
-          },
-          '&.MuiGrid-grid-xs-1': {
-            justifyContent: 'flex-start',
-            marginLeft: '10px',
-            '& > button + button': {
-              marginLeft: '4px',
-            },
-          },
-        },
-      },
-    },
-    MuiPickersToolbar: {
-      toolbar: { height: '64px' },
-      /*toolbar: {
-        [defaultTheme.breakpoints.up('sm')]: {
-          height: '64px',
-        },
-      },*/
-    },
-    MuiPickersBasePicker: {
-      pickerView: {
-        width: '100%',
-        margin: '0 auto',
-        maxWidth: 'initial',
-      },
-    },
-    MuiPickersDay: {
-      /*day: {
-        width: '40px',
-        height: '40px'
-      }*/
-    },
-  },
 });

@@ -56,6 +56,7 @@ function FormSignUp() {
     setIsLoading(true);
     const userAPI = new UserAPI();
     await userAPI.signUp(newUserInput);
+    setIsLoading(false);
     const newUser = userAPI.newUserInfo.user;
     if (newUser && newUser.email) {
       // save cookies
@@ -64,11 +65,9 @@ function FormSignUp() {
       const token = userAPI.newUserInfo.token;
       setCookie('emailToken', token, 30);
       dispatch(signIn(newUser));
-      setIsLoading(false);
       history.push('/app/tasks');
     } else {
       console.log('signup fail');
-      setIsLoading(false);
     }
   }
 

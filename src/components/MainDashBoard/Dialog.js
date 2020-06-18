@@ -18,7 +18,6 @@ import SectionAPI from '../../apis/section';
 
 // Styling
 import { red } from '@material-ui/core/colors';
-import { ThemeProvider } from '@material-ui/styles';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,7 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  useTheme,
 } from '@material-ui/core';
 import {
   AddCircle as AddCircleIcon,
@@ -42,12 +42,7 @@ import {
   InfoOutlined as InfoIcon,
 } from '@material-ui/icons';
 import { DateTimePicker } from '@material-ui/pickers';
-import {
-  muiModal,
-  muiMenuItemModal,
-  muiSelectSchedule,
-  muiDateTimePicker,
-} from './styled';
+import { muiModal, muiMenuItemModal, muiSelectSchedule } from './styled';
 
 export function getCloneTaskAfterAddSection(tasks, newSection) {
   const sectionTasks = tasks.sectionTasks.slice();
@@ -204,7 +199,6 @@ export function ModalAddTask(props) {
   const classes = muiModal();
   const menuItemClasses = muiMenuItemModal();
   const selectScheduleClasses = muiSelectSchedule();
-
   const [isLoading, setIsLoading] = useLoading();
 
   function chooseDefaultValueTaskSection() {
@@ -575,18 +569,16 @@ export function ModalAddTask(props) {
         {/* Select schedule and Datetime picker */}
         <DialogContent>
           {switchScheduleType ? (
-            <ThemeProvider theme={muiDateTimePicker}>
-              <DateTimePicker
-                autoOk
-                size="small"
-                variant="static"
-                openTo="date"
-                minDate={curDate}
-                open={isOpenCalendar}
-                value={selectedDate}
-                onChange={setSelectedDate}
-              />
-            </ThemeProvider>
+            <DateTimePicker
+              autoOk
+              size="small"
+              variant="static"
+              openTo="date"
+              minDate={curDate}
+              open={isOpenCalendar}
+              value={selectedDate}
+              onChange={setSelectedDate}
+            />
           ) : (
             <FormControl variant="outlined" size="small" fullWidth={true}>
               <InputLabel>Schedule</InputLabel>

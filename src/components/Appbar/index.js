@@ -46,12 +46,25 @@ function LevelOneMenu({
     if (theme.palette.type === 'dark') return 'Dark theme : ON';
     return 'Dark theme : OFF';
   };
+
   const handleOpenBasedMenu = (anchorEl, ctrKey) => {
     if (ctrKey) {
       const cloneAnchorEl = anchorEl;
       handleOpen(cloneAnchorEl, ctrKey);
     }
   };
+
+  const preHandleOpen = (id, anchorEl, control) => {
+    if (control) {
+      const cloneAnchorEl = anchorEl;
+      handleOpen(cloneAnchorEl, control);
+    } else {
+      if (id === 'profile-00') {
+        console.log('sign out');
+      }
+    }
+  };
+
   return (
     <Menu
       id={menuId}
@@ -67,7 +80,7 @@ function LevelOneMenu({
         <MenuItem
           key={id}
           divider={index === items.length - 1}
-          onClick={() => handleOpenBasedMenu(anchorEl, control)}
+          onClick={() => preHandleOpen(id, anchorEl, control)}
         >
           {icon && icon.start}
           <span className={'ml mr'}>
@@ -190,7 +203,13 @@ function Header() {
       menuId: 'iz-appbar-profile-menu',
       title: 'Profile',
       anchorEl: null,
-      items: [],
+      items: [
+        {
+          id: 'profile-00',
+          icon: {},
+          text: 'Sign Out',
+        },
+      ],
     },
     // based
     darktheme: {

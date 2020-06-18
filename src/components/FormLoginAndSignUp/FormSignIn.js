@@ -4,6 +4,7 @@ import validator from 'validator';
 import { useHistory } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { setCookie } from '../../utils/cookies';
+import { useLoading } from '../../hooks/loading';
 import User from '../../apis/user';
 import { signIn } from '../../actions/oauth';
 
@@ -32,6 +33,8 @@ function FormSignIn(props) {
 
   const [eMailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  const [, setIsLoading] = useLoading();
 
   function clearErrorText(prop) {
     if (prop === 'email') {
@@ -77,7 +80,9 @@ function FormSignIn(props) {
   // call API SignIn
   async function callAPISignIn(userInfo) {
     console.log('>>> START SIGN IN <<<');
+    setIsLoading(true);
     await userAPI.signIn(userInfo);
+    setIsLoading(false);
     const data = userAPI.dataLogin;
     if (data.isError) {
       // set Error Text

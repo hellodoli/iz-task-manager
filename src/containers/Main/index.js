@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
+import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 
 // Components
 import Loading from '../../components/Loading';
@@ -10,15 +10,9 @@ import DashBoard from '../DashBoard';
 
 function Main(props) {
   const { auth } = props;
-  const history = useHistory();
-
-  useEffect(() => {
-    if (auth.isSignedIn === false) history.push('/show');
-  }, [auth.isSignedIn, history]);
-
   if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
   if (auth.isSignedIn) return <DashBoard />;
-  return null;
+  return <Redirect to="/show" />;
 }
 
 Main.propTypes = {

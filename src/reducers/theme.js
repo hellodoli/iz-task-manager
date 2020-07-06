@@ -1,5 +1,6 @@
-import { defaultTheme, defaultType, getTheme } from '../theme/theme';
+import { THEME_DL } from '../constants/localStorage';
 import { TOGGLE_DARKTHEME } from '../constants/theme';
+import { defaultTheme, defaultType, getTheme } from '../theme/theme';
 
 function json2string(type) {
   return JSON.stringify({ type });
@@ -8,7 +9,7 @@ function json2string(type) {
 function getDLTheme() {
   let dlTheme = defaultTheme;
   const ls = window.localStorage;
-  const savedTheme = ls.getItem('dlTheme');
+  const savedTheme = ls.getItem(THEME_DL);
   if (savedTheme) {
     const obSavedtheme = JSON.parse(savedTheme);
     const type = obSavedtheme.type;
@@ -16,11 +17,10 @@ function getDLTheme() {
       const fType = type.toLowerCase();
       if (fType === 'dark' || fType === 'light') dlTheme = getTheme(fType);
     } else {
-      ls.removeItem('dlTheme');
-      ls.setItem('dlTheme', json2string(defaultType));
+      ls.setItem(THEME_DL, json2string(defaultType));
     }
   } else {
-    ls.setItem('dlTheme', json2string(defaultType));
+    ls.setItem(THEME_DL, json2string(defaultType));
   }
   return dlTheme;
 }
@@ -29,7 +29,7 @@ const dlThemeReducer = (state = getDLTheme(), action) => {
   switch (action.type) {
     case TOGGLE_DARKTHEME:
       const type = state.palette.type === 'light' ? 'dark' : 'light';
-      window.localStorage.setItem('dlTheme', json2string(type));
+      window.localStorage.setItem(THEME_DL, json2string(type));
       return getTheme(type);
     default:
       return state;

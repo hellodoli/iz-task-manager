@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { connect } from 'react-redux';
-import { Switch, Route } from 'react-router-dom';
+import { Switch } from 'react-router-dom';
 // Task API Class
 import TaskAPI from '../../apis/task';
 
@@ -16,9 +16,8 @@ import {
   getSuggestScheduleDate,
 } from '../../utils/time';
 
-import { useLoading } from '../../hooks/loading';
-
 import { getTask, setTask } from '../../actions/task';
+import { useLoading } from '../../hooks/loading';
 import { useMediaBreakingPoint } from '../../hooks/mediaBp';
 
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -55,6 +54,8 @@ import {
 import { green, amber, purple, red, grey } from '@material-ui/core/colors';
 import { muiTaskGeneral, muiTaskItem } from './styled';
 // Components
+import Loading from '../Loading';
+import { PublicRouter } from '../HOC/Router';
 import {
   ModalAddTask,
   ModalCreateSection,
@@ -62,7 +63,6 @@ import {
   createNewSection,
   getCloneTaskAfterAddSection,
 } from './Dialog';
-import Loading from '../Loading';
 
 let prevPathNameTask = null;
 let prevEditTask = null;
@@ -1043,18 +1043,6 @@ function TaskWrapperUpcoming(props) {
   );
 }
 
-// RouteWrapper
-function RouteWrapper({ component: Component, passesProps, ...rest }) {
-  // important: passesProps contains history, location, match but we dont need
-  // rest: exact, path
-  return (
-    <Route
-      {...rest}
-      render={(routerProps) => <Component {...passesProps} {...routerProps} />}
-    />
-  );
-}
-
 function TaskMain(props) {
   const { tasks, getTask, location } = props;
   const taskLocationInfo = checkCurrentPathname(location.pathname); // get info location pathname
@@ -1068,20 +1056,18 @@ function TaskMain(props) {
   return (
     <div className="task-main">
       <Switch>
-        <RouteWrapper
-          exact={true}
+        <PublicRouter
+          exact
           path={TASK_ALL}
           passesProps={taskMainProps}
           component={TaskWrapper}
         />
-        <RouteWrapper
-          exact={false}
+        <PublicRouter
           path={TASK_TODAY}
           passesProps={taskMainProps}
           component={TaskWrapper}
         />
-        <RouteWrapper
-          exact={false}
+        <PublicRouter
           path={TASK_UPCOMING}
           passesProps={taskMainProps}
           component={TaskWrapperUpcoming}

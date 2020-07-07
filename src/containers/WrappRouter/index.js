@@ -1,30 +1,18 @@
 import React from 'react';
-import { Switch, Route, Redirect } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { Switch, Route } from 'react-router-dom';
+
 // Containers
-import Main from '../Main';
+import DashBoard from '../DashBoard';
 // Components
-import Loading from '../../components/Loading';
+import { PrivateRouter, PublicRouter } from '../../components/HOC/Router';
 import FormLoginAndSignUp from '../../components/FormLoginAndSignUp';
-
-function RedirectRouter({ ...rest }) {
-  const auth = useSelector((state) => state.oauthReducer);
-
-  function RouteComponent() {
-    if (auth.isSignedIn === null) return <Loading fullScreen={true} />;
-    if (auth.isSignedIn) return <Redirect to="/app" />;
-    return <Redirect to="/show" />;
-  }
-
-  return <Route {...rest} render={() => <RouteComponent />} />;
-}
 
 function WrappRouter() {
   return (
     <Switch>
-      <RedirectRouter exact path="/" />
-      <Route path="/show" component={FormLoginAndSignUp} />
-      <Route path="/app" component={Main} />
+      <PrivateRouter exact path="/" />
+      <PrivateRouter path="/app" component={DashBoard} />
+      <PublicRouter path="/show" component={FormLoginAndSignUp} />
       <Route path="*" render={() => <h1>404 PAGE</h1>} />
     </Switch>
   );
